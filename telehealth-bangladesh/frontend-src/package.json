@@ -1,0 +1,28 @@
+{
+  "name": "swastho-nirapod-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node -e \"const fs = require('fs'); const bg = 'C:/Users/Niloy/.gemini/antigravity-ide/brain/745ba60c-b6b4-4124-b814-5a429df51cc1/medicare_sector_bg_1780866818528.png'; const hero = 'C:/Users/Niloy/.gemini/antigravity-ide/brain/745ba60c-b6b4-4124-b814-5a429df51cc1/telemedicine_hero_1780860621024.png'; if (fs.existsSync(bg)) fs.copyFileSync(bg, 'src/assets/medicare_sector_bg.png'); if (fs.existsSync(hero)) fs.copyFileSync(hero, 'src/assets/telemedicine_hero.png');\"",
+    "build": "vite build",
+    "lint": "echo 'No linting configured'",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^0.454.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.8"
+  }
+}

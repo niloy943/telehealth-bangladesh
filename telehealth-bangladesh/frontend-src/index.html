@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Elements -->
+  <title>SwasthoNirapod – Secure Telemedicine Platform</title>
+  <meta name="description" content="SwasthoNirapod is a highly secure, end-to-end encrypted telemedicine SaaS platform connecting patients, certified doctors, and administrators in Bangladesh.">
+  <meta name="keywords" content="telehealth, telemedicine, Bangladesh, e-health, secure prescription, E2EE doctor consultation">
+  
+  <!-- PWA Elements -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="theme-color" content="#14b8a6">
+  
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <!-- Google Fonts for Modern UX -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Nunito:ital,wght@0,300..900;1,300..900&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- HTML2PDF library for E-Prescription PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="bg-[#F4F6F9] text-[#1E293B] antialiased overflow-hidden min-h-screen" style="font-family: 'Inter', 'Nunito', 'Hind Siliguri', 'Noto Sans Bengali', sans-serif; font-size: 15px; line-height: 1.6;">
+  
+  <div id="root"></div>
+
+  <!-- Global Sound Alerts -->
+  <audio id="audioRingtone" loop src="https://assets.mixkit.co/active_storage/sfx/1358/1358-84.wav" preload="auto"></audio>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+          .catch((err) => console.error('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+
+  <!-- Vite entry script -->
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
