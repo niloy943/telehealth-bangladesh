@@ -1,9 +1,9 @@
 ========================================================================
-             SWASTHONIRAPOD - SECURE TELEMEDICINE PLATFORM
+             HealNSight- SECURE TELEMEDICINE PLATFORM
                        Project Setup & Run Manual
 ========================================================================
 
-SwasthoNirapod is a highly secure, end-to-end encrypted telemedicine SaaS 
+HealNsightis a highly secure, end-to-end encrypted telemedicine SaaS 
 platform tailored for the Bangladesh context, connecting Patients, Certified 
 Doctors, and System Administrators.
 
@@ -112,7 +112,7 @@ A. Forgot Password Endpoint:
 URL: POST http://localhost:8000/api/auth/forgot-password/
 Request Body:
 {
-  "email_or_phone": "admin@swasthonirapod.com"
+  "email_or_phone": "admin@HealNSight.com"
 }
 Response:
 {
@@ -156,7 +156,7 @@ The prescription management desk is updated to ensure clean formatting and relia
 ========================================================================
 8. BRANDING & PREMIUM UX AESTHETICS
 ========================================================================
-* Global Rebranding: All instances of "TeleVital", "TeleVital BD", and the Bengali name "টেলিভাইটাল বিডি" have been renamed to "SwasthoNirapod" (and "স্বাস্থ্যনিরাপদ") across all files.
+* Global Rebranding: All instances of "TeleVital", "TeleVital BD", and the Bengali name "টেলিভাইটাল বিডি" have been renamed to "HealNSight" (and "আরোগ্য সাইট") across all files.
 * Premium Theme: A high-end transparent medical sector visual theme has been applied globally as the application background, accented with beautiful CSS blur effects, soft gradients, and modern fonts (Inter, Noto Sans Bengali).
 ========================================================================
 
