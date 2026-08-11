@@ -54,16 +54,16 @@ button {
 
 :root {
   /* Soft off-white page background instead of plain white */
-  --bg-app: #F7FBFE; 
-  --bg-card: #FFFFFF;
+  --bg-app: #803fd4; 
+  --bg-card: #908080;
   
   /* Highly visible borders for clear component separation */
-  --border-card: #D8E3F0; 
+  --border-card: transparent; 
   
   /* High contrast darker typography colors */
-  --text-main: #0B1645; 
-  --text-body: #435776;
-  --text-muted: #73839E; 
+  --text-main: #000000; 
+  --text-body: #6b21a8; 
+  --text-muted: #52525b; 
   
   /* Premium colors with high contrast */
   --color-primary: #168CF5;   /* Medical blue */
@@ -76,12 +76,12 @@ button {
   --gradient-left: #DAEAFA;
   --gradient-right: #E8F2FC;
   --accent-lavender: #895FDF;
-  --decor-lavender: #D7CFFB;
-  --color-secondary-blue: #1664F2;
+  --decor-lavender: #d9d3f9;
+  --color-secondary-blue: #555f94;
   --decor-blue: #BDDDFA;
   
   --glass-bg: #FFFFFF;
-  --glass-border: #94A3B8;
+  --glass-border: rgba(255, 255, 255, 0.12);
   --bg-scrollbar: #E2E8F0;
   --thumb-scrollbar: #94A3B8;
   --thumb-scrollbar-hover: #475569;
@@ -97,9 +97,7 @@ button {
 }
 
 .gradient-mesh-bg:not(.dark) .glass-panel,
-.gradient-mesh-bg:not(.dark) .bg-white,
-.gradient-mesh-bg:not(.dark) header,
-.gradient-mesh-bg:not(.dark) aside {
+.gradient-mesh-bg:not(.dark) .bg-white {
   background-color: var(--bg-card) !important;
   border-color: var(--border-card) !important;
 }
@@ -136,11 +134,12 @@ button {
 
 .dark {
   /* Deep Navy dark mode */
-  --bg-app: #080E1A; 
-  --bg-card: #0F172A;
-  --border-card: rgba(255, 255, 255, 0.12);
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
+  --bg-app: #587ecb; 
+  --bg-card: #0719e184;
+  --border-card: transparent;
+  --text-main: #f5f3ff;
+  --text-body: #d8b4fe;
+  --text-muted: #10b981;
   
   /* Royal Blue & Digital Cyan highlights */
   --color-primary: #3B82F6; 
@@ -149,15 +148,15 @@ button {
   --color-warning: #F59E0B;
   --color-error: #EF4444;
   
-  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-bg: rgba(61, 94, 170, 0.8);
   --glass-border: rgba(255, 255, 255, 0.12);
-  --bg-scrollbar: #020617;
-  --thumb-scrollbar: #1E293B;
+  --bg-scrollbar: #98cbff;
+  --thumb-scrollbar: #3c83f0;
   --thumb-scrollbar-hover: #475569;
   
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 4px rgba(62, 53, 98, 0.5); 
   --shadow-md: 0 10px 20px -3px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 20px 40px -4px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 20px 40px -4px rgba(15, 23, 42, 0.973);
 }
 
 /* Custom Scrollbars */
@@ -186,7 +185,7 @@ button {
 }
 
 .glass-panel:hover {
-  border-color: var(--color-primary) !important;
+  border-color: transparent !important;
   box-shadow: var(--shadow-lg) !important;
 }
 

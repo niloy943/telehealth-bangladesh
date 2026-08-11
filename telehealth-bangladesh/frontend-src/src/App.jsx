@@ -331,10 +331,10 @@ const MainApp = () => {
       )}
 
       {/* Collapsible Sidebar Navigation */}
-      <aside className={`border-r flex-col p-6 shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'w-24' : 'w-72'} ${darkMode ? 'bg-[#111827] border-white/5' : 'bg-white border-slate-200 shadow-sm'} ${mobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 flex w-72 shadow-2xl' : 'hidden md:flex'}`}>
+      <aside className={`border-r flex-col p-6 shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'w-24' : 'w-72'} bg-[#111827] border-white/5 ${mobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 flex w-72 shadow-2xl' : 'hidden md:flex'}`}>
         
         {/* Sidebar Header Brand */}
-        <div className="flex items-center justify-between border-b pb-6 mb-6 border-slate-200 dark:border-white/5 overflow-hidden">
+        <div className="flex items-center justify-between border-b pb-6 mb-6 border-white/5 overflow-hidden">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-r from-medical-teal to-medical-indigo p-2.5 rounded-xl text-white shadow-md pulse-glow shrink-0">
               <Activity className="w-5 h-5 stroke-[2.5]" />
@@ -354,7 +354,7 @@ const MainApp = () => {
               {/* Patient Tab 1: Dashboard */}
               <button 
                 onClick={() => { setActiveTab("dashboard"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'dashboard' && !selectedConsultation ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'dashboard' && !selectedConsultation ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <LayoutDashboard className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('dashboard')}</span>}
@@ -363,7 +363,7 @@ const MainApp = () => {
               {/* Patient Tab 2: Book appointment */}
               <button 
                 onClick={() => { setActiveTab("booking"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'booking' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'booking' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <CalendarPlus className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('bookNewAppt')}</span>}
@@ -372,7 +372,7 @@ const MainApp = () => {
               {/* Patient Tab 3: Encrypted Records */}
               <button 
                 onClick={() => { setActiveTab("records"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'records' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'records' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <FileHeart className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('encryptedRecords')}</span>}
@@ -381,7 +381,7 @@ const MainApp = () => {
               {/* Patient Tab 4: Consent Manager */}
               <button 
                 onClick={() => { setActiveTab("consent"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'consent' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'consent' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <ShieldCheck className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('consentManager')}</span>}
@@ -390,7 +390,7 @@ const MainApp = () => {
               {/* Patient Tab 5: Pharmacy medicine delivery */}
               <button 
                 onClick={() => { setActiveTab("pharmacy"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'pharmacy' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'pharmacy' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <ShoppingBag className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('medicineDelivery')}</span>}
@@ -403,7 +403,7 @@ const MainApp = () => {
               {/* Doctor Tab 1: Dashboard Home */}
               <button 
                 onClick={() => { setActiveTab("dashboard"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'dashboard' && !selectedConsultation ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'dashboard' && !selectedConsultation ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <Home className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('docHome')}</span>}
@@ -416,7 +416,7 @@ const MainApp = () => {
               {/* Admin Tab 1: Audit logs */}
               <button 
                 onClick={() => { setActiveTab("audit"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'audit' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'audit' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <ShieldAlert className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('securityAuditLogs')}</span>}
@@ -425,7 +425,7 @@ const MainApp = () => {
               {/* Admin Tab 2: Dispatch shipping */}
               <button 
                 onClick={() => { setActiveTab("pharmacy"); setSelectedConsultation(null); }} 
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'pharmacy' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'pharmacy' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 <ShoppingBag className="w-4.5 h-4.5 shrink-0" />
                 {!sidebarCollapsed && <span className="animate-fade">{t('medicineDelivery')}</span>}
@@ -436,7 +436,7 @@ const MainApp = () => {
           {/* Unified Profile Settings Link */}
           <button 
             onClick={() => { setActiveTab("profile"); setSelectedConsultation(null); }} 
-            className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'profile' ? (darkMode ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'bg-slate-100 text-slate-900 border-l-4 border-medical-teal') : 'text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === 'profile' ? 'bg-white/5 text-white border-l-4 border-medical-teal' : 'text-slate-400 hover:text-slate-300'}`}
           >
             <User className="w-4.5 h-4.5 shrink-0" />
             {!sidebarCollapsed && <span className="animate-fade">Profile &amp; Settings</span>}
@@ -446,13 +446,13 @@ const MainApp = () => {
         {/* Collapse Toggle Trigger */}
         <button 
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`p-2 border rounded-xl hover:text-white mb-4 transition-all self-center ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600 shadow-sm'}`}
+          className="p-2 border rounded-xl hover:text-white mb-4 transition-all self-center bg-slate-900/60 border-white/5 text-slate-400"
         >
           {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
 
         {/* Bottom User Profile quick access link */}
-        <div className="border-t border-slate-200 dark:border-white/5 pt-4 mt-auto flex items-center justify-between overflow-hidden">
+        <div className="border-t border-white/5 pt-4 mt-auto flex items-center justify-between overflow-hidden">
           <button 
             onClick={() => setActiveTab('profile')}
             className="flex items-center gap-2 overflow-hidden hover:opacity-80 transition-opacity text-left cursor-pointer"
@@ -462,8 +462,8 @@ const MainApp = () => {
             </div>
             {!sidebarCollapsed && (
               <div className="overflow-hidden animate-fade">
-                <h4 className="text-xs font-bold truncate text-slate-700 dark:text-white">{user.first_name || user.username}</h4>
-                <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">{user.role} Member</span>
+                <h4 className="text-xs font-bold truncate text-white">{user.first_name || user.username}</h4>
+                <span className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider">{user.role} Member</span>
               </div>
             )}
           </button>
@@ -480,18 +480,18 @@ const MainApp = () => {
       <main className="flex-grow flex flex-col h-screen overflow-hidden">
         
         {/* Header toolbar */}
-        <header className={`h-16 border-b flex items-center justify-between px-6 md:px-10 shrink-0 transition-colors duration-300 ${darkMode ? 'bg-[#111827]/30 border-white/5' : 'bg-white border-slate-200 shadow-sm'}`}>
+        <header className="h-16 border-b flex items-center justify-between px-6 md:px-10 shrink-0 transition-colors duration-300 bg-[#111827] border-white/5">
           
           {/* Header title & mobile menu toggle button */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2.5 rounded-xl border border-slate-250 dark:border-white/10 bg-slate-100/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-350 md:hidden hover:opacity-80 transition-opacity z-50 animate-fade"
+              className="p-2.5 rounded-xl border border-white/10 bg-slate-900/80 text-slate-300 md:hidden hover:opacity-80 transition-opacity z-50 animate-fade"
               title="Open Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h1 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-white">
+            <h1 className="text-sm font-bold uppercase tracking-wider text-white">
               {selectedConsultation ? t('clinicalRoom') : (activeTab === 'dashboard' ? t('dashboard') : activeTab === 'booking' ? t('bookNewAppt') : activeTab === 'profile' ? 'Profile Settings' : t(activeTab))}
             </h1>
           </div>
@@ -500,7 +500,7 @@ const MainApp = () => {
           <div className="relative w-44 sm:w-60">
             <button 
               onClick={() => setCmdOpen(true)}
-              className={`w-full border rounded-xl py-1.5 pl-8 pr-3 text-left text-xs font-semibold flex items-center justify-between select-none outline-none ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}
+              className="w-full border rounded-xl py-1.5 pl-8 pr-3 text-left text-xs font-semibold flex items-center justify-between select-none outline-none bg-slate-900/60 border-white/5 text-slate-400"
             >
               <div className="flex items-center gap-2">
                 <Search className="w-3.5 h-3.5 text-medical-teal" />
@@ -518,7 +518,7 @@ const MainApp = () => {
             <div className="relative">
               <button 
                 onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-                className={`px-3 py-2 rounded-xl border flex items-center gap-1 transition-all ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'}`}
+                className="px-3 py-2 rounded-xl border flex items-center gap-1 transition-all bg-slate-900/60 border-white/5 text-slate-400 hover:text-white"
               >
                 <span>Actions</span>
               </button>
@@ -550,11 +550,11 @@ const MainApp = () => {
             <div className="relative">
               <button 
                 onClick={() => setNotifOpen(!notifOpen)} 
-                className={`p-2.5 rounded-xl border transition-all relative ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'}`}
+                className="p-2.5 rounded-xl border transition-all relative bg-slate-900/60 border-white/5 text-slate-400 hover:text-white"
               >
                 <Bell className="w-4 h-4 text-medical-indigo" />
                 {unreadNotifCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-medical-rose text-white text-[9px] font-extrabold flex items-center justify-center px-1 border-2 border-white dark:border-slate-900 shadow-sm animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-medical-rose text-white text-[9px] font-extrabold flex items-center justify-center px-1 border-2 border-slate-900 shadow-sm animate-pulse">
                     {unreadNotifCount}
                   </span>
                 )}
@@ -568,12 +568,12 @@ const MainApp = () => {
             </div>
  
             {/* Light/Dark Toggle */}
-            <button onClick={() => { setDarkMode(!darkMode); triggerNotification("Theme Switch", `Mode transitioned successfully.`, "system"); }} className={`p-2.5 rounded-xl border transition-all ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'}`}>
+            <button onClick={() => { setDarkMode(!darkMode); triggerNotification("Theme Switch", `Mode transitioned successfully.`, "system"); }} className="p-2.5 rounded-xl border transition-all bg-slate-900/60 border-white/5 text-slate-400 hover:text-white">
               {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
             </button>
  
             {/* Language switch */}
-            <button onClick={() => { toggleLanguage(); triggerNotification("Language Switched", `Active dictionary updated.`, "system"); }} className={`px-3 py-2 rounded-xl border flex items-center gap-1 transition-all ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'}`}>
+            <button onClick={() => { toggleLanguage(); triggerNotification("Language Switched", `Active dictionary updated.`, "system"); }} className="px-3 py-2 rounded-xl border flex items-center gap-1 transition-all bg-slate-900/60 border-white/5 text-slate-400 hover:text-white">
               <Globe className="w-4 h-4 text-medical-teal" />
               <span>{lang === 'en' ? 'EN' : 'বাংলা'}</span>
             </button>
@@ -581,17 +581,16 @@ const MainApp = () => {
             {/* Connection node state */}
             <div 
               title={t('nodeConnected')} 
-              className={`p-2.5 rounded-xl border flex items-center justify-center relative transition-all group cursor-help ${darkMode ? 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 shadow-sm'}`}
+              className="p-2.5 rounded-xl border flex items-center justify-center relative transition-all group cursor-help bg-slate-900/60 border-white/5 text-slate-400 hover:text-white"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-pulse"></span>
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
               
               {/* Tooltip */}
               <div className="absolute right-0 top-12 scale-0 group-hover:scale-100 transition-all duration-200 origin-top-right bg-slate-950 text-white text-[10px] uppercase font-bold tracking-wider py-1.5 px-3 rounded-lg border border-white/10 shadow-xl pointer-events-none whitespace-nowrap z-50">
                 {t('nodeConnected')}
               </div>
             </div>
-
  
           </div>
         </header>

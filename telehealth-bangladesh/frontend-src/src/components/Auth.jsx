@@ -749,7 +749,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
               </div>
               <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-medical-teal to-medical-indigo bg-clip-text text-transparent">{t('brand')}</span>
             </div>
-            <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mt-2">{t('tagline')}</p>
+            <p className="text-xs text-medical-textMuted uppercase tracking-widest font-semibold mt-2">{t('tagline')}</p>
           </div>
 
           {error && (
@@ -774,14 +774,14 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                 <Key className="w-6 h-6 text-medical-indigo shrink-0" />
                 <div>
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-wider">Multi-Factor Authentication Required</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-normal">
+                  <p className="text-sm text-medical-textMuted mt-1 leading-normal">
                     A verification check is active on this account. Enter the 6-digit OTP code below to approve session access (Enter mock code 123456).
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">MFA Verification Code</label>
+                <label className="block text-sm font-bold text-medical-textMuted mb-1 uppercase tracking-wider">MFA Verification Code</label>
                 <input
                   required
                   type="text"
@@ -804,7 +804,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
             <div className="space-y-4 animate-fade text-center py-6">
               <ShieldAlert className="w-14 h-14 text-medical-amber mx-auto" />
               <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase">License Credentials Audit Pending</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-sm text-medical-textMuted max-w-sm mx-auto leading-relaxed">
                 Your certified BMDC license registration has not yet been audited. Credentials must be approved by system administrators before clinical workstation routing access is granted.
               </p>
               <button onClick={() => setDoctorKycGate(false)} className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-white/10 px-6 py-2.5 rounded-xl font-bold transition-all mt-4 text-sm">
@@ -818,14 +818,14 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                 <ShieldAlert className="w-6 h-6 text-medical-rose shrink-0" />
                 <div>
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-wider">Administrative Access Confirmed Gate</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-sm text-medical-textMuted mt-1 leading-relaxed">
                     Organizational auditing systems require validation parameters. Enter the administrative verification code:
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Org Passcode (Enter: ADMIN-SN-2026)</label>
+                <label className="block text-sm font-bold text-medical-textMuted mb-1 uppercase tracking-wider">Org Passcode (Enter: ADMIN-SN-2026)</label>
                 <input
                   required
                   type="text"
@@ -851,12 +851,12 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                   </div>
                 </div>
                 <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">Reset Password</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Please enter a secure new password for your account.</p>
+                <p className="text-sm text-medical-textMuted">Please enter a secure new password for your account.</p>
               </div>
 
               <form onSubmit={handleResetPasswordSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">New Password</label>
+                  <label className="block text-sm font-bold text-medical-textMuted mb-1 uppercase tracking-wider">New Password</label>
                   <input
                     required
                     type="password"
@@ -868,7 +868,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
 
                   {newPassword && (
                     <div className="mt-3 space-y-2 text-xs bg-slate-50 dark:bg-slate-950/40 p-3.5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <p className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Safety Checklist:</p>
+                      <p className="font-bold text-medical-textMuted uppercase tracking-wider mb-1.5">Safety Checklist:</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-semibold text-slate-600 dark:text-slate-300">
                         <div className="flex items-center gap-1.5">
                           <span className={newPassword.length >= 8 ? "text-emerald-500" : "text-slate-400"}>
@@ -911,7 +911,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Confirm New Password</label>
+                  <label className="block text-sm font-bold text-medical-textMuted mb-1 uppercase tracking-wider">Confirm New Password</label>
                   <input
                     required
                     type="password"
@@ -959,12 +959,12 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                       </div>
                     </div>
                     <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">Forgot Password</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Enter your registered email or phone number and we'll send you a 6-digit verification code.</p>
+                    <p className="text-sm text-medical-textMuted">Enter your registered email or phone number and we'll send you a 6-digit verification code.</p>
                   </div>
 
                   <form onSubmit={handleForgotPasswordSubmit} className="space-y-5">
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Email or Phone Number</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1 uppercase tracking-wider">Email or Phone Number</label>
                       <input
                         required
                         type="text"
@@ -1017,14 +1017,14 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                       </div>
                     </div>
                     <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">Verify Secure OTP</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-medical-textMuted">
                       We've dispatched a 6-digit validation OTP to <strong className="text-slate-800 dark:text-white">{forgotEmailOrPhone}</strong>. Enter it below to authorize.
                     </p>
                   </div>
 
                   <form onSubmit={handleVerifyOtpSubmit} className="space-y-5">
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">6-Digit Verification Code</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1 uppercase tracking-wider">6-Digit Verification Code</label>
                       <input
                         required
                         type="text"
@@ -1082,12 +1082,12 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                     <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
                   </div>
                   <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">Reset Successful</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                  <p className="text-sm text-medical-textMuted max-w-sm mx-auto leading-relaxed">
                     Your password has been successfully updated. All previous authentication tokens and sessions have been secured.
                   </p>
 
-                  <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-white/5 text-left text-xs space-y-2 max-w-sm mx-auto text-slate-500">
-                    <p className="font-bold uppercase tracking-wider text-slate-400 mb-1">Security validations applied:</p>
+                  <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-white/5 text-left text-xs space-y-2 max-w-sm mx-auto text-medical-textMuted">
+                    <p className="font-bold uppercase tracking-wider text-medical-textMuted mb-1">Security validations applied:</p>
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-350">✔ Hashed user password using standard PBKDF2</div>
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-350">✔ Marked active OTP session as consumed</div>
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-350">✔ Logged change events in authentication audit ledger</div>
@@ -1142,13 +1142,13 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
               {/* Login form block */}
               <form onSubmit={handleLogin} className="space-y-4 transition-all duration-300">
                 <div>
-                  <label className="block text-xs font-extrabold text-medical-textMain dark:text-slate-400 mb-1.5 uppercase tracking-wider">Username</label>
+                  <label className="block text-xs font-extrabold text-medical-textMain dark:text-medical-textMuted mb-1.5 uppercase tracking-wider">Username</label>
                   <input required type="text" name="username" value={formData.username} onChange={handleChange} className={`w-full bg-transparent border rounded-xl py-3.5 px-4 text-sm outline-none transition-all text-medical-textMain dark:text-white focus:border-medical-indigo focus:ring-1 focus:ring-medical-indigo ${darkMode ? 'border-white/10' : 'border-medical-borderBg'}`} placeholder="niloy" />
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="block text-xs font-extrabold text-medical-textMain dark:text-slate-400 uppercase tracking-wider">Password</label>
+                    <label className="block text-xs font-extrabold text-medical-textMain dark:text-medical-textMuted uppercase tracking-wider">Password</label>
                     <button type="button" onClick={() => { setIsForgotPassword(true); setForgotStep('request'); setForgotEmailOrPhone(""); setForgotOtpCode(""); setForgotOtpSent(false); setError(""); setMessage(""); }} className="text-xs text-medical-teal hover:underline font-bold focus:outline-none flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Forgot Password?</button>
                   </div>
                   <input required type="password" name="password" value={formData.password} onChange={handleChange} className={`w-full bg-transparent border rounded-xl py-3.5 px-4 text-sm outline-none transition-all text-medical-textMain dark:text-white focus:border-medical-indigo focus:ring-1 focus:ring-medical-indigo ${darkMode ? 'border-white/10' : 'border-medical-borderBg'}`} placeholder="••••••••••" />
@@ -1169,7 +1169,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                 <div className="space-y-4 animate-fade">
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-white/5 pb-2 uppercase tracking-wider">Step 1: Account Type &amp; Credentials</h3>
                   <div>
-                    <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Select Role</label>
+                    <label className="block text-sm font-bold text-medical-textMuted mb-1">Select Role</label>
                     <div className="grid grid-cols-2 gap-3">
                       {['patient', 'doctor'].map(r => (
                         <button key={r} type="button" onClick={() => setRole(r)} className={`py-2.5 rounded-xl font-bold uppercase transition-all border ${role === r ? 'bg-medical-teal/10 border-medical-teal text-teal-600 dark:text-medical-teal' : 'bg-slate-900/40 border-white/5 text-slate-400'}`}>
@@ -1181,33 +1181,33 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">First Name</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">First Name</label>
                       <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Last Name</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">Last Name</label>
                       <input required type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Username</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">Username</label>
                       <input required type="text" name="username" value={formData.username} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Phone Number</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">Phone Number</label>
                       <input required type="tel" name="phone" placeholder="+8801" value={formData.phone} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Email</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">Email</label>
                       <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Password</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">Password</label>
                       <input required type="password" name="password" value={formData.password} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                       {formData.password && (
                         <div className="mt-2 space-y-1">
@@ -1238,17 +1238,17 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                     <>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Date of Birth</label>
+                          <label className="block text-sm font-bold text-medical-textMuted mb-1">Date of Birth</label>
                           <input required type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                         </div>
                         <div>
-                          <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">NID (National ID)</label>
+                          <label className="block text-sm font-bold text-medical-textMuted mb-1">NID (National ID)</label>
                           <input required type="text" name="nid" placeholder="National NID Code" value={formData.nid} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Emergency Contacts Relation (Phone)</label>
+                        <label className="block text-sm font-bold text-medical-textMuted mb-1">Emergency Contacts Relation (Phone)</label>
                         <input required type="text" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                       </div>
                     </>
@@ -1258,11 +1258,11 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                     <>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">BMDC Registration</label>
+                          <label className="block text-sm font-bold text-medical-textMuted mb-1">BMDC Registration</label>
                           <input required type="text" name="bmdc_reg" placeholder="BMDC/A-XXXX" value={formData.bmdc_reg} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                         </div>
                         <div>
-                          <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Specialty</label>
+                          <label className="block text-sm font-bold text-medical-textMuted mb-1">Specialty</label>
                           <input required type="text" name="specialty" placeholder="e.g. Cardiology" value={formData.specialty} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                         </div>
                       </div>
@@ -1271,7 +1271,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
 
                   {role === 'admin' && (
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Organization Passcode</label>
+                      <label className="block text-sm font-bold text-medical-textMuted mb-1">Organization Passcode</label>
                       <input required type="text" name="admin_code" placeholder="ADMIN-SN-XXXX" value={formData.admin_code} onChange={handleChange} className="w-full bg-transparent border border-slate-300 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white focus:border-medical-teal outline-none" />
                     </div>
                   )}
@@ -1292,7 +1292,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                 <div className="space-y-4 animate-fade text-center py-4">
                   <Mail className="w-12 h-12 text-medical-teal mx-auto animate-bounce" />
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase">Step 3: Gmail Address Validation</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal max-w-sm mx-auto">
+                  <p className="text-sm text-medical-textMuted leading-normal max-w-sm mx-auto">
                     Mandatory email validation required. Click the button below to simulate confirming the verification link sent to your inbox:
                   </p>
 
@@ -1319,7 +1319,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                     <button
                       type="button"
                       onClick={() => { if (emailVerified) setStep(4); else alert("Verify email address first."); }}
-                      className={`w-2/3 py-2.5 rounded-xl font-bold transition-all ${emailVerified ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'bg-slate-900 border border-white/5 text-slate-500 cursor-not-allowed'}`}
+                      className={`w-2/3 py-2.5 rounded-xl font-bold transition-all ${emailVerified ? 'bg-slate-800 dark:bg-slate-700 text-white' : 'bg-slate-900 border border-white/5 text-medical-textMuted cursor-not-allowed'}`}
                     >
                       Next Step &rarr;
                     </button>
@@ -1333,7 +1333,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-white/5 pb-2 uppercase tracking-wider">Step 4: Phone OTP Verification</h3>
 
                   <div className="bg-slate-100 dark:bg-slate-950/40 p-4 border border-slate-200 dark:border-white/5 rounded-xl space-y-3">
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                    <p className="text-sm text-medical-textMuted leading-normal">
                       Phone verification required. Send verification OTP code via SMS and enter it below (Code: 123456):
                     </p>
 
@@ -1377,7 +1377,7 @@ export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-200 dark:border-white/5 pb-2 uppercase tracking-wider">Step 5: KYC Verification Scan Upload</h3>
 
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                    <p className="text-sm text-medical-textMuted mb-3">
                       Please upload your {role === 'doctor' ? 'BMDC Registration Certificate Scan' : 'Citizen National ID (NID)'} to activate dashboard compliance checks.
                     </p>
 
