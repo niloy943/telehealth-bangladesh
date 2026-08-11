@@ -143,7 +143,7 @@ CHANNEL_LAYERS = {
 
 # Email Backend Configuration for local development password resets
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@swasthonirapod.com'
+DEFAULT_FROM_EMAIL = 'noreply@HealNSight.com'
 
 # Token expiry for password reset in seconds (15 minutes = 900 seconds)
 PASSWORD_RESET_TIMEOUT = 900

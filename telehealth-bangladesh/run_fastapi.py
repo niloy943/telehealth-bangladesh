@@ -6,7 +6,7 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     fastapi_dir = os.path.join(base_dir, "fastapi-backend")
 
-    print("--- SwasthoNirapod: Starting FastAPI Upstream Worker at http://127.0.0.1:6000 ---")
+    print("--- HealNSight: Starting FastAPI Upstream Worker at http://127.0.0.1:6000 ---")
     try:
         # Check if fastapi and uvicorn are installed, otherwise install them
         try:

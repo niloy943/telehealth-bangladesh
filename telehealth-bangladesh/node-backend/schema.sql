@@ -1,5 +1,5 @@
 -- ========================================================================
---              SWASTHONIRAPOD TELEMEDICINE PLATFORM
+--              HealNsightTELEMEDICINE PLATFORM
 --              Forgot Password Feature DB Schema (MySQL/SQLite)
 -- ========================================================================
 

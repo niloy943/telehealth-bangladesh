@@ -14,7 +14,7 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.join(base_dir, "backend")
 
-    print("--- SwasthoNirapod: Initializing Database & Seed Data ---")
+    print("--- HealNSight: Initializing Database & Seed Data ---")
     
     # 1. Makemigrations
     if not run_command([sys.executable, "manage.py", "makemigrations", "api"], cwd=backend_dir):
@@ -31,7 +31,7 @@ def main():
         print("Error: seed_data failed.")
         sys.exit(1)
 
-    print("\n[SUCCESS] SwasthoNirapod database initialized and seeded successfully!")
+    print("\n[SUCCESS] HealNsightdatabase initialized and seeded successfully!")
 
 if __name__ == "__main__":
     main()

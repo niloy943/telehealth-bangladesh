@@ -1,7 +1,7 @@
 {
   "name": "swastho-nirapod-auth-service",
   "version": "1.0.0",
-  "description": "Secure authentication & password recovery microservice for SwasthoNirapod platform",
+  "description": "Secure authentication & password recovery microservice for HealNsightplatform",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {

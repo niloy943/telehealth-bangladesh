@@ -5,7 +5,7 @@ const LanguageContext = createContext();
 const translations = {
   en: {
     // General
-    brand: "SwasthoNirapod",
+    brand: "HealNSight",
     tagline: "Secure Telemedicine Platform",
     rolePatient: "Patient (Citizen)",
     roleDoctor: "Certified Doctor",
@@ -20,7 +20,7 @@ const translations = {
     confirm: "Confirm",
     status: "Status",
     actions: "Actions",
-    
+
     // Auth & Register
     loginTitle: "Secure Professional Log-In",
     registerTitle: "Create Secure Healthcare Account",
@@ -66,7 +66,7 @@ const translations = {
     roleCardAdminSubtitle: "System administration",
     selectRolePrompt: "Please select one role to continue",
 
-    
+
     // Patient Dashboard
     vitalsOverview: "Personal Vitals Summary",
     heartRate: "Heart Rate",
@@ -89,7 +89,7 @@ const translations = {
     emptyAppt: "No upcoming appointments scheduled.",
     rating: "Rating",
     fee: "Fee",
-    
+
     // Medical Records
     encryptedRecords: "Encrypted Health Records",
     clinicalIndex: "Encrypted Clinical Index",
@@ -103,7 +103,7 @@ const translations = {
     labResult: "Lab Result",
     clinicalNotes: "Clinical Note",
     diagnosticScan: "Diagnostic Scan",
-    
+
     // Consent Management
     consentManager: "Consent Manager",
     delegateAccess: "Delegate Clinical Access",
@@ -121,7 +121,7 @@ const translations = {
     twelveHours: "12 Hours",
     twentyFourHours: "24 Hours (Standard)",
     fortyEightHours: "48 Hours",
-    
+
     // Doctor Workstation
     docWorkstation: "Physician Workstation",
     dailyQueue: "Patient Consultation Desk",
@@ -143,7 +143,7 @@ const translations = {
     instructions: "Instructions",
     savePrescription: "Issue Signed E-Prescription",
     docHome: "Doctor Home",
-    
+
     // Pharmacy / Delivery
     medicineDelivery: "Medicine Delivery",
     courierLogs: "Courier Shipment Logs",
@@ -155,7 +155,7 @@ const translations = {
     pack: "Pack Shipment",
     ship: "Ship Order",
     deliver: "Mark Delivered",
-    
+
     // Admin Controls
     securityAuditLogs: "Security & GDPR Audit Trail",
     timestamp: "Timestamp",
@@ -171,14 +171,14 @@ const translations = {
     pendingVerifications: "Pending Doctor Registrations",
     verifyDoctorBtn: "Verify BMDC Credentials",
     rejectDoctorBtn: "Deny Credentials",
-    
+
     // Clinical Room
     clinicalRoom: "Live Clinical Room",
     websocketActive: "E2EE Chat Channel active",
     chatPlaceholder: "Type secure message to room...",
     send: "Send",
     startVideo: "Start Video",
-    videoSetupTitle: "SwasthoNirapod Video Room",
+    videoSetupTitle: "HealNsightVideo Room",
     videoSetupDesc: "Prepare for your secure, E2E encrypted consultation. Check your camera and mic before joining.",
     cameraOn: "Camera On",
     micOn: "Mic On",
@@ -191,7 +191,7 @@ const translations = {
     triggerTwilio: "Trigger Callback Bridge",
     recentLogs: "Call Logs",
     pbxScreen: "PBX Telephony Terminal",
-    
+
     // Extra Redesign Features
     aiAssistant: "AI Health Assistant",
     aiPlaceholder: "Ask the AI assistant about your symptoms...",
@@ -207,7 +207,7 @@ const translations = {
   },
   bn: {
     // General
-    brand: "স্বাস্থ্যনিরাপদ",
+    brand: "আরোগ্য সাইট",
     tagline: "নিরাপদ টেলিমেডিসিন প্ল্যাটফর্ম",
     rolePatient: "রোগী (নাগরিক)",
     roleDoctor: "প্রত্যয়িত ডাক্তার",
@@ -222,7 +222,7 @@ const translations = {
     confirm: "নিশ্চিত করুন",
     status: "অবস্থা",
     actions: "পদক্ষেপ",
-    
+
     // Auth & Register
     loginTitle: "নিরাপদ পেশাদার লগ-ইন",
     registerTitle: "নিরাপদ স্বাস্থ্যসেবা অ্যাকাউন্ট তৈরি করুন",
@@ -268,7 +268,7 @@ const translations = {
     roleCardAdminSubtitle: "সিস্টেম প্রশাসন",
     selectRolePrompt: "দয়া করে চালিয়ে যেতে একটি ভূমিকা নির্বাচন করুন",
 
-    
+
     // Patient Dashboard
     vitalsOverview: "ব্যক্তিগত ভাইটালস সারাংশ",
     heartRate: "হার্ট রেট",
@@ -291,7 +291,7 @@ const translations = {
     emptyAppt: "কোনো আসন্ন অ্যাপয়েন্টমেন্ট নির্ধারিত নেই।",
     rating: "রেটিং",
     fee: "ফি",
-    
+
     // Medical Records
     encryptedRecords: "এনক্রিপ্ট করা মেডিকেল রেকর্ডস",
     clinicalIndex: "এনক্রিপ্ট করা ক্লিনিক্যাল ইনডেক্স",
@@ -305,7 +305,7 @@ const translations = {
     labResult: "ল্যাব পরীক্ষার ফলাফল",
     clinicalNotes: "ক্লিনিক্যাল নোট",
     diagnosticScan: "ডায়াগনস্টিক স্ক্যান",
-    
+
     // Consent Management
     consentManager: "সম্মতি ম্যানেজার",
     delegateAccess: "ক্লিনিক্যাল অ্যাক্সেস প্রদান করুন",
@@ -323,7 +323,7 @@ const translations = {
     twelveHours: "১২ ঘণ্টা",
     twentyFourHours: "২৪ ঘণ্টা (সাধারণ)",
     fortyEightHours: "৪৮ ঘণ্টা",
-    
+
     // Doctor Workstation
     docWorkstation: "ডাক্তারের ওয়ার্কস্টেশন",
     dailyQueue: "রোগী পরামর্শ ডেস্ক",
@@ -345,7 +345,7 @@ const translations = {
     instructions: "নির্দেশাবলী",
     savePrescription: "প্রেসক্রিপশন ইস্যু করুন",
     docHome: "ডাক্তার হোম",
-    
+
     // Pharmacy / Delivery
     medicineDelivery: "ওষুধ বিতরণ",
     courierLogs: "কুরিয়ার শিপমেন্ট লগ",
@@ -357,7 +357,7 @@ const translations = {
     pack: "প্যাকেজিং শুরু করুন",
     ship: "শিপিং করুন",
     deliver: "ডেলিভারি সম্পন্ন করুন",
-    
+
     // Admin Controls
     securityAuditLogs: "নিরাপত্তা ও জিডিপিআর অডিট ট্রেইল",
     timestamp: "সময়কাল",
@@ -373,14 +373,14 @@ const translations = {
     pendingVerifications: "অপেক্ষমান চিকিৎসকদের নিবন্ধন তালিকা",
     verifyDoctorBtn: "BMDC তথ্য যাচাই করুন",
     rejectDoctorBtn: "প্রত্যাখ্যান করুন",
-    
+
     // Clinical Room
     clinicalRoom: "লাইভ ক্লিনিক্যাল রুম",
     websocketActive: "E2EE চ্যাট চ্যানেল সক্রিয়",
     chatPlaceholder: "কক্ষে সুরক্ষিত বার্তা পাঠান...",
     send: "পাঠান",
     startVideo: "ভিডিও শুরু করুন",
-    videoSetupTitle: "স্বাস্থ্যনিরাপদ ভিডিও রুম",
+    videoSetupTitle: "আরোগ্য সাইট ভিডিও রুম",
     videoSetupDesc: "আপনার সুরক্ষিত, E2E এনক্রিপ্ট করা পরামর্শের জন্য প্রস্তুত হন। যোগদানের আগে ক্যামেরা ও মাইক পরীক্ষা করুন।",
     cameraOn: "ক্যামেরা অন",
     micOn: "মাইক অন",
@@ -393,7 +393,7 @@ const translations = {
     triggerTwilio: "কলব্যাক ব্রিজ চালু করুন",
     recentLogs: "কল লগসমূহ",
     pbxScreen: "PBX টেলিফোনি টার্মিনাল",
-    
+
     // Extra Redesign Features
     aiAssistant: "এআই স্বাস্থ্য সহকারী",
     aiPlaceholder: "আপনার লক্ষণ সম্পর্কে এআই সহকারীকে জিজ্ঞাসা করুন...",

@@ -3,8 +3,8 @@ require('dotenv').config();
 
 // Initialize Twilio client dynamically (handle errors if keys are placeholders)
 let twilioClient = null;
-const hasTwilioCreds = 
-  process.env.TWILIO_ACCOUNT_SID && 
+const hasTwilioCreds =
+  process.env.TWILIO_ACCOUNT_SID &&
   process.env.TWILIO_ACCOUNT_SID !== 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' &&
   process.env.TWILIO_AUTH_TOKEN;
 
@@ -34,7 +34,7 @@ const transporter = nodemailer.createTransport({
  */
 const sendOTP = async (recipient, otpCode) => {
   const isEmail = recipient.includes('@');
-  
+
   // Huge developer console banner (MANDATORY for testing in local sandbox)
   console.log('\n======================================================');
   console.log(`🔑 SECURE OTP CHALLENGE DISPATCHED`);
@@ -45,13 +45,13 @@ const sendOTP = async (recipient, otpCode) => {
 
   if (isEmail) {
     const mailOptions = {
-      from: process.env.SMTP_FROM || 'noreply@swasthonirapod.com.bd',
+      from: process.env.SMTP_FROM || 'noreply@healnsight.com.bd',
       to: recipient,
-      subject: 'Forgot Password OTP Verification - SwasthoNirapod',
-      text: `Hello,\n\nWe received a request to recover your account password. Your secure 6-digit verification code is:\n\n👉 ${otpCode}\n\nThis OTP is valid for exactly 5 minutes. Do not share this code with anyone.\n\nIf you did not request this code, please ignore this email.\n\nBest regards,\nSwasthoNirapod Security Desk`,
+      subject: 'Forgot Password OTP Verification - HealNSight',
+      text: `Hello,\n\nWe received a request to recover your account password. Your secure 6-digit verification code is:\n\n👉 ${otpCode}\n\nThis OTP is valid for exactly 5 minutes. Do not share this code with anyone.\n\nIf you did not request this code, please ignore this email.\n\nBest regards,\nHealNsightSecurity Desk`,
       html: `
         <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; rounded: 8px;">
-          <h2 style="color: #0d9488; text-align: center;">SwasthoNirapod Telemedicine</h2>
+          <h2 style="color: #0d9488; text-align: center;">HealNsightTelemedicine</h2>
           <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;">
           <p>Hello,</p>
           <p>We received a password reset request for your account. Please enter the following 6-digit OTP code to verify your request:</p>
@@ -60,7 +60,7 @@ const sendOTP = async (recipient, otpCode) => {
           </div>
           <p style="color: #64748b; font-size: 14px;"><strong>Note:</strong> This verification code is valid for exactly <strong>5 minutes</strong>. If you did not trigger this request, please secure your credentials immediately.</p>
           <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;">
-          <p style="font-size: 12px; color: #94a3b8; text-align: center;">SwasthoNirapod Security Desk, Dhaka, Bangladesh</p>
+          <p style="font-size: 12px; color: #94a3b8; text-align: center;">HealNsightSecurity Desk, Dhaka, Bangladesh</p>
         </div>
       `,
     };
@@ -78,7 +78,7 @@ const sendOTP = async (recipient, otpCode) => {
     if (twilioClient) {
       try {
         await twilioClient.messages.create({
-          body: `SwasthoNirapod security OTP is: ${otpCode}. Valid for 5 minutes.`,
+          body: `HealNsightsecurity OTP is: ${otpCode}. Valid for 5 minutes.`,
           from: process.env.TWILIO_PHONE_NUMBER,
           to: recipient
         });

@@ -9,7 +9,7 @@ def main():
 
     # Auto-compile Vite assets if src folder exists
     if os.path.exists(frontend_src_dir):
-        print("--- SwasthoNirapod: Compiling React/Vite assets via npm run build ---")
+        print("--- HealNSight: Compiling React/Vite assets via npm run build ---")
         try:
             # On Windows, npm is usually npm.cmd
             npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
@@ -18,7 +18,7 @@ def main():
         except Exception as e:
             print(f"[WARNING] Automated build failed: {e}. Attempting to serve existing build.")
 
-    print("\n--- SwasthoNirapod: Starting Frontend Server on Port 3000 ---")
+    print("\n--- HealNSight: Starting Frontend Server on Port 3000 ---")
     print("Open http://localhost:3000 in your browser to view the platform.")
     try:
         subprocess.run([sys.executable, "-m", "http.server", "3000"], cwd=frontend_dir)

@@ -13,7 +13,7 @@ from api.models import (
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = "Purges old data safely and seeds database with fresh realistic SwasthoNirapod mock data"
+    help = "Purges old data safely and seeds database with fresh realistic HealNsightmock data"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write("\n========================================================")
-        self.stdout.write("        SWASTHONIRAPOD DATABASE INITIALIZER & SEEDER      ")
+        self.stdout.write("        HealNsightDATABASE INITIALIZER & SEEDER      ")
         self.stdout.write("========================================================\n")
 
         # Safe Mode check
@@ -60,7 +60,7 @@ class Command(BaseCommand):
         for username in ['admin1', 'admin2']:
             admin_user = User.objects.create(
                 username=username,
-                email=f'{username}@swasthonirapod.com.bd',
+                email=f'{username}@healnsight.com.bd',
                 first_name='System',
                 last_name=username.capitalize(),
                 role='admin',
@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 'username': 'sarah',
                 'first_name': 'Sarah',
                 'last_name': 'Jenkins',
-                'email': 'sarah@swasthonirapod.com.bd',
+                'email': 'sarah@healnsight.com.bd',
                 'phone': '+8801822223344',
                 'bmdc_reg': 'BMDC/A-22334',
                 'specialty': 'General Medicine',
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                 'username': 'zara',
                 'first_name': 'Zara',
                 'last_name': 'Ahmed',
-                'email': 'zara@swasthonirapod.com.bd',
+                'email': 'zara@healnsight.com.bd',
                 'phone': '+8801711112233',
                 'bmdc_reg': 'BMDC/A-11223',
                 'specialty': 'Cardiology',
@@ -107,7 +107,7 @@ class Command(BaseCommand):
                 'username': 'kamal',
                 'first_name': 'Kamal',
                 'last_name': 'Islam',
-                'email': 'kamal@swasthonirapod.com.bd',
+                'email': 'kamal@healnsight.com.bd',
                 'phone': '+8801988889900',
                 'bmdc_reg': 'BMDC/A-88990',
                 'specialty': 'ENT',
@@ -121,7 +121,7 @@ class Command(BaseCommand):
                 'username': 'sukarna',
                 'first_name': 'Sukarna',
                 'last_name': 'Bhowmik',
-                'email': 'sukarna@swasthonirapod.com.bd',
+                'email': 'sukarna@healnsight.com.bd',
                 'phone': '+8801777777777',
                 'bmdc_reg': 'BMDC/A-99999',
                 'specialty': 'Medicine',
@@ -167,7 +167,7 @@ class Command(BaseCommand):
                 'username': 'sadia',
                 'first_name': 'Sadia',
                 'last_name': 'Kader',
-                'email': 'sadia@swasthonirapod.com.bd',
+                'email': 'sadia@healnsight.com.bd',
                 'phone': '+8801611002233',
                 'nid': '1995447788990011',
                 'dob': date(1995, 8, 20),
@@ -180,7 +180,7 @@ class Command(BaseCommand):
                 'username': 'niloy',
                 'first_name': 'Niloy',
                 'last_name': 'Hasan',
-                'email': 'niloy@swasthonirapod.com.bd',
+                'email': 'niloy@healnsight.com.bd',
                 'phone': '+8801511001122',
                 'nid': '1990442233112233',
                 'dob': date(1990, 4, 15),
@@ -193,7 +193,7 @@ class Command(BaseCommand):
                 'username': 'rakib',
                 'first_name': 'Rakib',
                 'last_name': 'Hasan',
-                'email': 'rakib@swasthonirapod.com.bd',
+                'email': 'rakib@healnsight.com.bd',
                 'phone': '+8801711003344',
                 'nid': '1988447788990022',
                 'dob': date(1988, 12, 10),
@@ -206,7 +206,7 @@ class Command(BaseCommand):
                 'username': 'farhan',
                 'first_name': 'Farhan',
                 'last_name': 'Yeasmin',
-                'email': 'farhan@swasthonirapod.com.bd',
+                'email': 'farhan@healnsight.com.bd',
                 'phone': '+8801811004455',
                 'nid': '1992447788990033',
                 'dob': date(1992, 3, 5),
@@ -219,7 +219,7 @@ class Command(BaseCommand):
                 'username': 'nasir',
                 'first_name': 'Kazi',
                 'last_name': 'Nasir',
-                'email': 'nasir@swasthonirapod.com.bd',
+                'email': 'nasir@healnsight.com.bd',
                 'phone': '+8801911005566',
                 'nid': '1985447788990044',
                 'dob': date(1985, 6, 25),
@@ -405,4 +405,4 @@ class Command(BaseCommand):
         for p in patients_data:
             self.stdout.write(f"  {p['first_name']} {p['last_name']} -> Username: {p['username']}")
         self.stdout.write("========================================================\n")
-        self.stdout.write(self.style.SUCCESS("[SUCCESS] SwasthoNirapod database refreshed and seeded successfully!"))
+        self.stdout.write(self.style.SUCCESS("[SUCCESS] HealNsightdatabase refreshed and seeded successfully!"))

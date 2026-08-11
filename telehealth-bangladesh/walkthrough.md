@@ -1,6 +1,6 @@
 # Implementation Walkthrough - Forgot Password Feature
 
-We have successfully designed and built a production-ready, secure **Forgot Password** feature for the SwasthoNirapod platform.
+We have successfully designed and built a production-ready, secure **Forgot Password** feature for the HealNsightplatform.
 
 ---
 
@@ -98,7 +98,7 @@ We have integrated all backend services, database migrations, and frontend asset
 2. **Verify Password Reset Loop:**
    - Open your browser to `http://localhost:3000/`.
    - Click "Forgot Password?".
-   - Enter `sarah.jenkins@swasthonirapod.com.bd` (mock doctor) or `nasim.patient@swasthonirapod.com.bd` (mock patient) and submit.
+   - Enter `sarah.jenkins@healnsight.com.bd` (mock doctor) or `nasim.patient@healnsight.com.bd` (mock patient) and submit.
    - Check the terminal console logs where `run_all.py` is executing. You will see a large, secure copy-pasteable banner displaying the generated OTP code.
    - Input the code on the OTP Verification screen before the 5-minute countdown timer expires.
    - Choose a new password that satisfies the policy rules (minimum 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character).

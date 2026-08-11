@@ -35,7 +35,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
 
     if (user?.role === 'patient') {
       return [
-        { id: 'go-dash', title: 'Navigate: Citizen Health Dashboard', icon: <Compass className="w-4 h-4 text-blue-500" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
+        { id: 'go-dash', title: 'Navigate: Citizen Health Dashboard', icon: <Compass className="w-4 h-4 text-medical-indigo" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
         { id: 'go-book', title: 'Action: Book Specialist Consultation', icon: <Activity className="w-4 h-4 text-blue-400" />, category: 'Consultation', action: () => { onAction('booking'); onClose(); } },
         { id: 'go-records', title: 'Navigate: Encrypted Medical Records', icon: <Eye className="w-4 h-4 text-medical-teal" />, category: 'Clinical Workspace', action: () => { onAction('records'); onClose(); } },
         { id: 'go-consent', title: 'Navigate: Delegated Consent Manager', icon: <Shield className="w-4 h-4 text-medical-indigo" />, category: 'Security', action: () => { onAction('consent'); onClose(); } },
@@ -104,7 +104,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
   return (
     <AnimatePresence>
       {isOpen && (
-        <div 
+        <div
           ref={overlayRef}
           onClick={handleOverlayClick}
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9990] flex justify-center pt-24 px-4 overflow-y-auto"
@@ -118,11 +118,11 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
           >
             {/* Search Input Area */}
             <div className="flex items-center gap-3 px-4 py-3.5 border-b border-medical-borderBg">
-              <Search className="w-5 h-5 text-slate-400 shrink-0" />
-              <input 
+              <Search className="w-5 h-5 text-medical-textMuted shrink-0" />
+              <input
                 ref={inputRef}
-                type="text" 
-                placeholder="Type a command or search options..." 
+                type="text"
+                placeholder="Type a command or search options..."
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -130,7 +130,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
                 }}
                 className="flex-grow bg-transparent text-sm text-white outline-none border-none placeholder-slate-500"
               />
-              <div className="flex items-center gap-1 bg-slate-900 border border-white/5 rounded-lg px-2 py-0.5 text-[10px] text-slate-500 font-bold font-mono">
+              <div className="flex items-center gap-1 bg-medical-darkBg border border-medical-borderBg rounded-lg px-2 py-0.5 text-[10px] text-medical-textMuted font-bold font-mono">
                 <Keyboard className="w-3.5 h-3.5" />
                 <span>ESC</span>
               </div>
@@ -139,7 +139,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
             {/* Commands List */}
             <div className="max-h-80 overflow-y-auto p-2 space-y-1.5">
               {filtered.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-xs">
+                <div className="text-center py-8 text-medical-textMuted text-xs">
                   No commands found matching "{query}"
                 </div>
               ) : (
@@ -148,20 +148,20 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
                     key={cmd.id}
                     onClick={cmd.action}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left ${selectedIndex === index ? 'bg-medical-indigo/10 border border-medical-indigo/20 text-white' : 'bg-transparent border border-transparent text-slate-300'}`}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left ${selectedIndex === index ? 'bg-medical-indigo/10 border border-medical-indigo/20 text-white' : 'bg-transparent border border-transparent text-medical-textBody'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-1.5 rounded-lg ${selectedIndex === index ? 'bg-medical-indigo/20 text-white' : 'bg-slate-900/60 text-slate-400'}`}>
+                      <div className={`p-1.5 rounded-lg ${selectedIndex === index ? 'bg-medical-indigo/20 text-white' : 'bg-medical-darkBg/60 text-medical-textMuted'}`}>
                         {cmd.icon}
                       </div>
                       <div>
                         <span className="text-xs font-bold block">{cmd.title}</span>
-                        <span className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider">{cmd.category}</span>
+                        <span className="text-[9px] text-medical-textMuted font-semibold uppercase tracking-wider">{cmd.category}</span>
                       </div>
                     </div>
-                    
+
                     {selectedIndex === index && (
-                      <span className="text-[10px] text-slate-500 font-bold bg-slate-950 px-2 py-1 rounded-md border border-white/5 font-mono">
+                      <span className="text-[10px] text-medical-textMuted font-bold bg-medical-darkBg px-2 py-1 rounded-md border border-medical-borderBg font-mono">
                         &crarr; ENTER
                       </span>
                     )}
@@ -171,8 +171,8 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
             </div>
 
             {/* Bottom Keyboard Hint Bar */}
-            <div className="bg-slate-950/60 border-t border-medical-borderBg px-4 py-2 flex items-center justify-between text-[10px] text-slate-500">
-              <span className="font-semibold uppercase tracking-wider">SwasthoNirapod AI Assistant Command Center</span>
+            <div className="bg-medical-darkBg/60 border-t border-medical-borderBg px-4 py-2 flex items-center justify-between text-[10px] text-medical-textMuted">
+              <span className="font-semibold uppercase tracking-wider">HealNsightAI Assistant Command Center</span>
               <div className="flex gap-3">
                 <span className="flex items-center gap-1 font-mono">
                   <span>&uarr;&darr;</span> Navigate

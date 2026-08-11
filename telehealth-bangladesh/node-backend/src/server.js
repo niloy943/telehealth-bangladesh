@@ -43,11 +43,11 @@ const seedDefaultUsers = async () => {
     const count = await User.count();
     if (count === 0) {
       console.log('[Database] Empty user registry. Seeding default telehealth credentials...');
-      
+
       const seedUsers = [
         {
           username: 'nasim_patient',
-          email: 'nasim.patient@swasthonirapod.com.bd',
+          email: 'nasim.patient@healnsight.com.bd',
           phone: '+8801700000001',
           password_hash: 'Demo@12345', // Hook will hash it automatic
           role: 'patient',
@@ -56,7 +56,7 @@ const seedDefaultUsers = async () => {
         },
         {
           username: 'sarah_doctor',
-          email: 'sarah.jenkins@swasthonirapod.com.bd',
+          email: 'sarah.jenkins@healnsight.com.bd',
           phone: '+8801700000002',
           password_hash: 'Demo@12345',
           role: 'doctor',
@@ -65,7 +65,7 @@ const seedDefaultUsers = async () => {
         },
         {
           username: 'admin',
-          email: 'admin@swasthonirapod.com.bd',
+          email: 'admin@healnsight.com.bd',
           phone: '+8801700000003',
           password_hash: 'Admin@12345',
           role: 'admin',
@@ -92,18 +92,18 @@ const startServer = async () => {
     const OTPVerification = require('./models/OTPVerification');
     const PasswordResetLog = require('./models/PasswordResetLog');
     const AuditLog = require('./models/AuditLog');
-    
+
     await OTPVerification.sync();
     await PasswordResetLog.sync();
     await AuditLog.sync();
     console.log('[Database] Custom authentication tables synchronized successfully.');
-    
+
     // Seed default telehealth profiles
     await seedDefaultUsers();
 
     app.listen(PORT, () => {
       console.log('\n======================================================');
-      console.log(`🚀 SwasthoNirapod Auth Service Running on Port ${PORT}`);
+      console.log(`🚀 HealNsightAuth Service Running on Port ${PORT}`);
       console.log(`   Health endpoint: http://localhost:${PORT}/health`);
       console.log(`   API prefix: http://localhost:${PORT}/api/auth`);
       console.log('======================================================\n');

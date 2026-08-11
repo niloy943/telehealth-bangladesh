@@ -379,12 +379,12 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     <div className="space-y-6">
       
       {/* Return header banner */}
-      <div className="flex justify-between items-center bg-slate-900 border border-white/5 p-4 rounded-xl">
+      <div className="flex justify-between items-center bg-medical-darkBg border border-medical-borderBg p-4 rounded-xl">
         <div className="flex items-center gap-2">
           <span className="status-light online"></span>
           <span className="text-sm font-bold text-slate-200">Clinical Suite: Consultation Room #{consultationId}</span>
         </div>
-        <button onClick={onClose} className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-bold">
+        <button onClick={onClose} className="text-xs text-medical-textMuted hover:text-white flex items-center gap-1 font-bold">
           <ArrowLeft className="w-4 h-4" />
           <span>Exit Workspace</span>
         </button>
@@ -394,8 +394,8 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left pane: Secure chat E2EE (Grows to span 3 columns if not video/phone) */}
-        <div className={`glass-panel p-6 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[500px] ${appointmentMode === 'chat' ? 'lg:col-span-3' : 'lg:col-span-1'}`}>
-          <div className="flex justify-between items-center border-b border-white/5 pb-2.5 mb-4">
+        <div className={`glass-panel p-6 rounded-2xl border border-medical-borderBg flex flex-col justify-between min-h-[500px] ${appointmentMode === 'chat' ? 'lg:col-span-3' : 'lg:col-span-1'}`}>
+          <div className="flex justify-between items-center border-b border-medical-borderBg pb-2.5 mb-4">
             <span className="text-xs font-bold text-medical-teal uppercase tracking-wider flex items-center gap-1">
               <ShieldCheck className="w-4 h-4 text-medical-teal animate-pulse" />
               <span>{t('websocketActive')}</span>
@@ -405,14 +405,14 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
           {/* Messages ledger */}
           <div ref={scrollRef} className="flex-grow overflow-y-auto pr-1 space-y-3 max-h-[360px] flex flex-col">
             {messages.length === 0 ? (
-              <div className="text-center text-xs text-slate-500 my-auto p-6 leading-relaxed">
-                <Lock className="w-6 h-6 text-slate-600 mx-auto mb-2" />
+              <div className="text-center text-xs text-medical-textMuted my-auto p-6 leading-relaxed">
+                <Lock className="w-6 h-6 text-medical-textBody mx-auto mb-2" />
                 <span>Chat session initialized. Outbound packets are encrypted locally via AES-256 symmetric cipher keys.</span>
               </div>
             ) : (
               messages.map((msg, i) => (
                 <div key={i} className={`chat-bubble-custom ${msg.sender === user.username ? 'outbound' : 'inbound'}`}>
-                  <span className="block text-[9px] text-slate-400 font-bold mb-0.5">{msg.sender}</span>
+                  <span className="block text-[9px] text-medical-textMuted font-bold mb-0.5">{msg.sender}</span>
                   <span>{msg.message}</span>
                 </div>
               ))
@@ -420,8 +420,8 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
           </div>
 
           {/* Form input */}
-          <div className="flex gap-2 border-t border-white/5 pt-4">
-            <input type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendText()} placeholder={t('chatPlaceholder')} className="flex-grow bg-slate-900 border border-white/10 focus:border-medical-teal rounded-xl px-3.5 py-2.5 text-xs outline-none text-white" />
+          <div className="flex gap-2 border-t border-medical-borderBg pt-4">
+            <input type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendText()} placeholder={t('chatPlaceholder')} className="flex-grow bg-medical-darkBg border border-medical-borderBg focus:border-medical-teal rounded-xl px-3.5 py-2.5 text-xs outline-none text-white" />
             <button onClick={sendText} className="bg-medical-teal hover:bg-medical-teal/90 text-medical-darkBg font-extrabold px-5 rounded-xl text-xs transition-all">
               {t('send')}
             </button>
@@ -434,29 +434,29 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
             
             {/* --- CASE A: WEBRTC VIDEO consultation --- */}
             {appointmentMode === 'video' && (
-              <div className="glass-panel p-6 rounded-2xl border border-white/5 flex flex-col justify-between bg-slate-950/20 min-h-[500px]">
+              <div className="glass-panel p-6 rounded-2xl border border-medical-borderBg flex flex-col justify-between bg-medical-darkBg/20 min-h-[500px]">
                 
                 {/* Header status HUD */}
-                <div className="flex justify-between items-center border-b border-white/5 pb-2.5 mb-4 text-xs font-semibold">
+                <div className="flex justify-between items-center border-b border-medical-borderBg pb-2.5 mb-4 text-xs font-semibold">
                   <span className="text-medical-teal flex items-center gap-1">
                     <ShieldCheck className="w-4 h-4 text-medical-teal animate-pulse" />
                     <span>{t('encryptedConference')}</span>
                   </span>
-                  <span className="font-mono text-white bg-slate-900 px-3 py-1 rounded-lg border border-white/5">{callTimer}</span>
+                  <span className="font-mono text-white bg-medical-darkBg px-3 py-1 rounded-lg border border-medical-borderBg">{callTimer}</span>
                 </div>
 
                 {/* Setup Preview Screen */}
                 {setupScreen ? (
-                  <div className="flex-grow flex flex-col items-center justify-center p-6 border border-white/5 rounded-xl bg-slate-900/40 relative overflow-hidden">
+                  <div className="flex-grow flex flex-col items-center justify-center p-6 border border-medical-borderBg rounded-xl bg-medical-darkBg/40 relative overflow-hidden">
                     <Video className="w-10 h-10 text-medical-teal animate-bounce mb-3" />
                     <h3 className="text-md font-bold text-white mb-2">{t('videoSetupTitle')}</h3>
-                    <p className="text-[11px] text-slate-400 text-center max-w-sm mb-6 leading-relaxed">
+                    <p className="text-[11px] text-medical-textMuted text-center max-w-sm mb-6 leading-relaxed">
                       {t('videoSetupDesc')}
                     </p>
 
-                    <div className="relative w-64 h-36 bg-slate-950 border border-white/5 rounded-xl overflow-hidden mb-6 flex items-center justify-center">
+                    <div className="relative w-64 h-36 bg-medical-darkBg border border-medical-borderBg rounded-xl overflow-hidden mb-6 flex items-center justify-center">
                       <video ref={localVideoRef} autoplay muted playsinline className="w-full h-full object-cover transform scale-x-[-1]"></video>
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-slate-500 text-[10px] uppercase font-bold" id="camIndicator">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-medical-textMuted text-[10px] uppercase font-bold" id="camIndicator">
                         Preview Feed Active
                       </div>
                     </div>
@@ -470,35 +470,35 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 ) : (
                   /* Active Conference Screen */
                   <div className="flex-grow flex flex-col justify-between">
-                    <div className="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-xl min-h-[300px] border border-white/5">
+                    <div className="grid grid-cols-2 gap-4 bg-medical-darkBg/80 p-4 rounded-xl min-h-[300px] border border-medical-borderBg">
                       
                       {/* Remote Stream Video */}
-                      <div className="relative rounded-lg overflow-hidden border border-white/5 bg-slate-900 flex items-center justify-center">
+                      <div className="relative rounded-lg overflow-hidden border border-medical-borderBg bg-medical-darkBg flex items-center justify-center">
                         <video ref={remoteVideoRef} autoplay playsinline className="w-full h-full object-cover"></video>
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-center p-4">
-                          <User className="w-8 h-8 text-slate-600 mb-2" />
-                          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Awaiting remote stream...</span>
+                          <User className="w-8 h-8 text-medical-textBody mb-2" />
+                          <span className="text-[10px] text-medical-textMuted uppercase font-bold tracking-wider">Awaiting remote stream...</span>
                         </div>
-                        <span className="absolute bottom-2 left-2 bg-slate-950/80 border border-white/5 px-2 py-0.5 rounded text-[9px] text-slate-300">Consultant (E2EE)</span>
+                        <span className="absolute bottom-2 left-2 bg-medical-darkBg/80 border border-medical-borderBg px-2 py-0.5 rounded text-[9px] text-medical-textBody">Consultant (E2EE)</span>
                       </div>
 
                       {/* Local Stream Video */}
-                      <div className="relative rounded-lg overflow-hidden border border-white/5 bg-slate-900 flex items-center justify-center">
+                      <div className="relative rounded-lg overflow-hidden border border-medical-borderBg bg-medical-darkBg flex items-center justify-center">
                         <video ref={localVideoRef} autoplay muted playsinline className="w-full h-full object-cover transform scale-x-[-1]"></video>
-                        <span className="absolute bottom-2 left-2 bg-slate-950/80 border border-white/5 px-2 py-0.5 rounded text-[9px] text-slate-300">You (Local)</span>
+                        <span className="absolute bottom-2 left-2 bg-medical-darkBg/80 border border-medical-borderBg px-2 py-0.5 rounded text-[9px] text-medical-textBody">You (Local)</span>
                       </div>
 
                     </div>
 
                     {/* HUD Action Controls */}
                     <div className="flex justify-center gap-4 mt-6">
-                      <button onClick={() => setMicActive(!micActive)} className={`p-3 rounded-full border transition-all ${micActive ? 'bg-slate-900 border-white/5 text-slate-300 hover:text-white' : 'bg-medical-rose/10 border-medical-rose text-medical-rose'}`}>
+                      <button onClick={() => setMicActive(!micActive)} className={`p-3 rounded-full border transition-all ${micActive ? 'bg-medical-darkBg border-medical-borderBg text-medical-textBody hover:text-white' : 'bg-medical-rose/10 border-medical-rose text-medical-rose'}`}>
                         {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                       </button>
-                      <button onClick={() => setCameraActive(!cameraActive)} className={`p-3 rounded-full border transition-all ${cameraActive ? 'bg-slate-900 border-white/5 text-slate-300 hover:text-white' : 'bg-medical-rose/10 border-medical-rose text-medical-rose'}`}>
+                      <button onClick={() => setCameraActive(!cameraActive)} className={`p-3 rounded-full border transition-all ${cameraActive ? 'bg-medical-darkBg border-medical-borderBg text-medical-textBody hover:text-white' : 'bg-medical-rose/10 border-medical-rose text-medical-rose'}`}>
                         {cameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
                       </button>
-                      <button className="p-3 rounded-full bg-slate-900 border border-white/5 text-slate-300 hover:text-white transition-all">
+                      <button className="p-3 rounded-full bg-medical-darkBg border border-medical-borderBg text-medical-textBody hover:text-white transition-all">
                         <Monitor className="w-4 h-4" />
                       </button>
                       <button onClick={handleHangup} className="p-3 rounded-full bg-medical-rose text-white hover:bg-medical-rose/90 transition-all">
@@ -515,19 +515,19 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[500px]">
                 
                 {/* Voice dialer key pad */}
-                <div className="glass-panel p-6 rounded-2xl border border-white/5 flex flex-col justify-between bg-slate-950/10">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2.5 mb-4">
-                    <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">{t('voiceDialpad')}</h3>
-                    <span className="text-[10px] bg-slate-900 border border-white/5 px-2 py-0.5 rounded text-slate-400 font-bold uppercase">{sipStatus}</span>
+                <div className="glass-panel p-6 rounded-2xl border border-medical-borderBg flex flex-col justify-between bg-medical-darkBg/10">
+                  <div className="flex justify-between items-center border-b border-medical-borderBg pb-2.5 mb-4">
+                    <h3 className="text-xs font-bold text-medical-textBody uppercase tracking-wider">{t('voiceDialpad')}</h3>
+                    <span className="text-[10px] bg-medical-darkBg border border-medical-borderBg px-2 py-0.5 rounded text-medical-textMuted font-bold uppercase">{sipStatus}</span>
                   </div>
 
                   <div className="space-y-4">
-                    <input type="text" readOnly placeholder={t('dialerPlaceholder')} value={dialNumber} className="w-full bg-slate-900 border border-white/10 rounded-xl py-3 px-4 text-center font-mono font-bold text-lg outline-none text-white" />
+                    <input type="text" readOnly placeholder={t('dialerPlaceholder')} value={dialNumber} className="w-full bg-medical-darkBg border border-medical-borderBg rounded-xl py-3 px-4 text-center font-mono font-bold text-lg outline-none text-white" />
                     
                     {/* Dialer layout */}
                     <div className="grid grid-cols-3 gap-3">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map(k => (
-                        <button key={k} onClick={() => pressDialKey(k.toString())} className="py-3 rounded-full bg-slate-900 hover:bg-slate-800 border border-white/5 text-sm font-bold text-white transition-transform hover:scale-[1.03] active:scale-[0.97]">
+                        <button key={k} onClick={() => pressDialKey(k.toString())} className="py-3 rounded-full bg-medical-darkBg hover:bg-medical-darkBg border border-medical-borderBg text-sm font-bold text-white transition-transform hover:scale-[1.03] active:scale-[0.97]">
                           {k}
                         </button>
                       ))}
@@ -535,7 +535,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                   </div>
 
                   <div className="flex gap-3 mt-4">
-                    <button onClick={handleBackspace} className="w-1/3 bg-slate-950 border border-white/10 hover:border-white/20 text-slate-400 font-bold py-3.5 rounded-xl text-xs transition-all">
+                    <button onClick={handleBackspace} className="w-1/3 bg-medical-darkBg border border-medical-borderBg hover:border-white/20 text-medical-textMuted font-bold py-3.5 rounded-xl text-xs transition-all">
                       Clear
                     </button>
                     {onCellCall ? (
@@ -555,21 +555,21 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 {/* Telephony Screen Log Terminal & Twilio webhook callback controller */}
                 <div className="space-y-6 flex flex-col">
                   {/* PBX log */}
-                  <div className="glass-panel p-6 rounded-2xl border border-white/5 flex-grow flex flex-col justify-between bg-slate-950">
-                    <div className="flex items-center gap-2.5 border-b border-white/5 pb-2.5 mb-3">
+                  <div className="glass-panel p-6 rounded-2xl border border-medical-borderBg flex-grow flex flex-col justify-between bg-medical-darkBg">
+                    <div className="flex items-center gap-2.5 border-b border-medical-borderBg pb-2.5 mb-3">
                       <Terminal className="w-4 h-4 text-medical-teal animate-pulse" />
                       <h4 className="text-xs font-bold text-slate-200">{t('pbxScreen')}</h4>
                     </div>
 
-                    <div className="flex-grow font-mono text-[9px] text-emerald-500 space-y-1.5 bg-black/80 p-3 rounded-xl border border-white/5 max-h-[180px] overflow-y-auto">
+                    <div className="flex-grow font-mono text-[9px] text-emerald-500 space-y-1.5 bg-black/80 p-3 rounded-xl border border-medical-borderBg max-h-[180px] overflow-y-auto">
                       {pbxLogs.map((line, i) => (
                         <p key={i} className="leading-relaxed">{line}</p>
                       ))}
                     </div>
 
-                    <div className="mt-4 border-t border-white/5 pt-3.5 space-y-2">
-                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PBX Callback Bridge</h4>
-                      <p className="text-[10px] text-slate-500 leading-relaxed">
+                    <div className="mt-4 border-t border-medical-borderBg pt-3.5 space-y-2">
+                      <h4 className="text-[10px] font-bold text-medical-textMuted uppercase tracking-widest">PBX Callback Bridge</h4>
+                      <p className="text-[10px] text-medical-textMuted leading-relaxed">
                         Request callback bridging: Twilio trunk rings your phone line, then dials the physician's active voice endpoint automatically.
                       </p>
                       <button onClick={triggerPBXCallbackSim} className="w-full bg-medical-teal/15 hover:bg-medical-teal text-medical-teal hover:text-medical-darkBg border border-medical-teal/25 font-bold py-2 rounded-xl text-xs transition-all">
@@ -579,15 +579,15 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                   </div>
 
                   {/* History List */}
-                  <div className="glass-panel p-6 rounded-2xl border border-white/5 max-h-[180px] overflow-y-auto bg-slate-950/10">
-                    <h4 className="text-xs font-bold text-slate-300 border-b border-white/5 pb-2 mb-3 uppercase tracking-wider">{t('recentLogs')}</h4>
+                  <div className="glass-panel p-6 rounded-2xl border border-medical-borderBg max-h-[180px] overflow-y-auto bg-medical-darkBg/10">
+                    <h4 className="text-xs font-bold text-medical-textBody border-b border-medical-borderBg pb-2 mb-3 uppercase tracking-wider">{t('recentLogs')}</h4>
                     {callLogs.length === 0 ? (
-                      <p className="text-[10px] text-slate-500 text-center py-4">No voice call history indexed.</p>
+                      <p className="text-[10px] text-medical-textMuted text-center py-4">No voice call history indexed.</p>
                     ) : (
                       callLogs.map(log => (
-                        <div key={log.id} className="flex justify-between items-center text-[10px] border-b border-white/5 py-1.5">
-                          <span className="font-mono text-slate-300">{log.number}</span>
-                          <span className="text-slate-500">{log.date}</span>
+                        <div key={log.id} className="flex justify-between items-center text-[10px] border-b border-medical-borderBg py-1.5">
+                          <span className="font-mono text-medical-textBody">{log.number}</span>
+                          <span className="text-medical-textMuted">{log.date}</span>
                           <span className="text-medical-teal font-bold">{log.status}</span>
                         </div>
                       ))
@@ -601,8 +601,8 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
             {/* Double panel: Live Audio STT and Vision Analysed Legacy Scans */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               {/* Live Audio Transcription box */}
-              <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-950/40">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2 mb-3">
+              <div className="glass-panel p-5 rounded-2xl border border-medical-borderBg bg-medical-darkBg/40">
+                <div className="flex justify-between items-center border-b border-medical-borderBg pb-2 mb-3">
                   <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />
                     <span>Live STT Transcription (100ms stream)</span>
@@ -610,11 +610,11 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 </div>
                 <div className="h-44 overflow-y-auto pr-1 space-y-2 font-mono text-[10px] text-emerald-300">
                   {audioTranscripts.length === 0 ? (
-                    <p className="text-slate-500 text-center py-10">Awaiting audio frames... Start the call to begin streaming live Speech-to-Text.</p>
+                    <p className="text-medical-textMuted text-center py-10">Awaiting audio frames... Start the call to begin streaming live Speech-to-Text.</p>
                   ) : (
                     audioTranscripts.map((t, idx) => (
-                      <div key={idx} className="bg-slate-950/60 p-2 rounded border border-white/5">
-                        <span className="text-[8px] text-slate-500 block">{t.timestamp}</span>
+                      <div key={idx} className="bg-medical-darkBg/60 p-2 rounded border border-medical-borderBg">
+                        <span className="text-[8px] text-medical-textMuted block">{t.timestamp}</span>
                         <span>{t.text}</span>
                       </div>
                     ))
@@ -623,8 +623,8 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
               </div>
 
               {/* Legacy Medical Image Scans Analysis */}
-              <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-950/40">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2 mb-3">
+              <div className="glass-panel p-5 rounded-2xl border border-medical-borderBg bg-medical-darkBg/40">
+                <div className="flex justify-between items-center border-b border-medical-borderBg pb-2 mb-3">
                   <span className="text-xs font-bold text-medical-indigo uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-medical-indigo" />
                     <span>Vision Analysed Legacy Scans</span>
@@ -632,15 +632,15 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 </div>
                 <div className="h-44 overflow-y-auto pr-1 space-y-2">
                   {legacyImageProfiles.length === 0 ? (
-                    <p className="text-slate-500 text-center py-10 text-[10px]">No legacy image summaries found for this patient.</p>
+                    <p className="text-medical-textMuted text-center py-10 text-[10px]">No legacy image summaries found for this patient.</p>
                   ) : (
                     legacyImageProfiles.map((p, idx) => (
-                      <div key={idx} className="bg-slate-900/60 p-2.5 rounded-xl border border-white/5 text-[10px] text-slate-300 space-y-1">
+                      <div key={idx} className="bg-medical-darkBg/60 p-2.5 rounded-xl border border-medical-borderBg text-[10px] text-medical-textBody space-y-1">
                         <div className="flex justify-between font-bold text-slate-200">
                           <span>{p.image_name}</span>
-                          <span className="text-[8px] text-slate-500">{new Date(p.created_at).toLocaleDateString()}</span>
+                          <span className="text-[8px] text-medical-textMuted">{new Date(p.created_at).toLocaleDateString()}</span>
                         </div>
-                        <p className="whitespace-pre-wrap font-mono text-[9px] bg-black/40 p-2 rounded border border-white/5 text-slate-400">
+                        <p className="whitespace-pre-wrap font-mono text-[9px] bg-black/40 p-2 rounded border border-medical-borderBg text-medical-textMuted">
                           {p.previous_data?.images?.ecg_summary || "No summary extracted."}
                         </p>
                       </div>

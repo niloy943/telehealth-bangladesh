@@ -219,14 +219,14 @@ Initiates password recovery. Checks rate limits and account existence before dis
 - **Request JSON:**
 ```json
 {
-  "email_or_phone": "sarah.jenkins@swasthonirapod.com.bd"
+  "email_or_phone": "sarah.jenkins@healnsight.com.bd"
 }
 ```
 - **Response JSON (200 OK):**
 ```json
 {
   "message": "A 6-digit verification OTP has been sent. Please verify within 5 minutes.",
-  "recipient": "sarah.jenkins@swasthonirapod.com.bd"
+  "recipient": "sarah.jenkins@healnsight.com.bd"
 }
 ```
 - **Response JSON (404 Not Found):**
@@ -244,7 +244,7 @@ Validates OTP token. Enforces expiration check and locks attempts at 3.
 - **Request JSON:**
 ```json
 {
-  "email_or_phone": "sarah.jenkins@swasthonirapod.com.bd",
+  "email_or_phone": "sarah.jenkins@healnsight.com.bd",
   "otp": "123456"
 }
 ```

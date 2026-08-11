@@ -37,7 +37,7 @@ def main():
     frontend_proc = subprocess.Popen([sys.executable, frontend_script])
 
     print("\n=======================================================")
-    print(" SwasthoNirapod Telemedicine Platform is running!")
+    print(" HealNsightTelemedicine Platform is running!")
     print(" Django Backend API: http://127.0.0.1:8000")
     print(" Node.js Auth API: http://localhost:5000")
     print(" FastAPI Upstream Worker: http://localhost:6000")

@@ -61,7 +61,7 @@ const MainApp = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [appointments, setAppointments] = useState([]);
   const [selectedConsultation, setSelectedConsultation] = useState(null);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   
   // Navigation sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

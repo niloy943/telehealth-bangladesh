@@ -54,22 +54,31 @@ button {
 
 :root {
   /* Soft off-white page background instead of plain white */
-  --bg-app: #F4F6F9; 
+  --bg-app: #F7FBFE; 
   --bg-card: #FFFFFF;
   
   /* Highly visible borders for clear component separation */
-  --border-card: #CBD5E1; 
+  --border-card: #D8E3F0; 
   
   /* High contrast darker typography colors */
-  --text-main: #0F172A; 
-  --text-muted: #334155; 
+  --text-main: #0B1645; 
+  --text-body: #435776;
+  --text-muted: #73839E; 
   
   /* Premium colors with high contrast */
-  --color-primary: #1D4ED8;   /* Royal Medical Blue */
-  --color-secondary: #0F766E; /* Healthcare Teal */
-  --color-success: #15803D;   /* Darker Emerald */
-  --color-warning: #B45309;   /* Darker Amber */
-  --color-error: #BE123C;     /* Darker Red */
+  --color-primary: #168CF5;   /* Medical blue */
+  --color-secondary: #38A6AF; /* Healthcare Teal */
+  --color-success: #16896F;   /* Calm green */
+  --color-warning: #E2A34C;   /* Warm orange */
+  --color-error: #C84A4A;     /* Soft dark red */
+  
+  /* Gradients and accents */
+  --gradient-left: #DAEAFA;
+  --gradient-right: #E8F2FC;
+  --accent-lavender: #895FDF;
+  --decor-lavender: #D7CFFB;
+  --color-secondary-blue: #1664F2;
+  --decor-blue: #BDDDFA;
   
   --glass-bg: #FFFFFF;
   --glass-border: #94A3B8;

@@ -7,7 +7,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="SwasthoNirapod Upstream Worker", version="1.0.0")
+app = FastAPI(title="HealNsightUpstream Worker", version="1.0.0")
 
 # Enable CORS for frontend API calls
 app.add_middleware(

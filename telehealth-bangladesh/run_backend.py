@@ -6,7 +6,7 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.join(base_dir, "backend")
 
-    print("--- SwasthoNirapod: Starting Django ASGI/REST Server at http://127.0.0.1:8000 ---")
+    print("--- HealNSight: Starting Django ASGI/REST Server at http://127.0.0.1:8000 ---")
     try:
         subprocess.run(
             [sys.executable, "-u", "manage.py", "runserver", "127.0.0.1:8000", "--noreload"],

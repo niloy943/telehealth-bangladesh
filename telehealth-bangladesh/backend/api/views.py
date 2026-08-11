@@ -419,15 +419,15 @@ class ForgotPasswordView(APIView):
             token_str = f"{uidb64}-{token}"
             reset_link = f"http://localhost:3000/?token={token_str}"
 
-            subject = "Password Reset Request - SwasthoNirapod"
-            message = f"Hello {user.first_name or user.username},\n\nWe received a request to reset your password. Please use the link below to set a new password. The link is valid for 15 minutes.\n\n{reset_link}\n\nIf you did not request this, please ignore this email.\n\nBest regards,\nSwasthoNirapod Team"
+            subject = "Password Reset Request - HealNSight"
+            message = f"Hello {user.first_name or user.username},\n\nWe received a request to reset your password. Please use the link below to set a new password. The link is valid for 15 minutes.\n\n{reset_link}\n\nIf you did not request this, please ignore this email.\n\nBest regards,\nHealNsightTeam"
 
             try:
                 if user.email:
                     send_mail(
                         subject,
                         message,
-                        settings.DEFAULT_FROM_EMAIL or 'noreply@swasthonirapod.com',
+                        settings.DEFAULT_FROM_EMAIL or 'noreply@HealNSight.com',
                         [user.email],
                         fail_silently=False
                     )

@@ -6,7 +6,7 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     node_dir = os.path.join(base_dir, "node-backend")
 
-    print("--- SwasthoNirapod: Starting Node.js Authentication Service at http://localhost:5000 ---")
+    print("--- HealNSight: Starting Node.js Authentication Service at http://localhost:5000 ---")
     try:
         # Check if node_modules exists, otherwise install dependencies
         node_modules_path = os.path.join(node_dir, "node_modules")
