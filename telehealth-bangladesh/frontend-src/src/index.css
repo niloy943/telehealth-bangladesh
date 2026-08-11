@@ -1,0 +1,410 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------------------------
+   GLOBAL TYPOGRAPHY & INTERACTIVE FOCUS RULES
+   ------------------------------------------------------------- */
+
+*, *::before, *::after {
+  font-family: 'Inter', 'Nunito', 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+}
+
+body {
+  font-family: 'Inter', 'Nunito', 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html,
+#root {
+  min-height: 100%;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-offset: 3px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary) !important;
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15) !important;
+}
+
+button {
+  min-height: 38px;
+}
+
+/* -------------------------------------------------------------
+   ACCESSIBILITY & COLOR SYSTEM REDESIGN (WHITE MODE CONTRAST FIX)
+   ------------------------------------------------------------- */
+
+:root {
+  /* Soft off-white page background instead of plain white */
+  --bg-app: #F7FBFE; 
+  --bg-card: #FFFFFF;
+  
+  /* Highly visible borders for clear component separation */
+  --border-card: #D8E3F0; 
+  
+  /* High contrast darker typography colors */
+  --text-main: #0B1645; 
+  --text-body: #435776;
+  --text-muted: #73839E; 
+  
+  /* Premium colors with high contrast */
+  --color-primary: #168CF5;   /* Medical blue */
+  --color-secondary: #38A6AF; /* Healthcare Teal */
+  --color-success: #16896F;   /* Calm green */
+  --color-warning: #E2A34C;   /* Warm orange */
+  --color-error: #C84A4A;     /* Soft dark red */
+  
+  /* Gradients and accents */
+  --gradient-left: #DAEAFA;
+  --gradient-right: #E8F2FC;
+  --accent-lavender: #895FDF;
+  --decor-lavender: #D7CFFB;
+  --color-secondary-blue: #1664F2;
+  --decor-blue: #BDDDFA;
+  
+  --glass-bg: #FFFFFF;
+  --glass-border: #94A3B8;
+  --bg-scrollbar: #E2E8F0;
+  --thumb-scrollbar: #94A3B8;
+  --thumb-scrollbar-hover: #475569;
+  
+  /* Stronger shadows for visual depth */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 20px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 40px -4px rgba(15, 23, 42, 0.12), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+}
+
+.gradient-mesh-bg:not(.dark) {
+  color: var(--text-main) !important;
+}
+
+.gradient-mesh-bg:not(.dark) .glass-panel,
+.gradient-mesh-bg:not(.dark) .bg-white,
+.gradient-mesh-bg:not(.dark) header,
+.gradient-mesh-bg:not(.dark) aside {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-card) !important;
+}
+
+.gradient-mesh-bg:not(.dark) .glass-panel .text-slate-300,
+.gradient-mesh-bg:not(.dark) .glass-panel .text-slate-400,
+.gradient-mesh-bg:not(.dark) .glass-panel .text-slate-500,
+.gradient-mesh-bg:not(.dark) .glass-panel .text-slate-600,
+.gradient-mesh-bg:not(.dark) .text-slate-400,
+.gradient-mesh-bg:not(.dark) .text-slate-500 {
+  color: var(--text-muted) !important;
+}
+
+.gradient-mesh-bg:not(.dark) .glass-panel .text-white,
+.gradient-mesh-bg:not(.dark) .text-slate-900,
+.gradient-mesh-bg:not(.dark) .text-slate-800,
+.gradient-mesh-bg:not(.dark) .text-slate-700 {
+  color: var(--text-main) !important;
+}
+
+.gradient-mesh-bg:not(.dark) .border-white\/5,
+.gradient-mesh-bg:not(.dark) .border-white\/10,
+.gradient-mesh-bg:not(.dark) .border-slate-200 {
+  border-color: var(--border-card) !important;
+}
+
+.gradient-mesh-bg:not(.dark) .shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.gradient-mesh-bg:not(.dark) button:not([disabled]) {
+  border-color: var(--border-card);
+}
+
+.dark {
+  /* Deep Navy dark mode */
+  --bg-app: #080E1A; 
+  --bg-card: #0F172A;
+  --border-card: rgba(255, 255, 255, 0.12);
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  
+  /* Royal Blue & Digital Cyan highlights */
+  --color-primary: #3B82F6; 
+  --color-secondary: #06B6D4;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  
+  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --bg-scrollbar: #020617;
+  --thumb-scrollbar: #1E293B;
+  --thumb-scrollbar-hover: #475569;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 10px 20px -3px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 20px 40px -4px rgba(0, 0, 0, 0.7);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-scrollbar);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--thumb-scrollbar);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--thumb-scrollbar-hover);
+}
+
+.glass-panel {
+  background: var(--bg-card) !important;
+  border: 1.5px solid var(--border-card) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: 16px;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s, box-shadow 0.2s;
+  padding: 1.5rem !important; /* Compact padding to reduce wasted layout space */
+}
+
+.glass-panel:hover {
+  border-color: var(--color-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* Active status badge indicator */
+.status-light {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-light.online {
+  background-color: var(--color-success);
+  box-shadow: 0 0 10px var(--color-success);
+}
+
+.status-light.offline {
+  background-color: var(--text-muted);
+}
+
+.status-light.ringing {
+  background-color: var(--color-warning);
+  animation: blink 0.5s infinite alternate;
+}
+
+/* Custom Pointer Styles (Hide real cursor when custom is active) */
+@media (pointer: fine) {
+  .custom-cursor-active:not([data-cursor-disabled="true"]),
+  .custom-cursor-active:not([data-cursor-disabled="true"]) * {
+    cursor: none !important;
+  }
+
+  [data-cursor-disabled="true"],
+  [data-cursor-disabled="true"] * {
+    cursor: auto !important;
+  }
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes blink {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+}
+
+.pulse-glow {
+  animation: pulse-ring 1.8s infinite;
+}
+
+/* Chat Message Bubbles styling */
+.chat-bubble-custom {
+  max-width: 75%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 18px !important;
+  line-height: 1.65;
+  margin-bottom: 12px;
+  animation: messageSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-bubble-custom.inbound {
+  align-self: flex-start;
+  background-color: var(--bg-scrollbar);
+  color: var(--text-main);
+  border-bottom-left-radius: 2px;
+  border: 1.5px solid var(--border-card);
+}
+
+.chat-bubble-custom.outbound {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: #FFFFFF;
+  border-bottom-right-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes messageSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 45%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 55%
+  );
+  transform: rotate(45deg);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+
+.card-shine:hover::after {
+  transform: translate(50%, 50%) rotate(45deg);
+}
+
+.radial-glow {
+  background: radial-gradient(circle at center, var(--color-primary) 0%, transparent 70%);
+}
+
+/* Premium Animated Gradient Mesh Background */
+@keyframes gradientMesh {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-mesh-bg {
+  background: linear-gradient(rgba(244, 246, 249, 0.92), rgba(244, 246, 249, 0.92)), url('./assets/medicare_sector_bg.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.dark .gradient-mesh-bg {
+  background: linear-gradient(rgba(8, 14, 26, 0.93), rgba(8, 14, 26, 0.93)), url('./assets/medicare_sector_bg.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* 3D Card Tilting & Perspective */
+.tilt-card-container {
+  perspective: 1000px;
+}
+
+.tilt-card {
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+/* Spotlight Reflection Effect */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+    rgba(29, 78, 216, 0.08),
+    transparent 80%
+  );
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+.dark .spotlight-card::before {
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+    rgba(6, 182, 212, 0.15),
+    transparent 80%
+  );
+}
+
+/* Floating Animations */
+@keyframes float-slow {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes float-medium {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-25px) rotate(-10deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes float-fast {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(15deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float-slow {
+  animation: float-slow 15s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 10s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 6s ease-in-out infinite;
+}
