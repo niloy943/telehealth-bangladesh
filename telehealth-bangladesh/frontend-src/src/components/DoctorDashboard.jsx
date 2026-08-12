@@ -6,7 +6,7 @@ import {
   DollarSign, Key, CheckCircle2, User, RefreshCcw, Save, Search, ArrowLeft
 } from 'lucide-react';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
 const downloadPrescriptionPDF = (p) => {
   const docName = p.doctor_details ? `Dr. ${p.doctor_details.first_name} ${p.doctor_details.last_name}` : "Certified Doctor";

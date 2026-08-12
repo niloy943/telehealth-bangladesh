@@ -20,7 +20,7 @@ app.add_middleware(
 
 # Relative path to Django SQLite Database
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "..", "backend", "db.sqlite3")
+DB_PATH = os.environ.get("DB_SQLITE_PATH", os.path.join(BASE_DIR, "..", "backend", "db.sqlite3"))
 
 class VisionAnalysisRequest(BaseModel):
     patient: int
@@ -68,12 +68,8 @@ def analyze_vision_image(request: VisionAnalysisRequest):
             "- Findings: Clear traces visible, normal baseline trends, metrics within typical reference intervals."
         )
 
-    # Store in Django SQLite DB under the api_patientimageprofile table
+    # Store in Django DB (PostgreSQL or SQLite) under the api_patientimageprofile table
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        
-        # Enforce previous_data.images.ecg_summary JSON schema
         previous_data = {
             "images": {
                 "ecg_summary": extracted_summary
@@ -81,16 +77,37 @@ def analyze_vision_image(request: VisionAnalysisRequest):
         }
         previous_data_json = json.dumps(previous_data)
         created_at_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        
-        cursor.execute(
-            "INSERT INTO api_patientimageprofile (patient_id, image_name, image_file, previous_data, created_at) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (request.patient, request.image_name, request.image_file, previous_data_json, created_at_iso)
-        )
-        
-        profile_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+
+        db_host = os.environ.get("DB_HOST")
+        if db_host:
+            import psycopg2
+            conn = psycopg2.connect(
+                dbname=os.environ.get("DB_NAME", "telehealth_bd"),
+                user=os.environ.get("DB_USER", "postgres"),
+                password=os.environ.get("DB_PASSWORD", "postgres"),
+                host=db_host,
+                port=os.environ.get("DB_PORT", "5432")
+            )
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO api_patientimageprofile (patient_id, image_name, image_file, previous_data, created_at) "
+                "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (request.patient, request.image_name, request.image_file, previous_data_json, created_at_iso)
+            )
+            profile_id = cursor.fetchone()[0]
+            conn.commit()
+            conn.close()
+        else:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO api_patientimageprofile (patient_id, image_name, image_file, previous_data, created_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (request.patient, request.image_name, request.image_file, previous_data_json, created_at_iso)
+            )
+            profile_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
     except Exception as e:
         raise HTTPException(
             status_code=500,

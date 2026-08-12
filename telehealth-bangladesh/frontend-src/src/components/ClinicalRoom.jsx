@@ -5,7 +5,7 @@ import {
   Monitor, Play, Trash2, ArrowLeft, Terminal, AlertCircle, Volume2
 } from 'lucide-react';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
 export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onClose }) => {
   const { t } = useLanguage();
@@ -45,8 +45,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
   useEffect(() => {
     // Connect to django WebSocket channels
-    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProto}//127.0.0.1:8000/ws/consultation/${consultationId}/`;
+    const apiBase = import.meta.env.VITE_API_BASE || window.location.origin;
+    const wsProto = apiBase.startsWith('https') ? 'wss:' : 'ws:';
+    const cleanHost = apiBase.replace(/^https?:\/\//, '');
+    const wsUrl = `${wsProto}//${cleanHost}/ws/consultation/${consultationId}/`;
     
     socketRef.current = new WebSocket(wsUrl);
 
@@ -236,7 +238,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
   const startAudioStreaming = async () => {
     try {
-      const wsUrl = "ws://127.0.0.1:6000/ws/audio";
+      const fastApiBase = import.meta.env.VITE_FASTAPI_BASE || window.location.origin;
+      const wsProtocol = fastApiBase.startsWith('https') ? 'wss:' : 'ws:';
+      const cleanHost = fastApiBase.replace(/^https?:\/\//, '');
+      const wsUrl = `${wsProtocol}//${cleanHost}/ws/audio`;
       audioSocketRef.current = new WebSocket(wsUrl);
       
       audioSocketRef.current.onmessage = (e) => {
@@ -274,7 +279,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     } catch (err) {
       console.warn("Hardware microphone setup failed. Running simulated WebSockets streaming flow.");
       // Graceful fallback for non-media or sandboxed environments
-      const simulatedSocket = new WebSocket("ws://127.0.0.1:6000/ws/audio");
+      const fastApiBase = import.meta.env.VITE_FASTAPI_BASE || window.location.origin;
+      const wsProtocol = fastApiBase.startsWith('https') ? 'wss:' : 'ws:';
+      const cleanHost = fastApiBase.replace(/^https?:\/\//, '');
+      const simulatedSocket = new WebSocket(`${wsProtocol}//${cleanHost}/ws/audio`);
       audioSocketRef.current = simulatedSocket;
       
       simulatedSocket.onmessage = (e) => {

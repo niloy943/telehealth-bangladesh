@@ -1,4 +1,4 @@
-import{c as U,u as ie,a as le,r,j as e,A as de,S as re,K as ne,e as V,f as oe,b as ce}from"./index-DjbZVlFd.js";import{R as xe}from"./refresh-ccw-Y69561kP.js";import{A as W}from"./arrow-left-DUKVVst8.js";/**
+import{c as U,u as ie,a as le,r,j as e,A as de,S as re,K as ne,e as V,f as oe,b as ce}from"./index-tM8jh3wY.js";import{R as xe}from"./refresh-ccw-Bpsp5jNd.js";import{A as W}from"./arrow-left-Db6H4knL.js";/**
  * @license lucide-react v0.454.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -8,7 +8,7 @@ import{c as U,u as ie,a as le,r,j as e,A as de,S as re,K as ne,e as V,f as oe,b 
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const pe=U("Save",[["path",{d:"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",key:"1c8476"}],["path",{d:"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7",key:"1ydtos"}],["path",{d:"M7 3v4a1 1 0 0 0 1 1h7",key:"t51u73"}]]),P="http://127.0.0.1:8000",ge=s=>{const j=s.doctor_details?`Dr. ${s.doctor_details.first_name} ${s.doctor_details.last_name}`:"Certified Doctor",x=s.doctor_details?s.doctor_details.specialty:"",b=s.doctor_details?s.doctor_details.bmdc_reg:"",w=s.patient_details?`${s.patient_details.first_name} ${s.patient_details.last_name}`:"Patient",$=s.patient_details?s.patient_details.phone:"";let u="";try{const o=JSON.parse(s.medicines);Array.isArray(o)?u=o.map((f,k)=>`
+ */const pe=U("Save",[["path",{d:"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",key:"1c8476"}],["path",{d:"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7",key:"1ydtos"}],["path",{d:"M7 3v4a1 1 0 0 0 1 1h7",key:"t51u73"}]]),P=window.location.origin,ge=s=>{const j=s.doctor_details?`Dr. ${s.doctor_details.first_name} ${s.doctor_details.last_name}`:"Certified Doctor",x=s.doctor_details?s.doctor_details.specialty:"",b=s.doctor_details?s.doctor_details.bmdc_reg:"",w=s.patient_details?`${s.patient_details.first_name} ${s.patient_details.last_name}`:"Patient",$=s.patient_details?s.patient_details.phone:"";let u="";try{const o=JSON.parse(s.medicines);Array.isArray(o)?u=o.map((f,k)=>`
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-weight: bold;">${k+1}. ${f.name}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center; color: #555;">${f.dosage}</td>

@@ -6,7 +6,7 @@ import {
   Settings, Activity, RefreshCcw, Lock, HardDrive, BarChart2, CheckCircle2, XCircle, Search
 } from 'lucide-react';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
 export const AdminDashboard = ({ token }) => {
   const { t } = useLanguage();

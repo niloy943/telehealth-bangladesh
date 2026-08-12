@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import telemedicineHero from '../assets/telemedicine_hero.png';
 
-const API_BASE = "http://127.0.0.1:8000";
-const AUTH_API_BASE = "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const AUTH_API_BASE = import.meta.env.VITE_AUTH_API_BASE || window.location.origin;
 
 export const Auth = ({ onLoginSuccess, darkMode, setDarkMode }) => {
   const { lang, toggleLanguage, t } = useLanguage();

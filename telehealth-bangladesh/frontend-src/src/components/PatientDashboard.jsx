@@ -6,7 +6,8 @@ import {
   Search, Bot, Send, AlertTriangle, ArrowRight, User, PlusCircle, CheckCircle, Trash2, Clock, Upload
 } from 'lucide-react';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const FASTAPI_BASE = import.meta.env.VITE_FASTAPI_BASE || window.location.origin;
 
 const downloadPrescriptionPDF = (p) => {
   const docName = p.doctor_details ? `Dr. ${p.doctor_details.first_name} ${p.doctor_details.last_name}` : "Certified Doctor";
@@ -264,7 +265,7 @@ export const PatientDashboard = ({ token, user, appointments, onSelectConsultati
       const base64Data = reader.result;
 
       try {
-        const resp = await fetch("http://localhost:6000/api/vision/analyze", {
+        const resp = await fetch(`${FASTAPI_BASE}/api/vision/analyze`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
