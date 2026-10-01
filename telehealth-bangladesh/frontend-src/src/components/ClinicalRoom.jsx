@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
-import { 
-  Send, ShieldCheck, Video, VideoOff, Mic, MicOff, PhoneOff, Phone, 
+import {
+  Send, ShieldCheck, Video, VideoOff, Mic, MicOff, PhoneOff, Phone,
   Monitor, Play, Trash2, ArrowLeft, Terminal, AlertCircle, Volume2, Lock, User,
   Activity, Clock
 } from 'lucide-react';
@@ -53,7 +53,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const micStreamRef = useRef(null);
-  
+
   // VoIP dialer state
   const [dialNumber, setDialNumber] = useState("");
   const [activeCallMode, setActiveCallMode] = useState("standby"); // standby, live, mock
@@ -89,19 +89,19 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
         const idKeyPair = await getOrCreateIdentityKeyPair();
         const epKeyPair = await generateEphemeralKeyPair();
-        
+
         myIdKeyPairRef.current = idKeyPair;
         myEpKeyPairRef.current = epKeyPair;
-        
+
         const idPubB64 = await exportPublicKey(idKeyPair.publicKey);
         const epPubB64 = await exportPublicKey(epKeyPair.publicKey);
-        
+
         myIdPubB64Ref.current = idPubB64;
         myEpPubB64Ref.current = epPubB64;
-        
+
         const signature = await signKeyExchange(idKeyPair.privateKey, epPubB64);
         mySignatureRef.current = signature;
-        
+
         addPbxLog("[E2EE] Cryptographic keys generated and stored in IndexedDB.");
         setE2eeStatus("pending_peer");
 
@@ -119,14 +119,14 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       const wsProto = apiBase.startsWith('https') ? 'wss:' : 'ws:';
       const cleanHost = apiBase.replace(/^https?:\/\//, '');
       const wsUrl = `${wsProto}//${cleanHost}/ws/consultation/${consultationId}/`;
-      
+
       socketRef.current = new WebSocket(wsUrl);
 
       socketRef.current.onmessage = async (e) => {
         const payload = JSON.parse(e.data);
         if (payload.action === 'encrypted_chat_message') {
           const { sender, ciphertext, iv, aad, message_id, timestamp } = payload;
-          
+
           if (!sessionKeyRef.current) {
             setMessages(prev => [...prev, {
               sender: sender,
@@ -160,7 +160,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
             try {
               const peerIdKey = await importPublicKey(public_key, "ECDSA", ["verify"]);
               peerIdentityKeyRef.current = peerIdKey;
-              
+
               // Respond with our identity key
               socketRef.current.send(JSON.stringify({
                 action: 'e2ee_key_exchange',
@@ -168,7 +168,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 key_type: 'identity',
                 public_key: myIdPubB64Ref.current
               }));
-              
+
               // Send our ephemeral public key signed with our identity private key
               socketRef.current.send(JSON.stringify({
                 action: 'e2ee_key_exchange',
@@ -195,23 +195,23 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 public_key,
                 signature
               );
-              
+
               if (!isValid) {
                 addPbxLog("[E2EE] Peer ephemeral signature verification failed!");
                 setE2eeStatus("failed");
                 return;
               }
-              
+
               addPbxLog("[E2EE] Ephemeral public key signature verified successfully.");
-              
+
               const peerEpKey = await importPublicKey(public_key, "ECDH", []);
               const derivedKey = await deriveSessionKey(
                 myEpKeyPairRef.current.privateKey,
                 peerEpKey
               );
-              
+
               sessionKeyRef.current = derivedKey;
-              
+
               const fp = generateFingerprint(myEpPubB64Ref.current, public_key);
               setFingerprint(fp);
               setE2eeStatus("secure");
@@ -304,12 +304,12 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       if (statusPollIntervalRef.current) clearInterval(statusPollIntervalRef.current);
       if (voipTimerIntervalRef.current) clearInterval(voipTimerIntervalRef.current);
       stopAudioStreaming();
-      
+
       // Clear key states upon leaving consultation
       sessionKeyRef.current = null;
       peerIdentityKeyRef.current = null;
       peerIdentityKeyB64Ref.current = "";
-      
+
       // Pause ringtone just in case
       const ring = document.getElementById("audioRingtone");
       if (ring) ring.pause();
@@ -338,7 +338,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     try {
       const msgId = Math.random().toString(36).substring(2, 15);
       const timestamp = new Date().toISOString();
-      
+
       const aad = {
         consultation_id: consultationId,
         sender: user.username,
@@ -367,7 +367,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   // WebRTC Signals
   const handleWebRTCSignaling = async (data, peerSender) => {
     if (peerSender === user.username) return; // avoid looping self actions
-    
+
     const pc = pcRef.current;
     if (!pc) return;
 
@@ -424,7 +424,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
     const ring = document.getElementById("audioRingtone");
     if (ring) {
-      ring.play().catch(e => {});
+      ring.play().catch(e => { });
     }
 
     addPbxLog(`[RTC] Initiating E2EE video room exchange...`);
@@ -453,7 +453,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     // Auto terminate ringing sound and start timing
     setTimeout(async () => {
       if (ring) ring.pause();
-      
+
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -467,8 +467,8 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       let duration = 0;
       timerIntervalRef.current = setInterval(() => {
         duration++;
-        const mins = Math.floor(duration/60).toString().padStart(2, '0');
-        const secs = (duration%60).toString().padStart(2, '0');
+        const mins = Math.floor(duration / 60).toString().padStart(2, '0');
+        const secs = (duration % 60).toString().padStart(2, '0');
         setCallTimer(`${mins}:${secs}`);
       }, 1000);
 
@@ -485,7 +485,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       const cleanHost = fastApiBase.replace(/^https?:\/\//, '');
       const wsUrl = `${wsProtocol}//${cleanHost}/ws/audio`;
       audioSocketRef.current = new WebSocket(wsUrl);
-      
+
       audioSocketRef.current.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.type === "transcription_segment") {
@@ -526,14 +526,14 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       const cleanHost = fastApiBase.replace(/^https?:\/\//, '');
       const simulatedSocket = new WebSocket(`${wsProtocol}//${cleanHost}/ws/audio`);
       audioSocketRef.current = simulatedSocket;
-      
+
       simulatedSocket.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.type === "transcription_segment") {
           setAudioTranscripts(prev => [...prev, { text: data.text, timestamp: data.timestamp }]);
         }
       };
-      
+
       const intervalId = setInterval(() => {
         if (simulatedSocket.readyState === WebSocket.OPEN) {
           simulatedSocket.send(new Uint8Array(1600)); // send simulated 100ms packet
@@ -678,9 +678,9 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 const displayLabel = statusDisplayMap[currentStatus] || `Call ${currentStatus}`;
                 setSipStatus(displayLabel);
                 addPbxLog(`[VOIP] Call ended with state: ${currentStatus.toUpperCase()} (Duration: ${statusData.duration || 0}s)`);
-                
+
                 // Update local call log status
-                setCallLogs(prev => prev.map(c => 
+                setCallLogs(prev => prev.map(c =>
                   c.number === statusData.recipient_phone || c.id === statusData.call_id
                     ? { ...c, status: currentStatus.toUpperCase() }
                     : c
@@ -743,7 +743,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
   return (
     <div className="space-y-6">
-      
+
       {/* 1. Clinical Consultation Suite Top Bar */}
       <div className="bg-white border border-[#BDDDFA] p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2.5">
@@ -784,7 +784,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
       {/* 2. Main Consultation Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left pane: Encrypted Clinical Chat */}
         <div className={`bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px] ${appointmentMode === 'chat' ? 'lg:col-span-3' : 'lg:col-span-1'}`}>
           <div className="border-b border-[#BDDDFA]/60 pb-3 mb-3 space-y-2.5">
@@ -793,11 +793,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 <Lock className="w-3.5 h-3.5 text-[#059669]" />
                 <span>Encrypted Chat</span>
               </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                e2eeStatus === 'secure' ? 'bg-emerald-50 text-[#059669] border border-emerald-200' :
-                e2eeStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
-                'bg-amber-50 text-amber-700 border border-amber-200'
-              }`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${e2eeStatus === 'secure' ? 'bg-emerald-50 text-[#059669] border border-emerald-200' :
+                  e2eeStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
+                    'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
                 {e2eeStatus === 'secure' ? 'E2EE: ACTIVE' : `E2EE: ${e2eeStatus.toUpperCase()}`}
               </span>
             </div>
@@ -845,11 +844,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 return (
                   <div key={i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
                     <span className="text-[10px] text-[#94A3B8] mb-0.5 px-1 font-semibold">{msg.sender}</span>
-                    <div className={`p-3 rounded-2xl text-xs leading-relaxed ${
-                      isMe
+                    <div className={`p-3 rounded-2xl text-xs leading-relaxed ${isMe
                         ? 'bg-[#059669] text-white rounded-br-sm'
                         : 'bg-[#E7F0FC] text-[#0F172A] rounded-bl-sm border border-[#BDDDFA]'
-                    }`}>
+                      }`}>
                       {msg.message}
                     </div>
                   </div>
@@ -860,17 +858,17 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
           {/* Chat Input */}
           <div className="flex gap-2 border-t border-[#BDDDFA]/60 pt-3 mt-2">
-            <input 
-              type="text" 
-              value={inputVal} 
-              onChange={e => setInputVal(e.target.value)} 
-              onKeyDown={e => e.key === 'Enter' && sendText()} 
+            <input
+              type="text"
+              value={inputVal}
+              onChange={e => setInputVal(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendText()}
               disabled={e2eeStatus !== 'secure'}
-              placeholder={e2eeStatus === 'secure' ? "Type encrypted clinical message..." : "Awaiting E2EE Handshake..."} 
-              className="flex-grow !min-h-[46px] !py-2 !px-3 text-xs" 
+              placeholder={e2eeStatus === 'secure' ? "Type encrypted clinical message..." : "Awaiting E2EE Handshake..."}
+              className="flex-grow !min-h-[46px] !py-2 !px-3 text-xs"
             />
-            <button 
-              onClick={sendText} 
+            <button
+              onClick={sendText}
               disabled={e2eeStatus !== 'secure'}
               className="bg-[#059669] hover:bg-[#047857] text-white font-bold px-4 rounded-[10px] text-xs disabled:opacity-50 flex items-center justify-center cursor-pointer"
             >
@@ -882,11 +880,11 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         {/* Right pane: WebRTC Video / Twilio Dialer */}
         {appointmentMode !== 'chat' && (
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* --- CASE A: WEBRTC VIDEO consultation --- */}
             {appointmentMode === 'video' && (
               <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px]">
-                
+
                 {/* Header Status Bar */}
                 <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2.5 mb-4 text-xs font-semibold">
                   <span className="text-[#059669] flex items-center gap-1.5">
@@ -929,10 +927,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                   /* Active Conference Screen with Floating Self View */
                   <div className="flex-grow flex flex-col justify-between">
                     <div className="relative rounded-2xl overflow-hidden bg-[#0F172A] border border-[#1E293B] min-h-[380px] flex items-center justify-center">
-                      
+
                       {/* Remote Participant Stream */}
                       <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
-                      
+
                       {/* Fallback Overlay if remote video is not streaming yet */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0F172A]/80 text-center p-4">
                         <div className="w-16 h-16 rounded-full bg-[#1E293B] border border-[#334155] text-[#34D399] flex items-center justify-center mb-3">
@@ -960,11 +958,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                     <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-[#BDDDFA]/60">
                       <button
                         onClick={() => setMicActive(!micActive)}
-                        className={`p-3 rounded-full border cursor-pointer ${
-                          micActive
+                        className={`p-3 rounded-full border cursor-pointer ${micActive
                             ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]'
                             : 'bg-red-500 border-red-600 text-white'
-                        }`}
+                          }`}
                         title={micActive ? "Mute Microphone" : "Unmute Microphone"}
                       >
                         {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
@@ -972,11 +969,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
                       <button
                         onClick={() => setCameraActive(!cameraActive)}
-                        className={`p-3 rounded-full border cursor-pointer ${
-                          cameraActive
+                        className={`p-3 rounded-full border cursor-pointer ${cameraActive
                             ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]'
                             : 'bg-red-500 border-red-600 text-white'
-                        }`}
+                          }`}
                         title={cameraActive ? "Turn Off Camera" : "Turn On Camera"}
                       >
                         {cameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
@@ -1005,7 +1001,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
             {/* --- CASE B: TWILIO TELEPHONY PHONE callback integration --- */}
             {appointmentMode === 'phone' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[500px]">
-                
+
                 {/* Voice dialer keypad */}
                 <div className="bg-white p-6 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between">
                   <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2.5 mb-4">
@@ -1026,14 +1022,14 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                   </div>
 
                   <div className="space-y-4">
-                    <input 
-                      type="text" 
-                      placeholder={t('dialerPlaceholder')} 
-                      value={dialNumber} 
+                    <input
+                      type="text"
+                      placeholder={t('dialerPlaceholder')}
+                      value={dialNumber}
                       onChange={e => setDialNumber(e.target.value)}
-                      className="w-full text-center font-mono font-bold text-lg" 
+                      className="w-full text-center font-mono font-bold text-lg"
                     />
-                    
+
                     {/* Keypad */}
                     <div className="grid grid-cols-3 gap-2">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map(k => (
@@ -1079,7 +1075,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                     <div className="mt-4 border-t border-[#BDDDFA]/60 pt-3.5 space-y-2">
                       <h4 className="text-[10px] font-bold text-[#55647C] uppercase tracking-widest">PBX Callback Bridge</h4>
                       <p className="text-[11px] text-[#55647C] leading-relaxed">
-                        Request callback bridging: Twilio trunk rings your phone line, then dials the physician's active voice endpoint automatically.
+                        Request callback bridging: Twilio trunk rings your phone line, then dials the doctor's active voice endpoint automatically.
                       </p>
                       <button onClick={triggerPBXCallbackSim} className="w-full bg-[#E7F0FC] hover:bg-[#BDDDFA] text-[#0F172A] border border-[#BDDDFA] font-bold py-2 rounded-[10px] text-xs cursor-pointer">
                         {t('triggerTwilio')}

@@ -35,7 +35,7 @@ const TIME_OPTIONS = [
 /* ─── Digital Prescription PDF Download Utility ─── */
 const downloadPrescriptionPDF = (p) => {
   const docName = p.doctor_details ? `Dr. ${p.doctor_details.first_name} ${p.doctor_details.last_name}` : "Certified Doctor";
-  const docSpecialty = p.doctor_details ? p.doctor_details.specialty : "General Physician";
+  const docSpecialty = p.doctor_details ? p.doctor_details.specialty : "General Doctor";
   const docReg = p.doctor_details ? p.doctor_details.bmdc_reg : "BMDC Verified";
 
   const patName = p.patient_details ? `${p.patient_details.first_name || ''} ${p.patient_details.last_name || ''}`.trim() || p.patient_details.username : "Patient";
@@ -111,7 +111,7 @@ const downloadPrescriptionPDF = (p) => {
       </table>
 
       <div style="background: #E7F0FC; border-left: 4px solid #168CF5; padding: 12px 14px; border-radius: 6px; margin-bottom: 24px; font-size: 13px; color: #0F172A;">
-        <strong style="display: block; margin-bottom: 3px; font-size: 13px; color: #0F172A;">Physician Instructions:</strong>
+        <strong style="display: block; margin-bottom: 3px; font-size: 13px; color: #0F172A;">Doctor Instructions:</strong>
         ${p.instructions || "Follow prescribed dosage. Stay hydrated and schedule a follow-up if symptoms persist."}
       </div>
 
@@ -215,7 +215,7 @@ export const DoctorDashboard = ({
     const nextVal = !onlineStatus;
     setOnlineStatus(nextVal);
     triggerNotification(
-      nextVal ? "Physician Online" : "Physician Offline",
+      nextVal ? "Doctor Online" : "Doctor Offline",
       `Specialist workstation is now ${nextVal ? 'available for live patient consultations' : 'paused'}.`,
       "system"
     );
@@ -415,11 +415,10 @@ export const DoctorDashboard = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={handleToggleOnline}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-xs font-bold border ${
-                onlineStatus
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-xs font-bold border ${onlineStatus
                   ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
                   : 'bg-[#F4F6F9] border-[#BDDDFA] text-[#55647C]'
-              }`}
+                }`}
             >
               <span className={`w-2 h-2 rounded-full ${onlineStatus ? 'bg-[#059669]' : 'bg-[#94A3B8]'}`} />
               <span>{onlineStatus ? 'Online & Available' : 'Offline / Paused'}</span>
@@ -666,11 +665,10 @@ export const DoctorDashboard = ({
                           key={val}
                           type="button"
                           onClick={() => setConsultationFee(val)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                            Number(consultationFee) === val
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${Number(consultationFee) === val
                               ? 'bg-[#059669] text-white border-[#059669]'
                               : 'bg-white text-[#0F172A] border-[#BDDDFA] hover:bg-[#E7F0FC]'
-                          }`}
+                            }`}
                         >
                           ৳{val}
                         </button>
@@ -709,25 +707,22 @@ export const DoctorDashboard = ({
                   {scheduleSlots.map((slot, idx) => (
                     <div
                       key={slot.day || idx}
-                      className={`p-4 rounded-xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                        slot.active
+                      className={`p-4 rounded-xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${slot.active
                           ? 'bg-white border-[#BDDDFA]'
                           : 'bg-[#F4F6F9] border-[#BDDDFA]/60 opacity-75'
-                      }`}
+                        }`}
                     >
                       {/* Day & Toggle */}
                       <div className="flex items-center gap-3.5 min-w-[180px]">
                         <button
                           type="button"
                           onClick={() => handleToggleDayActive(idx)}
-                          className={`w-10 h-6 rounded-full transition-colors relative flex items-center p-0.5 ${
-                            slot.active ? 'bg-[#059669]' : 'bg-[#94A3B8]'
-                          }`}
+                          className={`w-10 h-6 rounded-full transition-colors relative flex items-center p-0.5 ${slot.active ? 'bg-[#059669]' : 'bg-[#94A3B8]'
+                            }`}
                         >
                           <span
-                            className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                              slot.active ? 'translate-x-4' : 'translate-x-0'
-                            }`}
+                            className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${slot.active ? 'translate-x-4' : 'translate-x-0'
+                              }`}
                           />
                         </button>
                         <div>
@@ -821,11 +816,10 @@ export const DoctorDashboard = ({
       >
         <form onSubmit={handleWritePrescription} className="space-y-4">
           {prescNotif && (
-            <div className={`p-3 rounded-xl text-xs font-semibold ${
-              prescNotif.includes("successfully")
+            <div className={`p-3 rounded-xl text-xs font-semibold ${prescNotif.includes("successfully")
                 ? "bg-[#E7F0FC] text-[#059669] border border-[#059669]"
                 : "bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]"
-            }`}>
+              }`}>
               {prescNotif}
             </div>
           )}
@@ -911,7 +905,7 @@ export const DoctorDashboard = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#0F172A] mb-1">Physician Advice &amp; Instructions</label>
+            <label className="block text-xs font-semibold text-[#0F172A] mb-1">Doctor Advice &amp; Instructions</label>
             <textarea
               rows={2}
               value={prescForm.instructions}

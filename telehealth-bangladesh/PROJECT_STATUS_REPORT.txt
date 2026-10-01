@@ -93,7 +93,7 @@ launch and run cleanly via a single command: `python run_all.py`.
   - Security & Guardrails:
     * Requires authenticated JWT token (unauthenticated requests rejected with 401).
     * Strict user isolation: users cannot access or view another user's conversations.
-    * Prompt injection defenses: ignores attempts to bypass medical safety guidelines.
+    * Prompt injection defenses: ignores  to bypass medical safety guidelines.
     * Message length constraints (max 1000 characters) and query throttling.
   - Frontend UI/UX:
     * `AIHealthAssistant.jsx`: Full-page interactive chat interface with suggested symptoms.
@@ -167,7 +167,7 @@ launch and run cleanly via a single command: `python run_all.py`.
     * `SecureLoginView`: Prompts for credentials; if MFA is active, issues OTP and returns 
       `mfa_required: true`.
     * `MFAVerifyView`: Validates OTP code, marks it used, and grants full JWT token pair.
-    * Brute-Force Rate Limiting: `LoginAttempt` tracks failed attempts and locks accounts 
+    * Brute-Force Rate Limiting: `LoginAttempt` tracks failed  and locks accounts 
       after repeated failures.
   - User Dashboards:
     * Distinct dashboards and navigation states for Patient, Doctor, and Administrator.
@@ -249,7 +249,7 @@ launch and run cleanly via a single command: `python run_all.py`.
     * `POST /api/gov/verify-nid/` verifies patient Bangladesh NID number (10 or 17 digits) 
       against government citizen registries.
   - BMDC Doctor License Verification:
-    * `POST /api/gov/verify-bmdc/` verifies physician registration with the Bangladesh 
+    * `POST /api/gov/verify-bmdc/` verifies doctor registration with the Bangladesh 
       Medical and Dental Council (BMDC), returning doctor status and qualification.
   - Admin KYC Approval:
     * Doctors registering on the platform start with `verification_status: 'pending'`.

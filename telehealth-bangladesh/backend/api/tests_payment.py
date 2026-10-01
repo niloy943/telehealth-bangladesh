@@ -126,7 +126,7 @@ class PaymentGatewayTests(TestCase):
 
     # Scenario 4: Correct server-side amount enforcement (ignores fraudulent client amount)
     def test_server_side_amount_enforced(self):
-        # Client attempts to pay 10 BDT instead of doctor fee 750 BDT
+        # Client  to pay 10 BDT instead of doctor fee 750 BDT
         resp = self.client.post('/api/payment/initiate/', {
             'appointment_id': self.appointment.id,
             'amount': 10.0,

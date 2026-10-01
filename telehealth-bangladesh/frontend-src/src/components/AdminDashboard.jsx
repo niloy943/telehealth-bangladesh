@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
-import { 
+import {
   ShieldAlert, UserCheck, AlertTriangle, Eye, ShieldCheck,
   Activity, RefreshCcw, Lock, HardDrive, BarChart2, CheckCircle2, XCircle, Search,
   FileText, Check, Clock, Truck, ShoppingBag, ExternalLink, Users, UserPlus,
@@ -47,7 +47,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
   const [showOnboardModal, setShowOnboardModal] = useState(false);
   const [onboardForm, setOnboardForm] = useState({
     username: '', password: '', email: '', first_name: '', last_name: '',
-    phone: '', bmdc_reg: '', specialty: 'General Physician', hospital: '',
+    phone: '', bmdc_reg: '', specialty: 'General Doctor', hospital: '',
     experience: 1, bio: ''
   });
   const [onboardLoading, setOnboardLoading] = useState(false);
@@ -282,7 +282,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
         setShowOnboardModal(false);
         setOnboardForm({
           username: '', password: '', email: '', first_name: '', last_name: '',
-          phone: '', bmdc_reg: '', specialty: 'General Physician', hospital: '',
+          phone: '', bmdc_reg: '', specialty: 'General Doctor', hospital: '',
           experience: 1, bio: ''
         });
         loadAdminData();
@@ -562,12 +562,12 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
 
   const filteredLogs = (Array.isArray(logs) ? logs : []).filter(log => {
     const matchesSearch = (log.details || '').toLowerCase().includes(searchAudit.toLowerCase()) ||
-                          (log.user_details?.username || '').toLowerCase().includes(searchAudit.toLowerCase());
-    const matchesFilter = auditFilter === 'all' || 
-                          (auditFilter === 'decrypt' && (log.action || '').includes('DECRYPT')) ||
-                          (auditFilter === 'kyc' && (log.action || '').includes('KYC')) ||
-                          (auditFilter === 'admin' && (log.action || '').includes('ADMIN')) ||
-                          (auditFilter === 'auth' && ((log.action || '').includes('LOGIN') || (log.action || '').includes('LOGOUT')));
+      (log.user_details?.username || '').toLowerCase().includes(searchAudit.toLowerCase());
+    const matchesFilter = auditFilter === 'all' ||
+      (auditFilter === 'decrypt' && (log.action || '').includes('DECRYPT')) ||
+      (auditFilter === 'kyc' && (log.action || '').includes('KYC')) ||
+      (auditFilter === 'admin' && (log.action || '').includes('ADMIN')) ||
+      (auditFilter === 'auth' && ((log.action || '').includes('LOGIN') || (log.action || '').includes('LOGOUT')));
     return matchesSearch && matchesFilter;
   });
 
@@ -662,7 +662,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
               Security &amp; Executive Console
             </h1>
             <p className="text-sm text-[#55647C] mt-0.5">
-              Comprehensive role administration, physician KYC license verification, audit trail, and dispatch.
+              Comprehensive role administration, doctor KYC license verification, audit trail, and dispatch.
             </p>
           </div>
 
@@ -684,7 +684,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
         <div className="bg-[#E7F0FC] border border-[#BDDDFA] p-4 rounded-xl">
           <span className="text-[10px] font-bold text-[#55647C] uppercase tracking-wider">Registered Doctors</span>
           <p className="text-xl font-bold text-[#0F172A] mt-1">{doctors.length}</p>
-          <span className="text-[10px] text-[#059669] font-semibold mt-1 block">Physician Directory</span>
+          <span className="text-[10px] text-[#059669] font-semibold mt-1 block">Doctor Directory</span>
         </div>
         <div className="bg-[#E7F0FC] border border-[#BDDDFA] p-4 rounded-xl">
           <span className="text-[10px] font-bold text-[#55647C] uppercase tracking-wider">Pending KYC Approvals</span>
@@ -714,11 +714,10 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                     <button
                       key={f}
                       onClick={() => setAuditFilter(f)}
-                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold uppercase border ${
-                        auditFilter === f
-                          ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
-                          : 'bg-white border-[#BDDDFA] text-[#55647C] hover:text-[#0F172A]'
-                      }`}
+                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold uppercase border ${auditFilter === f
+                        ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
+                        : 'bg-white border-[#BDDDFA] text-[#55647C] hover:text-[#0F172A]'
+                        }`}
                     >
                       {f}
                     </button>
@@ -768,13 +767,12 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                             {log.user_details?.username || "System"}
                           </td>
                           <td className="px-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                              log.action?.includes("DELETE") || log.action?.includes("BLOCK") || log.action?.includes("REJECT")
-                                ? "bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30"
-                                : log.action?.includes("SUPERADMIN") || log.action?.includes("CREATE")
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${log.action?.includes("DELETE") || log.action?.includes("BLOCK") || log.action?.includes("REJECT")
+                              ? "bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30"
+                              : log.action?.includes("SUPERADMIN") || log.action?.includes("CREATE")
                                 ? "bg-emerald-50 text-[#059669] border border-[#059669]/30"
                                 : "bg-[#E7F0FC] text-[#168CF5] border border-[#BDDDFA]"
-                            }`}>
+                              }`}>
                               {log.action}
                             </span>
                           </td>
@@ -897,22 +895,20 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                 <div className="flex items-center bg-[#E7F0FC] p-1 rounded-[12px] border border-[#BDDDFA] shrink-0">
                   <button
                     onClick={() => setDoctorViewMode('grid')}
-                    className={`p-1.5 rounded-[8px] transition-colors ${
-                      doctorViewMode === 'grid'
-                        ? 'bg-[#059669] text-white'
-                        : 'text-[#55647C] hover:text-[#0F172A]'
-                    }`}
+                    className={`p-1.5 rounded-[8px] transition-colors ${doctorViewMode === 'grid'
+                      ? 'bg-[#059669] text-white'
+                      : 'text-[#55647C] hover:text-[#0F172A]'
+                      }`}
                     title="Grid Card View"
                   >
                     <LayoutGrid className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setDoctorViewMode('list')}
-                    className={`p-1.5 rounded-[8px] transition-colors ${
-                      doctorViewMode === 'list'
-                        ? 'bg-[#059669] text-white'
-                        : 'text-[#55647C] hover:text-[#0F172A]'
-                    }`}
+                    className={`p-1.5 rounded-[8px] transition-colors ${doctorViewMode === 'list'
+                      ? 'bg-[#059669] text-white'
+                      : 'text-[#55647C] hover:text-[#0F172A]'
+                      }`}
                     title="Compact Table / List View"
                   >
                     <List className="w-4 h-4" />
@@ -923,11 +919,10 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                 <div className="relative shrink-0" ref={docMenuRef}>
                   <button
                     onClick={() => setDocMenuOpen(prev => !prev)}
-                    className={`p-2.5 rounded-[12px] border transition-colors flex items-center justify-center ${
-                      docMenuOpen || isDoctorFilterActive
-                        ? 'bg-[#059669] border-[#059669] text-white'
-                        : 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]/60'
-                    }`}
+                    className={`p-2.5 rounded-[12px] border transition-colors flex items-center justify-center ${docMenuOpen || isDoctorFilterActive
+                      ? 'bg-[#059669] border-[#059669] text-white'
+                      : 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]/60'
+                      }`}
                     title="Sort, Filter & Layout Options"
                   >
                     <MoreVertical className="w-4 h-4" />
@@ -960,22 +955,20 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                           <button
                             type="button"
                             onClick={() => { setDoctorViewMode('grid'); setDocMenuOpen(false); }}
-                            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl border text-xs font-semibold ${
-                              doctorViewMode === 'grid'
-                                ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
-                                : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-[#E7F0FC]'
-                            }`}
+                            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl border text-xs font-semibold ${doctorViewMode === 'grid'
+                              ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
+                              : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-[#E7F0FC]'
+                              }`}
                           >
                             <LayoutGrid className="w-3.5 h-3.5" /> Grid Cards
                           </button>
                           <button
                             type="button"
                             onClick={() => { setDoctorViewMode('list'); setDocMenuOpen(false); }}
-                            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl border text-xs font-semibold ${
-                              doctorViewMode === 'list'
-                                ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
-                                : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-[#E7F0FC]'
-                            }`}
+                            className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl border text-xs font-semibold ${doctorViewMode === 'list'
+                              ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
+                              : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-[#E7F0FC]'
+                              }`}
                           >
                             <List className="w-3.5 h-3.5" /> Table List
                           </button>
@@ -1101,9 +1094,8 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <StatusBadge status={status} size="sm" />
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                isActive ? 'bg-emerald-50 text-[#059669] border border-[#059669]/20' : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-[#059669] border border-[#059669]/20' : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
+                                }`}>
                                 {isActive ? 'Active' : 'Deactivated'}
                               </span>
                             </div>
@@ -1213,7 +1205,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                   <table className="w-full text-left text-xs text-[#334155]">
                     <thead>
                       <tr className="border-b border-[#BDDDFA] text-[#0F172A] font-bold">
-                        <th className="py-3 px-3">Physician</th>
+                        <th className="py-3 px-3">Doctor</th>
                         <th>BMDC Reg</th>
                         <th>Specialty &amp; Hospital</th>
                         <th>Experience &amp; Joined</th>
@@ -1267,9 +1259,8 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                             <td>
                               <div className="flex flex-col items-start gap-1">
                                 <StatusBadge status={status} size="sm" />
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                  isActive ? 'bg-emerald-50 text-[#059669] border border-[#059669]/20' : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${isActive ? 'bg-emerald-50 text-[#059669] border border-[#059669]/20' : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
+                                  }`}>
                                   {isActive ? 'Active' : 'Suspended'}
                                 </span>
                               </div>
@@ -1406,9 +1397,8 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                             {/* User details */}
                             <td className="py-3.5 px-3">
                               <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                                  isSuper ? 'bg-[#0F172A] text-white' : 'bg-[#E7F0FC] border border-[#BDDDFA] text-[#059669]'
-                                }`}>
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${isSuper ? 'bg-[#0F172A] text-white' : 'bg-[#E7F0FC] border border-[#BDDDFA] text-[#059669]'
+                                  }`}>
                                   {admin.first_name ? admin.first_name[0].toUpperCase() : admin.username[0].toUpperCase()}
                                 </div>
                                 <div>
@@ -1441,9 +1431,8 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
 
                             {/* Status */}
                             <td>
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                                isActive ? 'bg-emerald-50 text-[#059669] border border-[#059669]/30' : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
-                              }`}>
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-[#059669] border border-[#059669]/30' : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
+                                }`}>
                                 {isActive ? 'Active' : 'Deactivated'}
                               </span>
                             </td>
@@ -1590,7 +1579,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
       >
         <form onSubmit={handleRejectDoctorSubmit} className="space-y-4">
           <p className="text-xs text-[#55647C]">
-            Specify the audit deficiency for denying this physician's BMDC registration:
+            Specify the audit deficiency for denying this doctor's BMDC registration:
           </p>
           <textarea
             rows={3}
@@ -1616,7 +1605,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
         isOpen={showOnboardModal}
         onClose={() => setShowOnboardModal(false)}
         title="Onboard Doctor Account"
-        subtitle="Provision a verified physician account directly into Telehealth Bangladesh"
+        subtitle="Provision a verified doctor account directly into Telehealth Bangladesh"
       >
         <form onSubmit={handleOnboardDoctorSubmit} className="space-y-4">
           {onboardError && (

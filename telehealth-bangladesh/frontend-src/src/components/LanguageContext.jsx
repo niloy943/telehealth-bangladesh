@@ -91,7 +91,7 @@ const translations = {
     fee: "Fee",
 
     // Medical Records
-    encryptedRecords: "Encrypted Health Records",
+    encryptedRecords: "Health Records",
     clinicalIndex: "Encrypted Clinical Index",
     addNewRecord: "Encrypt New Health Record",
     recordCategory: "Record Category",
@@ -108,7 +108,7 @@ const translations = {
     consentManager: "Consent Manager",
     delegateAccess: "Delegate Clinical Access",
     delegateDesc: "Enforce role-based access security. Explicitly allow registered specialists to inspect your historical health records.",
-    selectPhysician: "Select Physician",
+    selectPhysician: "Select Doctor",
     validityDuration: "Consent Validity Duration",
     authorizeKey: "Authorize Key Access",
     activeTokens: "Active Access Tokens",
@@ -123,7 +123,7 @@ const translations = {
     fortyEightHours: "48 Hours",
 
     // Doctor Workstation
-    docWorkstation: "Physician Workstation",
+    docWorkstation: "Doctor Workstation",
     dailyQueue: "Patient Consultation Desk",
     incomeOverview: "Earnings Overview",
     availabilityStatus: "Online Availability Status",

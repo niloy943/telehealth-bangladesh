@@ -63,7 +63,7 @@ You can import `telehealth_openapi_spec.json` directly into:
 
 ### 2. User Profiles & Doctor KYC (5 APIs)
 - `GET /api/profile/` — Fetch User / Doctor / Patient Profile
-- `PUT /api/profile/` — Update Demographics and Medical Indicators
+- `PUT /api/profile/` — Update  and Medical Indicators
 - `GET /api/doctors/` — Public Directory of Verified Doctors
 - `GET /api/admin/doctors/` — Admin Doctor KYC Review List
 - `POST /api/admin/doctors/{id}/action/` — Approve / Reject Doctor Verification
@@ -78,7 +78,7 @@ You can import `telehealth_openapi_spec.json` directly into:
 - `PUT /api/consultations/{id}/` — Save Diagnosis, Vitals, and Clinical Notes
 
 ### 4. E2EE Medical Records & Patient Consent (5 APIs)
-- `GET /api/records/` — List Patient Encrypted Health Records
+- `GET /api/records/` — List Patient Health Records
 - `POST /api/records/` — Upload Encrypted Medical Record
 - `GET /api/consent/` — List Active Doctor Access Grants
 - `POST /api/consent/` — Grant Record Access to Doctor

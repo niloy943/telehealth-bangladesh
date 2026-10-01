@@ -228,7 +228,7 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// 4. OTP Verification (Validates code, manages attempts/expiration, issues temp claim token)
+// 4. OTP Verification (Validates code, manages /expiration, issues temp claim token)
 const verifyOTP = async (req, res) => {
   const { email_or_phone, otp } = req.body;
   const ipAddress = req.ip || req.connection.remoteAddress;
@@ -261,7 +261,7 @@ const verifyOTP = async (req, res) => {
 
     // Check brute force thresholds (Max 3 retries)
     if (verification.retry_attempts >= 3) {
-      return res.status(400).json({ error: 'Too many incorrect attempts. This OTP has been blocked. Please request a new code.' });
+      return res.status(400).json({ error: 'Too many incorrect . This OTP has been blocked. Please request a new code.' });
     }
 
     // Check OTP expiration (5 mins)
@@ -287,15 +287,15 @@ const verifyOTP = async (req, res) => {
       await logAction({
         userId: user ? user.id : null,
         action: 'OTP_INVALID_ATTEMPT',
-        details: `Invalid OTP entry. Attempt #${verification.retry_attempts}. Remaining attempts: ${remaining}`,
+        details: `Invalid OTP entry. Attempt #${verification.retry_attempts}. Remaining : ${remaining}`,
         ipAddress
       });
 
       if (remaining <= 0) {
-        return res.status(400).json({ error: 'Too many incorrect attempts. This OTP has been locked. Please request a new code.' });
+        return res.status(400).json({ error: 'Too many incorrect . This OTP has been locked. Please request a new code.' });
       }
 
-      return res.status(400).json({ error: `Incorrect verification code. You have ${remaining} attempts remaining.` });
+      return res.status(400).json({ error: `Incorrect verification code. You have ${remaining}  remaining.` });
     }
 
     // Correct OTP: Update Reset Logs to verified
@@ -421,7 +421,56 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// 6. Fetch System Audit Logs (Admin access only)
+// 6. Change Password (Authenticated users)
+const changePassword = async (req, res) => {
+  const { current_password, new_password, confirm_password, current, new: newPwd, confirm: confirmPwd } = req.body;
+  const currentVal = current_password || current;
+  const newVal = new_password || newPwd;
+  const confirmVal = confirm_password || confirmPwd;
+  const ipAddress = req.ip || req.connection.remoteAddress;
+
+  if (!currentVal || !newVal) {
+    return res.status(400).json({ error: 'Current password and new password are required.' });
+  }
+
+  if (confirmVal && newVal !== confirmVal) {
+    return res.status(400).json({ error: 'New passwords do not match.' });
+  }
+
+  if (newVal.length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+  }
+
+  try {
+    const userId = req.user?.id || req.user?.user_id;
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    const isValid = await user.comparePassword(currentVal);
+    if (!isValid) {
+      return res.status(400).json({ error: 'Current password is incorrect.' });
+    }
+
+    user.setPassword(newVal);
+    await user.save();
+
+    await logAction({
+      userId: user.id,
+      action: 'PASSWORD_CHANGED',
+      details: 'User successfully changed account password.',
+      ipAddress
+    });
+
+    return res.status(200).json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ error: 'Failed to update password.' });
+  }
+};
+
+// 7. Fetch System Audit Logs (Admin access only)
 const getAuditLogs = async (req, res) => {
   try {
     // Ensure requesting user has the admin role
@@ -452,5 +501,6 @@ module.exports = {
   forgotPassword,
   verifyOTP,
   resetPassword,
+  changePassword,
   getAuditLogs
 };

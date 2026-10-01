@@ -72,7 +72,7 @@ const MainApp = () => {
     try {
       localStorage.removeItem('theme');
       localStorage.removeItem('darkMode');
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   useEffect(() => { setMobileMenuOpen(false); }, [activeTab]);
@@ -227,7 +227,7 @@ const MainApp = () => {
     if (actionId === 'logout') { setLogoutModalOpen(true); }
     else if (actionId === 'sos') {
       const alarm = document.getElementById("audioRingtone");
-      if (alarm) { alarm.play().catch(() => {}); setTimeout(() => alarm.pause(), 4000); }
+      if (alarm) { alarm.play().catch(() => { }); setTimeout(() => alarm.pause(), 4000); }
       triggerNotification("Emergency SOS Alert", "Broadcasting location to emergency contacts.", "security");
     } else if (actionId === 'toggle-availability') {
       triggerNotification("Availability Updated", "Your status has been updated.", "system");
@@ -251,10 +251,9 @@ const MainApp = () => {
   const unreadNotifCount = notifications.filter(n => !n.read).length;
 
   const navBtn = (tab, isActive, isSubItem = false) =>
-    `w-full flex items-center gap-3 px-4 ${isSubItem ? 'py-2 pl-6 text-[11px]' : 'py-3 text-xs'} rounded-[10px] font-semibold select-none cursor-pointer transition-colors ${
-      isActive
-        ? 'bg-[#059669] text-white'
-        : 'text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white'
+    `w-full flex items-center gap-3 px-4 ${isSubItem ? 'py-2 pl-6 text-[11px]' : 'py-3 text-xs'} rounded-[10px] font-semibold select-none cursor-pointer transition-colors ${isActive
+      ? 'bg-[#059669] text-white'
+      : 'text-[#CBD5E1] hover:bg-[#1E293B] hover:text-white'
     }`;
 
   const getPageTitle = () => {
@@ -263,22 +262,22 @@ const MainApp = () => {
       dashboard: user.role === 'doctor' ? 'Clinical Workspace & Queue' : user.role === 'admin' ? 'Security & Executive Console' : 'My Health Home',
       ai: 'AI Health Assistant',
       booking: 'Find a Doctor & Specialty Directory',
-      records: 'Encrypted Health Records',
-      prescriptions: 'Digital Prescriptions & Rx',
+      records: 'Health Records',
+      prescriptions: 'Digital Prescription',
       consent: 'Privacy & Data Consent Manager',
       pharmacy: user.role === 'admin' ? 'Medicine Order Management' : 'Pharmacy Store & Prescription Delivery',
-      payments: 'Billing & Payment Ledger',
-      schedule: 'Physician Consultation Fee & Weekly Schedule',
+      payments: 'Billing & Payment',
+      schedule: 'Doctor Consultation Fee & Weekly Schedule',
       audit: 'Security & Audit Ledger',
       kyc: 'Doctor Registry & License Verification',
       staff: 'Admin & Staff Authority Directory',
-      profile: 'Account Details & Demographics',
-      profile_personal: 'Account Details & Demographics',
-      profile_security: 'Security Center & Multi-Factor Auth',
-      profile_kyc: user.role === 'doctor' ? 'BMDC License & KYC Verification' : 'Citizen National ID (NID) KYC',
-      profile_clinical: user.role === 'doctor' ? 'Specialist Affiliation & Credentials' : 'Medical Vitals & Clinical History',
-      profile_activity: 'Security & User Activity Logs',
-      profile_privacy: 'Privacy Policy & Data Sharing Settings'
+      profile: 'Account Details',
+      profile_personal: 'Account Details',
+      profile_security: 'Security & Multi-Factor Auth',
+      profile_kyc: user.role === 'doctor' ? 'BMDC License & KYC Verification' : 'National ID (NID) KYC',
+      profile_clinical: user.role === 'doctor' ? 'Specialist Affiliation & Credentials' : 'Vital History',
+      profile_activity: 'User Activity',
+      profile_privacy: 'Privacy Policy'
     };
     return titles[activeTab] || 'Dashboard';
   };

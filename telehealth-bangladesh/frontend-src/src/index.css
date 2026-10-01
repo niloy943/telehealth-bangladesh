@@ -165,6 +165,8 @@ input[type="time"],
 input[type="url"],
 select,
 textarea {
+  width: 100%;
+  display: block;
   background-color: #E7F0FC !important;
   border: none !important;
   border-radius: 15px !important;
@@ -317,4 +319,20 @@ textarea:focus-visible {
 .custom-cursor,
 #custom-cursor {
   display: none !important;
+}
+
+/* Sleek Scrollbars for Scrollable Containers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #BDDDFA;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }

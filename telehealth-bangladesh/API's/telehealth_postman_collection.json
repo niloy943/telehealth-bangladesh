@@ -268,7 +268,7 @@
           "response": []
         },
         {
-          "name": "2.2 Update Profile & Demographics",
+          "name": "2.2 Update Profile & ",
           "request": {
             "method": "PUT",
             "header": [
@@ -1986,7 +1986,7 @@
                 "audit-logs"
               ]
             },
-            "description": "Queries OTP challenge attempts, IP addresses, and verification statuses."
+            "description": "Queries OTP challenge , IP addresses, and verification statuses."
           },
           "response": []
         }

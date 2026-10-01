@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, Shield, Lock, FileText, Activity, Settings, Upload, CheckCircle2, 
+import {
+  User, Shield, Lock, FileText, Activity, Settings, Upload, CheckCircle2,
   AlertTriangle, Key, History, Eye, ArrowUp, RefreshCw, ZoomIn,
   Calendar, Clock, Plus, Trash2
 } from 'lucide-react';
@@ -15,13 +15,13 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
   const { t } = useLanguage();
   const { triggerNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState(activeSection); // 'personal', 'security', 'kyc', 'clinical', 'activity', 'privacy'
-  
+
   useEffect(() => {
     if (activeSection) {
       setActiveTab(activeSection);
     }
   }, [activeSection]);
-  
+
   // Forms state
   const [personalForm, setPersonalForm] = useState({
     first_name: user?.first_name || '',
@@ -340,12 +340,12 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
   const handleTogglePrivacy = (key) => {
     const updated = { ...privacySettings, [key]: !privacySettings[key] };
     setPrivacySettings(updated);
-    
+
     let label = key === 'twoFactorEnabled' ? "Two-Factor Auth Status Updated" : "Privacy Policy Changed";
-    let desc = key === 'twoFactorEnabled' 
-      ? `2FA ${updated[key] ? 'ENABLED' : 'DISABLED'}` 
+    let desc = key === 'twoFactorEnabled'
+      ? `2FA ${updated[key] ? 'ENABLED' : 'DISABLED'}`
       : `Sharing variables: ${updated[key] ? 'YES' : 'NO'}`;
-      
+
     triggerNotification(label, desc, "security");
     setActivities(prev => [
       { id: Date.now(), action: `Privacy toggle modified: ${key} = ${updated[key]}`, ip: '127.0.0.1', date: 'Just now' },
@@ -355,10 +355,10 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 text-xs">
-      
+
       {/* LEFT COLUMN: Profile summary & Security Score */}
       <div className="lg:col-span-1 space-y-6">
-        
+
         {/* Profile Card Summary */}
         <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl text-center space-y-4">
           <div className="relative w-24 h-24 mx-auto">
@@ -369,7 +369,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                 <span>{user?.first_name ? user.first_name[0] : (user?.username ? user.username[0] : 'U')}</span>
               )}
             </div>
-            
+
             {/* Verified Badge */}
             {(user?.bmdc_reg || docUploaded) && (
               <span className="absolute bottom-0 right-0 bg-[#059669] text-white p-1 rounded-full border-2 border-white" title="KYC Verified Specialist">
@@ -388,7 +388,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
           <div className="border-t border-[#BDDDFA] pt-3 text-left space-y-2 text-xs text-[#55647C]">
             <div className="flex justify-between">
-              <span>KYC Level:</span>
+              <span>KYC :</span>
               <span className={`font-bold uppercase ${(user?.bmdc_reg || docUploaded) ? 'text-[#059669]' : 'text-amber-600'}`}>
                 {(user?.bmdc_reg || docUploaded) ? 'Verified Class A' : 'Pending Review'}
               </span>
@@ -407,17 +407,17 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
         {/* Account Security Score Widget */}
         <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl text-center space-y-4">
           <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Account Security Score</h4>
-          
+
           <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
             {/* SVG Progress Circle */}
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="40" stroke="#E7F0FC" strokeWidth="8" fill="transparent" />
-              <circle 
-                cx="50" 
-                cy="50" 
-                r="40" 
-                stroke="#059669" 
-                strokeWidth="8" 
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                stroke="#059669"
+                strokeWidth="8"
                 fill="transparent"
                 strokeDasharray="251.2"
                 strokeDashoffset={251.2 - (251.2 * securityScore) / 100}
@@ -430,7 +430,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
           </div>
 
           <p className="text-xs text-[#55647C] leading-normal">
-            {securityScore < 50 ? "Verification pending. Complete NID/BMDC verification." : "Account security compliance is solid."}
+            {securityScore < 50 ? "Verification pending. Complete NID/BMDC verification." : "Account security."}
           </p>
         </div>
 
@@ -441,12 +441,12 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
         {/* Sub-panels display */}
         <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl min-h-[360px]">
-          
+
           {/* 1. PERSONAL DEMOGRAPHICS */}
           {activeTab === 'personal' && (
             <form onSubmit={handleSavePersonal} className="space-y-4">
-              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Edit Demographic Profile</h3>
-              
+              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Edit Profile</h3>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[#0F172A] mb-1 font-semibold">First Name</label>
@@ -475,19 +475,19 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
               </div>
 
               <div>
-                <label className="block text-[#0F172A] mb-1 font-semibold">Emergency Contacts Name &amp; Relation (Phone)</label>
+                <label className="block text-[#0F172A] mb-1 font-semibold">Emergency Contact</label>
                 <input required type="text" value={personalForm.emergency_contact} onChange={e => setPersonalForm({ ...personalForm, emergency_contact: e.target.value })} className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-[#111827] outline-none" />
               </div>
 
               <Button type="submit" variant="primary">
-                Save Demographic Data
+                Save  Data
               </Button>
             </form>
           )}
 
           {/* 2. DEDICATED SECURITY CENTER DASHBOARD */}
           {activeTab === 'security' && (
-            <SecurityCenter 
+            <SecurityCenter
               user={user}
               onUpdateUser={onUpdateUser}
               token={token}
@@ -497,21 +497,21 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
           {/* 3. KYC UPLOAD CENTRE */}
           {activeTab === 'kyc' && (
             <div className="space-y-6">
-              
+
               {/* Profile Photo Uploader */}
               <div className="space-y-3">
-                <h4 className="font-bold text-[#0F172A]">Update Profile Avatar</h4>
-                
+                <h4 className="font-bold text-[#0F172A]">Update Profile</h4>
+
                 {avatarCropOpen ? (
                   <div className="bg-[#E7F0FC] p-4 border border-[#BDDDFA] rounded-xl space-y-4">
                     <p className="text-[10px] text-[#55647C]">Avatar image loaded. Click confirm to save:</p>
-                    
+
                     <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-[#168CF5] mx-auto bg-white flex items-center justify-center">
                       {avatarPreview && (
-                        <img 
-                          src={avatarPreview} 
-                          alt="Crop Preview" 
-                          className="w-full h-full object-cover" 
+                        <img
+                          src={avatarPreview}
+                          alt="Crop Preview"
+                          className="w-full h-full object-cover"
                         />
                       )}
                     </div>
@@ -527,14 +527,14 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                   </div>
                 ) : (
                   <div className="flex items-center gap-4 bg-[#E7F0FC] p-4 rounded-xl border border-[#BDDDFA]">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       id="avatarFile"
                       accept="image/*"
                       onChange={handleAvatarSelect}
-                      className="hidden" 
+                      className="hidden"
                     />
-                    <label 
+                    <label
                       htmlFor="avatarFile"
                       className="border border-dashed border-[#BDDDFA] bg-white rounded-xl px-5 py-4 cursor-pointer text-center flex-grow"
                     >
@@ -548,17 +548,17 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
               {/* KYC Document Uploader */}
               <div className="space-y-3">
-                <h4 className="font-bold text-[#0F172A]">{user?.role === 'doctor' ? 'BMDC Registration Certificate Scan' : 'Citizen National ID (NID) Scan'}</h4>
-                
-                <input 
-                  type="file" 
+                <h4 className="font-bold text-[#0F172A]">{user?.role === 'doctor' ? 'BMDC Registration Certificate Scan' : ' ID (NID) Scan'}</h4>
+
+                <input
+                  type="file"
                   id="kycDocFile"
                   accept=".pdf,image/*"
                   onChange={handleDocSelect}
-                  className="hidden" 
+                  className="hidden"
                 />
-                
-                <label 
+
+                <label
                   htmlFor="kycDocFile"
                   className="border-2 border-dashed border-[#BDDDFA] bg-[#E7F0FC] rounded-xl py-6 text-center cursor-pointer block"
                 >
@@ -584,8 +584,8 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
           {/* 4. ROLE SPECIFIC DETAILS: CLINICAL / PROFESSIONAL */}
           {activeTab === 'clinical' && user?.role === 'patient' && (
             <form onSubmit={handleSaveMedical} className="space-y-4">
-              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Patient Medical Vitals Record</h3>
-              
+              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Vitals Record</h3>
+
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[#0F172A] mb-1 font-semibold">Blood Group</label>
@@ -616,7 +616,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
               </div>
 
               <div>
-                <label className="block text-[#0F172A] mb-1 font-semibold">Chronic Conditions / Current Medications</label>
+                <label className="block text-[#0F172A] mb-1 font-semibold">Current Medications</label>
                 <textarea rows="2" placeholder="e.g. Hypertension - Napa 500mg daily" value={medicalForm.chronic_conditions} onChange={e => setMedicalForm({ ...medicalForm, chronic_conditions: e.target.value })} className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-[#111827] outline-none"></textarea>
               </div>
 
@@ -636,7 +636,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                   Configure your medical specialty, hospital affiliation, consultation fee, and weekly availability schedule.
                 </p>
               </div>
-              
+
               {/* Professional Credentials & Fee */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -802,7 +802,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
           {activeTab === 'activity' && (
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Action Logs</h3>
-              
+
               <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
                 {activities.map(act => (
                   <div key={act.id} className="bg-[#E7F0FC] p-3 rounded-xl border border-[#BDDDFA] flex justify-between items-center">
@@ -821,16 +821,16 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
           {activeTab === 'privacy' && (
             <div className="space-y-6">
               <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Security Policy &amp; Privacy Configuration</h3>
-              
+
               <div className="space-y-4">
-                
+
                 {/* Switch 1 */}
                 <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
                   <div>
                     <h4 className="font-bold text-[#0F172A]">Clinical Records Visibility</h4>
-                    <p className="text-[10px] text-[#55647C] mt-0.5">Allow verified medical doctors to inspect diagnostic history during consultation.</p>
+                    <p className="text-[10px] text-[#55647C] mt-0.5"></p>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => handleTogglePrivacy('visibleToDocs')}
                     className={`w-11 h-6 rounded-full relative border ${privacySettings.visibleToDocs ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
@@ -843,9 +843,9 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                 <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
                   <div>
                     <h4 className="font-bold text-[#0F172A]">SMS &amp; Real-Time Alerts</h4>
-                    <p className="text-[10px] text-[#55647C] mt-0.5">Receive SMS notifications for scheduled appointments and prescription issues.</p>
+                    <p className="text-[10px] text-[#55647C] mt-0.5"></p>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => handleTogglePrivacy('alertsEnabled')}
                     className={`w-11 h-6 rounded-full relative border ${privacySettings.alertsEnabled ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
@@ -858,9 +858,9 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                 <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
                   <div>
                     <h4 className="font-bold text-[#0F172A]">Two-Factor Authentication</h4>
-                    <p className="text-[10px] text-[#55647C] mt-0.5">Require an authentication passcode during login entry.</p>
+                    <p className="text-[10px] text-[#55647C] mt-0.5"></p>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => handleTogglePrivacy('twoFactorEnabled')}
                     className={`w-11 h-6 rounded-full relative border ${privacySettings.twoFactorEnabled ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}

@@ -312,7 +312,7 @@ class PaymentTransactionSerializer(serializers.ModelSerializer):
         return {
             "id": obj.appointment.id,
             "doctor_name": f"Dr. {doc.first_name} {doc.last_name}".strip() or doc.username,
-            "specialty": doc_prof.specialty if doc_prof else "General Physician",
+            "specialty": doc_prof.specialty if doc_prof else "General Doctor",
             "date": str(obj.appointment.date),
             "time": obj.appointment.time,
         }

@@ -22,25 +22,25 @@ const otpLimiter = rateLimit({
   }
 });
 
-// Rate limiter for verification attempts (prevents brute forcing the 6-digit OTP code)
+// Rate limiter for verification  (prevents brute forcing the 6-digit OTP code)
 const verificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // Limit each IP to 10 OTP checks per window
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    error: 'Too many verification attempts. Please wait 15 minutes before trying again.'
+    error: 'Too many verification . Please wait 15 minutes before trying again.'
   }
 });
 
 // Rate limiter for login requests (prevents brute force logins)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 attempts per window
+  max: 5, // Limit each IP to 5  per window
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    error: 'Too many login attempts. Account lockout policy triggered. Please try again in 15 minutes.'
+    error: 'Too many login . Account lockout policy triggered. Please try again in 15 minutes.'
   }
 });
 

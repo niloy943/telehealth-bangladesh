@@ -240,7 +240,7 @@ class AdminDoctorKYCView(APIView):
         last_name = data.get('last_name', '')
         phone = data.get('phone', '')
         bmdc_reg = data.get('bmdc_reg', '')
-        specialty = data.get('specialty', 'General Physician')
+        specialty = data.get('specialty', 'General Doctor')
         hospital = data.get('hospital', '')
         fees = data.get('fees', 500)
         experience = data.get('experience', 1)
@@ -667,7 +667,7 @@ class SecureLoginView(APIView):
         if attempt.locked_until and attempt.locked_until > timezone.now():
             seconds_left = int((attempt.locked_until - timezone.now()).total_seconds())
             return Response({
-                "error": f"Account locked due to consecutive failed attempts. Please retry in {seconds_left} seconds."
+                "error": f"Account locked due to consecutive failed . Please retry in {seconds_left} seconds."
             }, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         # Check if account exists and is deactivated/suspended before authentication fails obscurely
@@ -681,11 +681,11 @@ class SecureLoginView(APIView):
         user = authenticate(username=username, password=password)
 
         if not user:
-            # Increment failed attempts
+            # Increment failed 
             attempt.failed_count += 1
             if attempt.failed_count >= 5:
                 attempt.locked_until = timezone.now() + timezone.timedelta(minutes=15)
-                write_audit_log(None, "BRUTE_FORCE_LOCKOUT", f"Account {username} locked out after 5 failed attempts from IP {ip_addr}", request)
+                write_audit_log(None, "BRUTE_FORCE_LOCKOUT", f"Account {username} locked out after 5 failed  from IP {ip_addr}", request)
             attempt.save()
             write_audit_log(None, "LOGIN_FAILED", f"Failed login for {username}", request)
             return Response({"error": "Invalid username or password."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -766,7 +766,7 @@ class MFAVerifyView(APIView):
         if otp_record.retry_attempts >= 3:
             otp_record.is_used = True
             otp_record.save()
-            return Response({"error": "Too many failed OTP attempts. MFA session locked. Please login again."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Too many failed OTP . MFA session locked. Please login again."}, status=status.HTTP_400_BAD_REQUEST)
 
         computed_hash = hashlib.sha256(otp_code.encode('utf-8')).hexdigest()
 
@@ -774,7 +774,7 @@ class MFAVerifyView(APIView):
             otp_record.retry_attempts += 1
             otp_record.save()
             remaining = 3 - otp_record.retry_attempts
-            return Response({"error": f"Invalid OTP code. {remaining} attempts remaining."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"Invalid OTP code. {remaining}  remaining."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Successful MFA verification! Mark OTP as used and issue JWT tokens
         otp_record.is_used = True
@@ -843,7 +843,7 @@ class AppointmentViewSet(APIView):
         # Verify doctor account is active and approved
         target_doc = User.objects.filter(id=data.get('doctor'), role='doctor').first()
         if not target_doc or not target_doc.is_active:
-            return Response({"error": "Selected physician is currently suspended or inactive and cannot accept appointments."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Selected doctor is currently suspended or inactive and cannot accept appointments."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Robust date parsing: accept standard YYYY-MM-DD or localized string formats (e.g. 17-Sep-2026, 17/09/2026)
         raw_date = data.get('date')
@@ -1951,7 +1951,7 @@ class ConsultationDetailView(APIView):
                 "id": appt.doctor.id,
                 "name": f"Dr. {appt.doctor.first_name} {appt.doctor.last_name}".strip() or appt.doctor.username,
                 "phone": appt.doctor.phone or "",
-                "specialty": getattr(getattr(appt.doctor, 'doctor_profile', None), 'specialty', 'General Physician')
+                "specialty": getattr(getattr(appt.doctor, 'doctor_profile', None), 'specialty', 'General Doctor')
             },
             "patient": {
                 "id": appt.patient.id,
@@ -2178,6 +2178,50 @@ class ResetPasswordView(APIView):
         write_audit_log(user, "PASSWORD_RESET_SUCCESS", f"Password successfully reset for username: {user.username}", request)
 
         return Response({"message": "Password has been successfully reset. You can now login with your new password."}, status=status.HTTP_200_OK)
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current_password = request.data.get('current_password') or request.data.get('current')
+        new_password = request.data.get('new_password') or request.data.get('new')
+        confirm_password = request.data.get('confirm_password') or request.data.get('confirm')
+
+        if not current_password or not new_password:
+            return Response({"error": "Current password and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(current_password):
+            return Response({"error": "Current password is incorrect."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if confirm_password and new_password != confirm_password:
+            return Response({"error": "New passwords do not match."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 6:
+            return Response({"error": "New password must be at least 6 characters long."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        # Keep Node backend SQLite Users table in sync if present
+        try:
+            import sqlite3
+            import bcrypt
+            from pathlib import Path
+            node_db_path = Path(__file__).resolve().parent.parent.parent / "node-backend" / "src" / "config" / "database.sqlite"
+            if node_db_path.exists():
+                hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                conn = sqlite3.connect(str(node_db_path))
+                cursor = conn.cursor()
+                cursor.execute("UPDATE Users SET password = ? WHERE username = ? OR email = ?", (hashed, user.username, user.email))
+                conn.commit()
+                conn.close()
+        except Exception as e:
+            print(f"Node DB password sync note: {e}")
+
+        write_audit_log(user, "PASSWORD_CHANGED", f"User {user.username} successfully rotated account password.", request)
+
+        return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
 
 class PatientImageProfileViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]

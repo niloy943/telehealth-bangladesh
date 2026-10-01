@@ -21,7 +21,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 /* ─── Digital Prescription PDF Download Utility ─── */
 const downloadPrescriptionPDF = (p) => {
   const docName = p.doctor_details ? `Dr. ${p.doctor_details.first_name} ${p.doctor_details.last_name}` : "Certified Doctor";
-  const docSpecialty = p.doctor_details ? p.doctor_details.specialty : "General Physician";
+  const docSpecialty = p.doctor_details ? p.doctor_details.specialty : "General Doctor";
   const docReg = p.doctor_details ? p.doctor_details.bmdc_reg : "BMDC Verified";
 
   const patName = p.patient_details ? `${p.patient_details.first_name || ''} ${p.patient_details.last_name || ''}`.trim() || p.patient_details.username : "Patient";
@@ -97,7 +97,7 @@ const downloadPrescriptionPDF = (p) => {
       </table>
 
       <div style="background: #E7F0FC; border-left: 4px solid #168CF5; padding: 12px 14px; border-radius: 6px; margin-bottom: 24px; font-size: 13px; color: #0F172A;">
-        <strong style="display: block; margin-bottom: 3px; font-size: 13px; color: #0F172A;">Physician Instructions:</strong>
+        <strong style="display: block; margin-bottom: 3px; font-size: 13px; color: #0F172A;">Doctor Instructions:</strong>
         ${p.instructions || "Follow prescribed dosage. Stay hydrated and schedule a follow-up if symptoms persist."}
       </div>
 
@@ -575,7 +575,7 @@ export const PatientDashboard = ({
       });
 
       if (resp.status === 201) {
-        triggerNotification("Consent Authorized", "Selected physician can now view your health records for the specified duration.", "security");
+        triggerNotification("Consent Authorized", "Selected doctor can now view your health records for the specified duration.", "security");
         setConsentForm({ doctorId: "", hours: 24 });
         fetchConsents();
       }
@@ -592,7 +592,7 @@ export const PatientDashboard = ({
         }
       });
       if (resp.status === 200) {
-        triggerNotification("Consent Revoked", "Physician access to your medical records has been terminated immediately.", "security");
+        triggerNotification("Consent Revoked", "Doctor access to your medical records has been terminated immediately.", "security");
         fetchConsents();
       }
     } catch (err) { console.error(err); }
@@ -806,7 +806,7 @@ export const PatientDashboard = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider block mb-1">
-                    Patient Health Portal
+
                   </span>
                   <h1 className="text-xl font-bold text-[#0F172A] tracking-tight">
                     {getGreeting()}, {user.first_name || user.username}
@@ -990,7 +990,7 @@ export const PatientDashboard = ({
                       </div>
                       <div>
                         <CardTitle>Upcoming Consultations</CardTitle>
-                        <CardDescription>Scheduled appointments</CardDescription>
+                        <CardDescription></CardDescription>
                       </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setSubView('booking')}>
@@ -1049,7 +1049,7 @@ export const PatientDashboard = ({
                             </Button>
                           ) : (
                             <span className="text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-lg border border-[#BDDDFA] text-center font-medium">
-                              Awaiting Physician Confirmation
+                              Awaiting Doctor Confirmation
                             </span>
                           )}
                         </div>
@@ -1290,7 +1290,7 @@ export const PatientDashboard = ({
                     <EmptyState
                       icon={Award}
                       title="No prescriptions issued yet"
-                      description="When a doctor completes a consultation, your digital prescription will appear here."
+                      description=""
                     />
                   ) : (
                     <div className="space-y-3">
@@ -1334,7 +1334,7 @@ export const PatientDashboard = ({
                     <EmptyState
                       icon={ShieldCheck}
                       title="No active authorizations"
-                      description="You have not delegated clinical record access to any physician yet."
+                      description="You have not delegated clinical record access to any doctor yet."
                     />
                   ) : (
                     <div className="space-y-3">
@@ -1371,7 +1371,7 @@ export const PatientDashboard = ({
         <div className="space-y-6">
           <PageHeader
             title="Find a Verified Doctor"
-            
+
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1379,35 +1379,56 @@ export const PatientDashboard = ({
             }
           />
 
-          {/* Search & Specialty Filter Controls */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-[#4B5563]" />
+          {/* Search & Specialty Suggestion Filter Controls */}
+          <div className="space-y-3">
+            {/* Search Bar on Top */}
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="w-4 h-4 text-[#4B5563]" />
+              </div>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder="Search by doctor name or medical department..."
-                className="w-full pl-10 pr-4 py-2.5 bg-[#E7F0FC] rounded-[15px] text-xs text-[#111827] placeholder-[#4B5563] outline-none"
+                className="w-full pl-11 pr-10 py-3 bg-[#E7F0FC] rounded-[15px] text-xs text-[#111827] placeholder-[#4B5563] outline-none border border-transparent focus:border-[#BDDDFA] transition-all"
+                style={{ paddingLeft: '2.75rem' }}
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#55647C] hover:text-[#0F172A]"
+                  title="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            <div className="bg-[#E7F0FC] p-1 rounded-xl flex items-center gap-1 border border-[#BDDDFA] overflow-x-auto w-full sm:w-auto">
-              {['all', 'Cardiology', 'Pediatrics', 'General Practice'].map(spec => {
-                const isActive = specialtyFilter === spec;
-                return (
-                  <button
-                    key={spec}
-                    onClick={() => setSpecialtyFilter(spec)}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${isActive
-                      ? 'bg-[#0F172A] text-white shadow-sm'
-                      : 'text-[#55647C] hover:text-[#0F172A]'
-                      }`}
-                  >
-                    {spec === 'all' ? 'All Specialties' : spec}
-                  </button>
-                );
-              })}
+            {/* Recommendation & Suggestion Bar Under the Search Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-[#55647C] flex items-center gap-1.5 mr-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#168CF5]" />
+
+              </span>
+              <div className="bg-[#E7F0FC] p-1 rounded-xl flex items-center gap-1 border border-[#BDDDFA] overflow-x-auto max-w-full">
+                {['all', 'Cardiology', 'Pediatrics', 'General Practice', 'ENT'].map(spec => {
+                  const isActive = specialtyFilter === spec;
+                  return (
+                    <button
+                      key={spec}
+                      onClick={() => setSpecialtyFilter(spec)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${isActive
+                        ? 'bg-[#0F172A] text-white shadow-sm'
+                        : 'text-[#55647C] hover:text-[#0F172A]'
+                        }`}
+                    >
+                      {spec === 'all' ? 'All Specialties' : spec}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -1495,8 +1516,8 @@ export const PatientDashboard = ({
       {subView === 'records' && (
         <div className="space-y-6">
           <PageHeader
-            title="Encrypted Health Records"
-            subtitle="Your medical records are cryptographically protected. Only you and authorized doctors can view them."
+            title="Health Records"
+            subtitle=""
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1508,7 +1529,7 @@ export const PatientDashboard = ({
           <Card>
             <CardHeader>
               <CardTitle>Add Medical Record</CardTitle>
-              <CardDescription>Enter clinical parameters or drag and drop diagnostic documents.</CardDescription>
+              <CardDescription>Enter clinical diagnostic documents.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1557,7 +1578,7 @@ export const PatientDashboard = ({
                   </div>
                   <h4 className="text-xs font-bold text-[#0F172A]">Drop lab report file here</h4>
                   <p className="text-[10px] text-[#55647C] mt-1 max-w-xs">
-                    Drag and drop PDF/JPEG reports or click to upload into encrypted ledger.
+                    Drag and drop PDF/JPEG reports or click
                   </p>
                 </div>
               </div>
@@ -1565,7 +1586,7 @@ export const PatientDashboard = ({
           </Card>
 
           {/* Records Timeline List */}
-          <SectionHeader title="Recorded Medical History" subtitle={`${records.length} encrypted documents stored.`} />
+          <SectionHeader title="Medical History" subtitle={`${records.length} documents stored.`} />
 
           {records.length === 0 ? (
             <EmptyState
@@ -1614,7 +1635,7 @@ export const PatientDashboard = ({
         <div className="space-y-6">
           <PageHeader
             title="Digital Prescriptions"
-            subtitle="View, download, and verify digital prescriptions signed by certified physicians."
+            subtitle="View, download, and verify digital prescriptions"
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1682,7 +1703,7 @@ export const PatientDashboard = ({
         <div className="space-y-6">
           <PageHeader
             title="Privacy &amp; Consent Manager"
-            subtitle="Grant and revoke time-limited decryption keys. Physicians cannot access your records without authorization."
+            subtitle="Doctors cannot access your records without authorization."
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1693,13 +1714,13 @@ export const PatientDashboard = ({
           {/* Grant Consent Form Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Grant Access to Physician</CardTitle>
+              <CardTitle>Grant Access to Doctor</CardTitle>
               <CardDescription>Select an authenticated doctor and specify authorization window duration.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleGrantConsent} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">Select Physician</label>
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">Select Doctor</label>
                   <select
                     value={consentForm.doctorId}
                     onChange={e => setConsentForm({ ...consentForm, doctorId: e.target.value })}
@@ -1739,7 +1760,7 @@ export const PatientDashboard = ({
           </Card>
 
           {/* Active Consents List */}
-          <SectionHeader title="Active Authorizations" subtitle="Physicians currently permitted to inspect your clinical record history." />
+          <SectionHeader title="Active Authorizations" subtitle="" />
 
           {consents.length === 0 ? (
             <EmptyState
@@ -1786,7 +1807,7 @@ export const PatientDashboard = ({
         <div className="space-y-6">
           <PageHeader
             title="Medicine Store &amp; Courier Dispatch"
-            subtitle="Order pharmaceuticals with doorstep courier delivery and digital payment."
+            subtitle="Order pharmacy with digital payment & delivery."
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1926,14 +1947,14 @@ export const PatientDashboard = ({
                 Billing &amp; Payment Ledger
               </h2>
               <p className="text-xs text-[#55647C] mt-0.5">
-                Verified SSLCommerz transactions, digital consultation receipts, and pharmacy invoices.
+
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E7F0FC] text-[#059669] border border-[#059669]">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
-                SSLCommerz TLS Verified
+                TLS Verified
               </span>
               <Button
                 variant="outline"

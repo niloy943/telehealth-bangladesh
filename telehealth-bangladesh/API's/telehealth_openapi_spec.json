@@ -701,7 +701,7 @@
         "tags": [
           "E2EE Records"
         ],
-        "summary": "List Patient Encrypted Health Records",
+        "summary": "List Patient Health Records",
         "description": "",
         "responses": {
           "200": {

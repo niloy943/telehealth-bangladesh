@@ -330,7 +330,7 @@ const Services = () => {
       icon: Video
     },
     {
-      title: "Encrypted Health Records",
+      title: "Health Records",
       desc: "Upload lab tests, imaging, and clinical histories. Control exactly who can view your medical data.",
       icon: FileText
     },
@@ -360,7 +360,7 @@ const Services = () => {
             Healthcare Services
           </h2>
           <p className="text-sm text-[#55647C] mt-2">
-            Designed to meet the full spectrum of patient and physician needs under strict clinical safety standards.
+            Designed to meet the full spectrum of patient and doctor needs under strict clinical safety standards.
           </p>
         </div>
 
@@ -482,13 +482,13 @@ const FeaturedDoctors = ({ onGetStarted }) => {
 const SecuritySection = () => {
   const capabilities = [
     {
-      title: "Encrypted Health Records",
+      title: "Health Records",
       desc: "Medical reports are hashed and encrypted on device before entering the database. Symmetric keys are governed by the patient.",
       icon: Lock
     },
     {
       title: "Multi-Factor Authentication (MFA)",
-      desc: "Protects physician workstations and patient accounts with 6-digit cryptographic one-time passwords.",
+      desc: "Protects doctor workstations and patient accounts with 6-digit cryptographic one-time passwords.",
       icon: ShieldCheck
     },
     {
@@ -498,7 +498,7 @@ const SecuritySection = () => {
     },
     {
       title: "BMDC License Audits",
-      desc: "System administrators review and verify national medical registry credentials before physician routing is enabled.",
+      desc: "System administrators review and verify national medical registry credentials before doctor routing is enabled.",
       icon: UserCheck
     },
     {
@@ -575,7 +575,7 @@ const Footer = ({ onLogin, onGetStarted }) => {
             <ul className="space-y-1.5 text-xs text-[#CBD5E1]">
               <li><button onClick={onGetStarted} className="hover:text-white cursor-pointer">Video Consultation</button></li>
               <li><button onClick={onGetStarted} className="hover:text-white cursor-pointer">E-Prescriptions</button></li>
-              <li><button onClick={onGetStarted} className="hover:text-white cursor-pointer">Encrypted Health Records</button></li>
+              <li><button onClick={onGetStarted} className="hover:text-white cursor-pointer">Health Records</button></li>
               <li><button onClick={onGetStarted} className="hover:text-white cursor-pointer">Medicine Delivery</button></li>
             </ul>
           </div>

@@ -10,7 +10,7 @@ from api.views import (
     AppointmentViewSet, HealthRecordViewSet, ConsentViewSet,
     PrescriptionViewSet, PrescriptionShareView, SharedPrescriptionView,
     MedicineListView, MedicineOrderViewSet, AuditLogListView,
-    ForgotPasswordView, ResetPasswordView, PatientImageProfileViewSet,
+    ForgotPasswordView, ResetPasswordView, ChangePasswordView, PatientImageProfileViewSet,
     SecureLoginView, MFAVerifyView, AdminDoctorKYCView, AdminDoctorActionView,
     AdminStaffManagementView, AdminStaffDetailView,
     PaymentInitiateView, PaymentCallbackView, PaymentIPNView, PaymentStatusView, PaymentHistoryView,
@@ -33,6 +33,8 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/forgot-password/', ForgotPasswordView.as_view(), name='forgot_password'),
     path('api/auth/reset-password/', ResetPasswordView.as_view(), name='reset_password'),
+    path('api/auth/change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('api/change-password/', ChangePasswordView.as_view(), name='change_password_alias'),
     
     # User & Doctor Profiles / KYC Review Center / Staff Management
     path('api/profile/', UserProfileView.as_view(), name='profile_detail'),

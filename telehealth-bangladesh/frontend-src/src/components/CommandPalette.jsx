@@ -24,7 +24,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
   const getCommands = () => {
     const common = [
       { id: 'toggle-lang', title: 'Switch Language (EN / বাংলা)', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Settings', action: () => { toggleLanguage(); onClose(); } },
-      { id: 'go-profile-personal', title: 'Navigate: Account Details & Demographics', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Profile', action: () => { onAction('profile_personal'); onClose(); } },
+      { id: 'go-profile-personal', title: 'Navigate: Account Details', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Profile', action: () => { onAction('profile_personal'); onClose(); } },
       { id: 'go-profile-security', title: 'Navigate: Security Center & 2FA', icon: <Shield className="w-4 h-4 text-[#059669]" />, category: 'Profile', action: () => { onAction('profile_security'); onClose(); } },
       { id: 'go-profile-kyc', title: 'Navigate: KYC Verification Files', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Profile', action: () => { onAction('profile_kyc'); onClose(); } },
       { id: 'go-profile-activity', title: 'Navigate: Activity & Access Logs', icon: <Compass className="w-4 h-4 text-[#55647C]" />, category: 'Profile', action: () => { onAction('profile_activity'); onClose(); } },
@@ -37,7 +37,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
         { id: 'go-dash', title: 'Navigate: Citizen Health Dashboard', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
         { id: 'go-book', title: 'Action: Book Specialist Consultation', icon: <Activity className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('booking'); onClose(); } },
         { id: 'go-records', title: 'Navigate: Encrypted Medical Records', icon: <Eye className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('records'); onClose(); } },
-        { id: 'go-prescriptions', title: 'Navigate: Digital Prescriptions & Rx', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('prescriptions'); onClose(); } },
+        { id: 'go-prescriptions', title: 'Navigate: Digital Prescription', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('prescriptions'); onClose(); } },
         { id: 'go-consent', title: 'Navigate: Privacy & Consent Manager', icon: <Shield className="w-4 h-4 text-[#168CF5]" />, category: 'Security', action: () => { onAction('consent'); onClose(); } },
         { id: 'go-pharmacy', title: 'Navigate: Pharmacy Store & Orders', icon: <Compass className="w-4 h-4 text-amber-600" />, category: 'Pharmacy', action: () => { onAction('pharmacy'); onClose(); } },
         { id: 'go-payments', title: 'Navigate: Billing & Payment Receipts', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Billing', action: () => { onAction('payments'); onClose(); } },
@@ -143,9 +143,8 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
                 key={cmd.id}
                 onClick={cmd.action}
                 onMouseEnter={() => setSelectedIndex(index)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-[10px] text-left cursor-pointer ${
-                  selectedIndex === index ? 'bg-[#E7F0FC] text-[#0F172A]' : 'bg-transparent text-[#334155] hover:bg-[#F4F6F9]'
-                }`}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-[10px] text-left cursor-pointer ${selectedIndex === index ? 'bg-[#E7F0FC] text-[#0F172A]' : 'bg-transparent text-[#334155] hover:bg-[#F4F6F9]'
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-1.5 rounded-[8px] border ${selectedIndex === index ? 'bg-white border-[#BDDDFA]' : 'bg-[#F4F6F9] border-transparent'}`}>

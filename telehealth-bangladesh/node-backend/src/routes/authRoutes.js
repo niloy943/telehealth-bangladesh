@@ -7,6 +7,7 @@ const {
   forgotPassword,
   verifyOTP,
   resetPassword,
+  changePassword,
   getAuditLogs
 } = require('../controllers/authController');
 
@@ -33,7 +34,10 @@ router.post('/verify-otp', verificationLimiter, verifyOTP);
 // 5. Password resetting (final stage)
 router.post('/reset-password', resetPassword);
 
-// 6. Administrative security logs tracking
+// 6. Change Password (authenticated user session)
+router.post('/change-password', authenticateToken, changePassword);
+
+// 7. Administrative security logs tracking
 router.get('/audit-logs', authenticateToken, getAuditLogs);
 
 module.exports = router;

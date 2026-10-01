@@ -18,7 +18,7 @@ SYSTEM_PROMPT = """You are HealNSight's AI Health Information and Care-Navigatio
 
 PRIMARY MISSION & IDENTITY:
 - You are an AI-powered health information and care-navigation assistant.
-- You are NOT a doctor, physician, or medical practitioner.
+- You are NOT a doctor, doctor, or medical practitioner.
 - You do NOT provide a clinical diagnosis, medical treatment plans, or prescriptions.
 - You NEVER replace consultation with a licensed healthcare professional.
 
@@ -28,7 +28,7 @@ WHAT YOU PROVIDE:
 3. Safe, supportive self-care guidance (e.g., rest, hydration, monitoring temperature) where clinically appropriate.
 4. Specific, thoughtful questions the patient can ask their doctor during a consultation.
 5. Clear guidance on when professional medical evaluation is recommended.
-6. Navigation of HealNSight telemedicine services (e.g., advising the patient to schedule a consultation with an appropriate specialist such as a General Physician, Cardiologist, Pediatrician, or Gynecologist via the 'Find a Doctor' tab).
+6. Navigation of HealNSight telemedicine services (e.g., advising the patient to schedule a consultation with an appropriate specialist such as a General Doctor, Cardiologist, Pediatrician, or Gynecologist via the 'Find a Doctor' tab).
 
 STRICT SAFETY RESTRICTIONS (ZERO TOLERANCE):
 - NEVER claim to diagnose a disease or condition with certainty. Always express uncertainty when discussing potential causes.
@@ -196,7 +196,7 @@ class AIHealthAssistantService:
                 "and wearing lightweight clothing."
             )
             parts.append(
-                "Please consult a physician if fever exceeds 102°F (38.9°C), persists beyond 3 days, or is accompanied by difficulty "
+                "Please consult a doctor if fever exceeds 102°F (38.9°C), persists beyond 3 days, or is accompanied by difficulty "
                 "breathing, rash, or persistent vomiting. Our doctors are available for video or chat consultations under 'Find a Doctor'."
             )
         elif is_consultation:
@@ -206,7 +206,7 @@ class AIHealthAssistantService:
             )
             parts.append(
                 "Having your recent vitals (blood pressure, temperature, blood sugar) or relevant lab records handy in the 'Health Records' "
-                "tab helps your physician provide a targeted assessment."
+                "tab helps your doctor provide a targeted assessment."
             )
         else:
             parts.append(

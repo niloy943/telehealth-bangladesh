@@ -7,6 +7,8 @@ import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 import { Button } from './ui';
 
+const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+
 export const SecurityCenter = ({ user, onUpdateUser, token }) => {
   const { t } = useLanguage();
   const { triggerNotification } = useNotifications();
@@ -17,9 +19,20 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
   const [secState, setSecState] = useState(() => {
     const key = `security_state_${user?.username || 'guest'}`;
     const cached = localStorage.getItem(key);
+    const defaultSessions = [
+      { id: 101, device: 'Chrome on Windows 11', loginTime: '2026-06-07 13:12', lastActive: 'Just now', ip: '103.145.152.12', location: 'Dhaka, Bangladesh' },
+      { id: 102, device: 'Chrome on iPhone 15', loginTime: '2026-06-07 12:44', lastActive: '12m ago', ip: '103.145.152.84', location: 'Dhaka, Bangladesh' },
+      { id: 103, device: 'Safari on iPad Pro', loginTime: '2026-06-06 18:20', lastActive: '1d ago', ip: '103.145.151.30', location: 'Dhaka, Bangladesh' },
+      { id: 104, device: 'Firefox on macOS Monterey', loginTime: '2026-06-05 09:15', lastActive: '2d ago', ip: '103.145.150.19', location: 'Chittagong, Bangladesh' },
+      { id: 105, device: 'Edge on Android 14', loginTime: '2026-06-04 22:05', lastActive: '3d ago', ip: '103.145.148.90', location: 'Rajshahi, Bangladesh' }
+    ];
     if (cached) {
       try {
-        return JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        if (!parsed.activeSessions || parsed.activeSessions.length < 3) {
+          parsed.activeSessions = defaultSessions;
+        }
+        return parsed;
       } catch (e) { }
     }
     return {
@@ -33,10 +46,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
         { id: 1, name: 'Chrome on Windows 11', ip: '103.145.152.12', location: 'Dhaka, Bangladesh', finger: 'fp_win_chr_938', current: true },
         { id: 2, name: 'Chrome on iPhone 15', ip: '103.145.152.84', location: 'Dhaka, Bangladesh', finger: 'fp_ios_chr_382', current: false }
       ],
-      activeSessions: [
-        { id: 101, device: 'Chrome on Windows 11', loginTime: '2026-06-07 13:12', lastActive: 'Just now', ip: '103.145.152.12' },
-        { id: 102, device: 'Chrome on iPhone 15', loginTime: '2026-06-07 12:44', lastActive: '12m ago', ip: '103.145.152.84' }
-      ],
+      activeSessions: defaultSessions,
       alerts: [
         { id: 201, title: 'Session Initialized', message: 'New device login approved.', ip: '103.145.152.12', timestamp: '2026-06-07 13:12' },
         { id: 202, title: 'Security Passcode Verified', message: 'E2E clinical routing credentials signed.', ip: '127.0.0.1', timestamp: '2026-06-07 13:00' }
@@ -67,6 +77,8 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
   // Password rotation forms
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
   const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
   // Expiration countdown for OTP Setup
   useEffect(() => {
@@ -214,25 +226,66 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
     triggerNotification("All Remote Sessions Terminated", "Forced logout completed across all alternative devices.", "security");
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    setPwError('');
+
     if (passwordForm.new !== passwordForm.confirm) {
-      alert("Passwords must match.");
+      setPwError("New passwords do not match.");
+      triggerNotification("Password Error", "New passwords do not match.", "security");
       return;
     }
-    setPwSuccess(true);
-    triggerNotification("Security Credentials Updated", "Password updated successfully.", "security");
-    saveSecState({
-      ...secState,
-      alerts: [
-        { id: Date.now(), title: 'Credentials Changed', message: 'Account password reset successfully.', ip: '127.0.0.1', timestamp: new Date().toLocaleString() },
-        ...secState.alerts
-      ]
-    });
-    setTimeout(() => {
-      setPwSuccess(false);
+
+    if (passwordForm.new.length < 6) {
+      setPwError("New password must be at least 6 characters long.");
+      triggerNotification("Password Error", "Password must be at least 6 characters long.", "security");
+      return;
+    }
+
+    setPwLoading(true);
+    try {
+      const authToken = token || localStorage.getItem('token') || localStorage.getItem('tv_token');
+      const response = await fetch(`${API_BASE}/api/auth/change-password/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          current_password: passwordForm.current,
+          new_password: passwordForm.new,
+          confirm_password: passwordForm.confirm
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.detail || "Failed to update password.");
+      }
+
+      setPwSuccess(true);
+      setPwError('');
+      triggerNotification("Security Credentials Updated", "Account password updated successfully.", "security");
+      saveSecState({
+        ...secState,
+        alerts: [
+          { id: Date.now(), title: 'Credentials Changed', message: 'Account password rotated successfully in secure vault.', ip: '127.0.0.1', timestamp: new Date().toLocaleString() },
+          ...secState.alerts
+        ]
+      });
+
       setPasswordForm({ current: '', new: '', confirm: '' });
-    }, 3000);
+      setTimeout(() => {
+        setPwSuccess(false);
+      }, 4000);
+    } catch (err) {
+      console.error("Change password error:", err);
+      setPwError(err.message || "Failed to update password. Please check your current password.");
+      triggerNotification("Password Change Failed", err.message || "Failed to update password.", "security");
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
@@ -272,7 +325,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
         <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl flex flex-col justify-between space-y-4">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-[#55647C] uppercase tracking-wider">Mobile OTP Verification</span>
+              <span className="text-[10px] font-bold text-[#55647C] uppercase tracking-wider">OTP Verification</span>
               <h4 className="text-sm font-bold text-[#0F172A]">{user?.phone || '+880 1712 345678'}</h4>
             </div>
             <Phone className={`w-5 h-5 ${secState.phoneVerified ? 'text-[#059669]' : 'text-[#FF7A7A]'}`} />
@@ -316,7 +369,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
         <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl flex flex-col justify-between space-y-4">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-[#55647C] uppercase tracking-wider">KYC Identity Level</span>
+              <span className="text-[10px] font-bold text-[#55647C] uppercase tracking-wider">KYC Identity </span>
               <h4 className="text-sm font-bold text-[#0F172A]">
                 {user?.role === 'doctor' ? 'BMDC License Verification' : 'National NID Document'}
               </h4>
@@ -342,7 +395,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
               <Key className="w-4 h-4 text-[#059669]" />
               <span>Multi-Factor Authentication (2FA) Setup</span>
             </h3>
-            <p className="text-[10px] text-[#55647C] mt-0.5">Protect account from unauthorized access attempts</p>
+            <p className="text-[10px] text-[#55647C] mt-0.5">Protect account from unauthorized access </p>
           </div>
           {secState.mfaEnabled && (
             <button
@@ -524,49 +577,49 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
               <Smartphone className="w-4 h-4 text-[#168CF5]" />
               <span>Device Management &amp; Session Registry</span>
             </h3>
-            <p className="text-[10px] text-[#55647C] mt-0.5">Audits active hardware logins and session tokens</p>
+            <p className="text-[10px] text-[#55647C] mt-0.5"></p>
           </div>
           {secState.activeSessions.length > 1 && (
             <button
               onClick={handleLogoutAll}
               className="text-[10px] text-[#FF7A7A] hover:underline font-bold bg-red-50 border border-[#FF7A7A]/30 px-2 py-0.5 rounded-[8px]"
             >
-              Logout From All Other Devices
+              Logout From All Devices
             </button>
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[200px] overflow-y-auto pr-1 border border-[#BDDDFA]/50 rounded-xl">
           <table className="w-full text-left text-xs text-[#334155]">
-            <thead>
-              <tr className="border-b border-[#BDDDFA] text-[#0F172A] font-semibold">
-                <th className="py-2.5">Access Device</th>
-                <th>IP Address</th>
-                <th>Approx. Location</th>
-                <th>Login Timestamp</th>
-                <th>Last Active</th>
-                <th className="text-right">Actions</th>
+            <thead className="sticky top-0 bg-white z-10 border-b border-[#BDDDFA] shadow-xs">
+              <tr className="text-[#0F172A] font-semibold">
+                <th className="py-2.5 px-3 bg-white">Access Device</th>
+                <th className="px-3 bg-white">IP Address</th>
+                <th className="px-3 bg-white">Approx. Location</th>
+                <th className="px-3 bg-white">Login Timestamp</th>
+                <th className="px-3 bg-white">Last Active</th>
+                <th className="text-right px-3 bg-white">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#BDDDFA]/40">
               {secState.activeSessions.map((session) => (
-                <tr key={session.id} className="hover:bg-[#E7F0FC]">
-                  <td className="py-3 font-bold text-[#0F172A] flex items-center gap-1.5">
+                <tr key={session.id} className="hover:bg-[#E7F0FC] transition-colors">
+                  <td className="py-3 px-3 font-bold text-[#0F172A] flex items-center gap-1.5">
                     <Cpu className="w-4 h-4 text-[#55647C]" />
                     <span>{session.device}</span>
                     {session.ip === '103.145.152.12' && (
-                      <span className="text-[8px] bg-[#E7F0FC] text-[#059669] border border-[#059669] px-1.5 py-0.5 rounded font-mono">CURRENT</span>
+                      <span className="text-[8px] bg-[#E7F0FC] text-[#059669] border border-[#059669] px-1.5 py-0.5 rounded font-mono font-bold">CURRENT</span>
                     )}
                   </td>
-                  <td className="font-mono text-[#55647C]">{session.ip}</td>
-                  <td className="text-[#334155]">{session.location}</td>
-                  <td className="font-mono text-[#55647C]">{session.loginTime}</td>
-                  <td className="text-[#059669] font-semibold">{session.lastActive}</td>
-                  <td className="text-right py-2">
+                  <td className="font-mono text-[#55647C] px-3">{session.ip}</td>
+                  <td className="text-[#334155] px-3">{session.location || 'Dhaka, Bangladesh'}</td>
+                  <td className="font-mono text-[#55647C] px-3">{session.loginTime}</td>
+                  <td className="text-[#059669] font-semibold px-3">{session.lastActive}</td>
+                  <td className="text-right py-2 px-3">
                     {session.ip !== '103.145.152.12' ? (
                       <button
                         onClick={() => terminateSession(session.id)}
-                        className="text-[#FF7A7A] hover:bg-red-50 p-1.5 rounded-lg"
+                        className="text-[#FF7A7A] hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
                         title="Force disconnect"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -589,7 +642,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
         <div className="md:col-span-2 bg-white border border-[#BDDDFA] p-6 rounded-2xl space-y-4">
           <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-[#FF7A7A]" />
-            <span>Identity Alert Log Events</span>
+            <span>Identity Log Events</span>
           </h3>
 
           <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
@@ -613,9 +666,17 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
         <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl space-y-4">
           <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2">Change Password</h3>
 
+          {pwError && (
+            <div className="bg-red-50 border border-[#FF7A7A] text-[#DC2626] p-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
+              <span>{pwError}</span>
+            </div>
+          )}
+
           {pwSuccess && (
-            <div className="bg-[#E7F0FC] border border-[#059669] text-[#059669] p-2 rounded-lg text-[10px] font-semibold">
-              Credentials changed successfully.
+            <div className="bg-[#E7F0FC] border border-[#059669] text-[#059669] p-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+              <CheckCircle className="w-4 h-4 text-[#059669] shrink-0" />
+              <span>Password changed successfully.</span>
             </div>
           )}
 
@@ -627,6 +688,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
                 type="password"
                 value={passwordForm.current}
                 onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                placeholder="Enter current password"
                 className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-xs text-[#111827] outline-none"
               />
             </div>
@@ -637,6 +699,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
                 type="password"
                 value={passwordForm.new}
                 onChange={e => setPasswordForm({ ...passwordForm, new: e.target.value })}
+                placeholder="Minimum 6 characters"
                 className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-xs text-[#111827] outline-none"
               />
             </div>
@@ -647,11 +710,12 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
                 type="password"
                 value={passwordForm.confirm}
                 onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                placeholder="Re-enter new password"
                 className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-xs text-[#111827] outline-none"
               />
             </div>
-            <Button type="submit" variant="primary" className="w-full">
-              Rotate Password
+            <Button type="submit" variant="primary" className="w-full" disabled={pwLoading}>
+              {pwLoading ? "Updating Password..." : "Rotate Password"}
             </Button>
           </form>
         </div>

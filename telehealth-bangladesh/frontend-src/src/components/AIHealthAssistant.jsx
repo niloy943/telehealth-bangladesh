@@ -116,7 +116,7 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-5xl mx-auto rounded-2xl border border-[#BDDDFA] bg-white shadow-sm overflow-hidden">
-      
+
       {/* 1. Header Toolbar */}
       <div className="px-6 py-4 border-b border-[#BDDDFA]/60 bg-[#F4F6F9] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -129,18 +129,18 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
                 AI Health Assistant
               </h2>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E7F0FC] text-[#059669] border border-[#BDDDFA]">
-                Care Guidance
+
               </span>
             </div>
             <p className="text-xs text-[#55647C]">
-              Health information and care navigation
+
             </p>
           </div>
         </div>
 
         <div className="hidden sm:flex items-center gap-2 text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-[10px] border border-[#BDDDFA]">
           <ShieldCheck className="w-4 h-4 text-[#059669]" />
-          <span>Server-Side Isolated • Safe Healthcare Guardrails</span>
+          <span>Server-Side </span>
         </div>
       </div>
 
@@ -148,13 +148,13 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
       <div className="px-6 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-900 flex items-center gap-2">
         <HelpCircle className="w-4 h-4 shrink-0 text-amber-600" />
         <span>
-          <strong>Medical Disclaimer:</strong> AI health information is for educational guidance only. It does not replace professional medical diagnosis or treatment by a licensed physician.
+          <strong>Medical Disclaimer:</strong> AI health information is for educational guidance only. It does not replace professional medical diagnosis or treatment by a licensed doctor.
         </span>
       </div>
 
       {/* 3. Messages Chat Viewport */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
-        
+
         {/* Welcome State Card */}
         {messages.length === 1 && (
           <div className="p-5 rounded-2xl bg-[#E7F0FC]/50 border border-[#BDDDFA] mb-4 space-y-3">
@@ -196,15 +196,14 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
               </div>
 
               <div
-                className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] whitespace-pre-line ${
-                  isUser
-                    ? 'bg-[#059669] text-white rounded-br-none'
-                    : isEmergency
+                className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] whitespace-pre-line ${isUser
+                  ? 'bg-[#059669] text-white rounded-br-none'
+                  : isEmergency
                     ? 'bg-red-50 text-red-950 border border-red-300 rounded-bl-none'
                     : isUrgent
-                    ? 'bg-amber-50 text-amber-950 border border-amber-300 rounded-bl-none'
-                    : 'bg-[#E7F0FC] text-[#0F172A] border border-[#BDDDFA] rounded-bl-none'
-                }`}
+                      ? 'bg-amber-50 text-amber-950 border border-amber-300 rounded-bl-none'
+                      : 'bg-[#E7F0FC] text-[#0F172A] border border-[#BDDDFA] rounded-bl-none'
+                  }`}
               >
                 {/* Emergency Banner Alert */}
                 {isEmergency && (
@@ -233,7 +232,7 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
 
               {!isUser && (
                 <span className="text-[9px] text-[#94A3B8] mt-1 px-1">
-                  AI-generated health guidance • Always verify with a licensed physician
+                  AI-generated health guidance • Always verify with a Doctor
                 </span>
               )}
             </div>
@@ -299,7 +298,7 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
         </form>
 
         <div className="flex items-center justify-between mt-2 px-1 text-[10px] text-[#55647C]">
-          <span>Confidential teleconsultation aid • Max 2,000 characters</span>
+          <span> • Max 2,000 characters</span>
           <span>Emergency? Dial Bangladesh 999 or 16263</span>
         </div>
       </div>

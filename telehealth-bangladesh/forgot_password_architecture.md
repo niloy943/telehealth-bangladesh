@@ -107,7 +107,7 @@ sequenceDiagram
         DB-->>BE: User Profile Records (Exists)
         BE->>BE: Generate secure 6-digit OTP
         BE->>BE: Hash OTP using bcrypt
-        BE->>DB: INSERT into otp_verifications (Hash, Expiry, 0 attempts)
+        BE->>DB: INSERT into otp_verifications (Hash, Expiry, 0 )
         BE->>DB: INSERT into password_reset_logs (user_id, 'requested')
         BE->>DB: INSERT into audit_logs ('PASSWORD_RESET_REQUESTED')
     end
@@ -135,9 +135,9 @@ sequenceDiagram
     end
 
     alt OTP Incorrect
-        BE->>DB: UPDATE retry_attempts = attempts + 1
+        BE->>DB: UPDATE retry_attempts =  + 1
         BE->>DB: INSERT into audit_logs ('OTP_INVALID_ATTEMPT')
-        BE-->>FE: HTTP 400 (Incorrect code, X attempts remaining)
+        BE-->>FE: HTTP 400 (Incorrect code, X  remaining)
     else OTP Correct & Valid
         BE->>DB: UPDATE reset logs status = 'verified'
         BE->>DB: INSERT into audit_logs ('OTP_VERIFICATION_SUCCESS')
@@ -192,7 +192,7 @@ flowchart TD
     CheckExpiry -->|Yes| MarkExpired[Log OTP_EXPIRED] --> ReturnOTPError
     CheckExpiry -->|No| CompareHash{Match OTP hash?}
     
-    CompareHash -->|No| IncAttempts[Increment attempts & Log OTP_INVALID_ATTEMPT] --> ReturnOTPError
+    CompareHash -->|No| IncAttempts[Increment  & Log OTP_INVALID_ATTEMPT] --> ReturnOTPError
     CompareHash -->|Yes| IssueClaim[Issue temp claim JWT & Log OTP_VERIFICATION_SUCCESS]
     
     IssueClaim --> InputPass[/User enters new password/]
@@ -237,7 +237,7 @@ Initiates password recovery. Checks rate limits and account existence before dis
 ```
 
 ### 5.2 POST `/api/auth/verify-otp`
-Validates OTP token. Enforces expiration check and locks attempts at 3.
+Validates OTP token. Enforces expiration check and locks  at 3.
 
 - **Rate Limits:** Max 10 verification tries per 15 minutes per IP.
 - **Request Headers:** `Content-Type: application/json`
@@ -264,7 +264,7 @@ Validates OTP token. Enforces expiration check and locks attempts at 3.
 - **Response JSON (400 Bad Request - Incorrect):**
 ```json
 {
-  "error": "Incorrect verification code. You have 2 attempts remaining."
+  "error": "Incorrect verification code. You have 2  remaining."
 }
 ```
 

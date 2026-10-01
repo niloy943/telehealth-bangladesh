@@ -349,7 +349,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
       const rem = Math.ceil((new Date(lockoutTime) - new Date()) / 1000);
       setLockRemaining(rem);
       setLockedOut(true);
-      setError(`Brute Force Lockout: Account locked for ${rem} seconds due to too many failed login attempts.`);
+      setError(`Brute Force Lockout: Account locked for ${rem} seconds due to too many failed login .`);
       return;
     }
 
@@ -383,7 +383,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
           if (profileData.role === 'admin') {
             setLoginRole('admin');
           } else if (profileData.role !== effectiveLoginRole) {
-            const roleLabels = { doctor: 'Physician Portal', patient: 'Citizen Portal', admin: 'Administration Portal' };
+            const roleLabels = { doctor: 'Doctor Portal', patient: 'Citizen Portal', admin: 'Administration Portal' };
             const selectedLabel = roleLabels[effectiveLoginRole] || effectiveLoginRole;
             const actualLabel = roleLabels[profileData.role] || profileData.role;
 
@@ -425,10 +425,10 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
           localStorage.setItem(lockoutKey, lockUntil.toISOString());
           setLockedOut(true);
           setLockRemaining(60);
-          setError("Too many failed attempts. Account locked for 60 seconds.");
+          setError("Too many failed . Account locked for 60 seconds.");
           triggerNotification("Security Lockout", "Brute force defense triggered for this identity.", "security");
         } else {
-          setError(data.error || `Invalid username, password, or role selection (${5 - currentAttempts} attempts remaining).`);
+          setError(data.error || `Invalid username, password, or role selection (${5 - currentAttempts}  remaining).`);
         }
       }
     } catch (err) {
@@ -544,7 +544,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
             Secure, Verified Telemedicine for <span className="text-[#34D399]">Bangladesh</span>
           </h1>
           <p className="text-xs max-w-sm mx-auto leading-relaxed text-[#CBD5E1]">
-            End-to-end encrypted consultations, BMDC doctor verification, patient-controlled health records, and tamper-evident digital prescriptions.
+
           </p>
         </div>
 
@@ -565,7 +565,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 overflow-y-auto max-h-screen bg-[#F4F6F9]">
         <div className="w-full max-w-[480px] p-8 md:p-10 rounded-2xl border bg-white border-[#BDDDFA] shadow-sm relative">
 
-          {/* Back to Homepage Button */}
+          {/* Homepage Button */}
           {onBackToLanding && (
             <button
               type="button"
@@ -573,7 +573,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#55647C] hover:text-[#0F172A] mb-5 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Homepage</span>
+              <span>Homepage</span>
             </button>
           )}
 
@@ -691,6 +691,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                     value={newPassword}
                     onChange={e => { setNewPassword(e.target.value); handlePasswordChange(e.target.value); }}
                     placeholder="••••••••"
+                    className="w-full"
                   />
 
                   {newPassword && (
@@ -714,6 +715,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
+                    className="w-full"
                   />
                 </div>
 
@@ -752,6 +754,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                         value={forgotEmailOrPhone}
                         onChange={e => setForgotEmailOrPhone(e.target.value)}
                         placeholder="name@domain.com or +8801..."
+                        className="w-full"
                       />
                     </div>
 
@@ -860,7 +863,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                 <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
                   Sign In to Heal<span className="text-[#059669]">NSight</span>
                 </h2>
-                <p className="text-xs text-[#55647C]">National E2EE Telemedicine Portal</p>
+                <p className="text-xs text-[#55647C]">Telemedicine Portal</p>
               </div>
 
               {/* Portal Role Selector */}
@@ -872,11 +875,10 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                   <button
                     type="button"
                     onClick={() => setLoginRole("patient")}
-                    className={`flex flex-col items-center p-3 rounded-xl border text-left cursor-pointer ${
-                      loginRole === 'patient'
-                        ? 'border-[#059669] bg-[#E7F0FC] text-[#0F172A]'
-                        : 'border-[#BDDDFA] bg-white text-[#55647C] hover:bg-[#F4F6F9]'
-                    }`}
+                    className={`flex flex-col items-center p-3 rounded-xl border text-left cursor-pointer ${loginRole === 'patient'
+                      ? 'border-[#059669] bg-[#E7F0FC] text-[#0F172A]'
+                      : 'border-[#BDDDFA] bg-white text-[#55647C] hover:bg-[#F4F6F9]'
+                      }`}
                   >
                     <div className={`w-8 h-8 rounded-[8px] flex items-center justify-center mb-1 ${loginRole === 'patient' ? 'bg-[#059669] text-white' : 'bg-[#E7F0FC] text-[#059669]'}`}>
                       <User className="w-4 h-4" />
@@ -888,11 +890,10 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                   <button
                     type="button"
                     onClick={() => setLoginRole("doctor")}
-                    className={`flex flex-col items-center p-3 rounded-xl border text-left cursor-pointer ${
-                      loginRole === 'doctor'
-                        ? 'border-[#059669] bg-[#E7F0FC] text-[#0F172A]'
-                        : 'border-[#BDDDFA] bg-white text-[#55647C] hover:bg-[#F4F6F9]'
-                    }`}
+                    className={`flex flex-col items-center p-3 rounded-xl border text-left cursor-pointer ${loginRole === 'doctor'
+                      ? 'border-[#059669] bg-[#E7F0FC] text-[#0F172A]'
+                      : 'border-[#BDDDFA] bg-white text-[#55647C] hover:bg-[#F4F6F9]'
+                      }`}
                   >
                     <div className={`w-8 h-8 rounded-[8px] flex items-center justify-center mb-1 ${loginRole === 'doctor' ? 'bg-[#059669] text-white' : 'bg-[#E7F0FC] text-[#059669]'}`}>
                       <UserCheck className="w-4 h-4" />
@@ -906,7 +907,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
               {/* Login Form */}
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">Username / Email</label>
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1.5">Username / Email</label>
                   <input
                     required
                     type="text"
@@ -914,11 +915,12 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="e.g. niloy"
+                    className="w-full"
                   />
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center mb-1">
+                  <div className="flex justify-between items-center mb-1.5">
                     <label className="block text-xs font-semibold text-[#0F172A]">Password</label>
                     <button
                       type="button"
@@ -935,6 +937,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••••"
+                    className="w-full"
                   />
                 </div>
 
@@ -962,8 +965,8 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
             /* --- CASE C: REGISTRATION FLOW --- */
             <form onSubmit={handleRegisterSubmit} className="space-y-4 text-xs">
               <div className="text-center space-y-1 mb-2">
-                <h2 className="text-lg font-bold text-[#0F172A]">Citizen Registration</h2>
-                <p className="text-xs text-[#55647C]">Create your patient health account</p>
+                <h2 className="text-lg font-bold text-[#0F172A]">Registration</h2>
+                <p className="text-xs text-[#55647C]">Create your patient account</p>
               </div>
 
               {step === 1 && (
