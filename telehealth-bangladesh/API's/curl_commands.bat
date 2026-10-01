@@ -1,6 +1,6 @@
 @echo off
 REM ==============================================================================
-REM HealNSight Telehealth Bangladesh — Complete 58 APIs cURL Runner (Windows Batch)
+REM HealNSight HealNSight — Complete 58 APIs cURL Runner (Windows Batch)
 REM ==============================================================================
 
 set DJANGO_URL=http://127.0.0.1:8000

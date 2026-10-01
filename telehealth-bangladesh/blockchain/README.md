@@ -1,7 +1,7 @@
-# Telehealth Bangladesh - Blockchain Ledger Module
+# HealNSight - Blockchain Ledger Module
 
 ## 1. Overview
-The **Blockchain Ledger Module** provides a decentralized, tamper-evident audit infrastructure for the Telehealth Bangladesh telemedicine network. It ensures that digital prescriptions, patient electronic health records (EHR), and privacy consent delegations cannot be altered, forged, or repudiated by any party—including database administrators.
+The **Blockchain Ledger Module** provides a decentralized, tamper-evident audit infrastructure for the HealNSight telemedicine network. It ensures that digital prescriptions, patient electronic health records (EHR), and privacy consent delegations cannot be altered, forged, or repudiated by any party—including database administrators.
 
 ---
 

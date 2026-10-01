@@ -69,7 +69,7 @@ const downloadPrescriptionPDF = (p) => {
     <div style="border: 2px solid #168CF5; padding: 28px; border-radius: 12px; position: relative;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #168CF5; padding-bottom: 16px; margin-bottom: 20px;">
         <div>
-          <h1 style="margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Telehealth Bangladesh</h1>
+          <h1 style="margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">HealNSight</h1>
           <p style="margin: 3px 0 0 0; color: #55647C; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Verified National Telemedicine Network</p>
         </div>
         <div style="text-align: right;">
@@ -117,7 +117,7 @@ const downloadPrescriptionPDF = (p) => {
 
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #BDDDFA; padding-top: 14px; font-size: 11px; color: #55647C;">
         <div>
-          <p style="margin: 2px 0;">Issued securely via <strong>Telehealth Bangladesh</strong>.</p>
+          <p style="margin: 2px 0;">Issued securely via <strong>HealNSight</strong>.</p>
           <p style="margin: 2px 0; color: #059669; font-weight: 600;">End-to-End Encrypted Digital Medical Ledger</p>
         </div>
         <div style="text-align: right; border: 1px solid #BDDDFA; padding: 6px 12px; border-radius: 6px; background: #E7F0FC;">
@@ -391,7 +391,7 @@ export const DoctorDashboard = ({
   const completedCount = appointments.filter(a => a.status === 'completed').length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 space-y-8">
 
       {/* 1. Clinical Workspace Header & Status Bar */}
       <div className="bg-white border border-[#BDDDFA] rounded-2xl p-6 sm:p-8">

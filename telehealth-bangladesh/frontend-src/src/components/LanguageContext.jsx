@@ -410,14 +410,11 @@ const translations = {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [lang, setLang] = useState('en');
-
-  const toggleLanguage = () => {
-    setLang(prev => prev === 'en' ? 'bn' : 'en');
-  };
+  const lang = 'en';
+  const toggleLanguage = () => {};
 
   const t = (key) => {
-    return translations[lang][key] || key;
+    return translations.en[key] || key;
   };
 
   return (

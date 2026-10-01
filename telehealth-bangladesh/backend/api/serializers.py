@@ -323,9 +323,13 @@ class PaymentTransactionSerializer(serializers.ModelSerializer):
         return {
             "id": obj.order.id,
             "items_count": len(obj.order.items_breakdown) if isinstance(obj.order.items_breakdown, list) else 0,
+            "items_breakdown": obj.order.items_breakdown,
             "delivery_address": obj.order.delivery_address,
             "delivery_fee": float(obj.order.delivery_fee),
             "total_price": float(obj.order.total_price),
+            "order_status": obj.order.status,
+            "status": obj.order.status,
+            "created_at": obj.order.created_at,
         }
 
 class BlockchainRecordSerializer(serializers.ModelSerializer):

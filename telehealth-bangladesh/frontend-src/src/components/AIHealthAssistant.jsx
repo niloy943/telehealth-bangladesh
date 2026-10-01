@@ -124,16 +124,11 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-[#0F172A] tracking-tight">
-                AI Health Assistant
-              </h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E7F0FC] text-[#059669] border border-[#BDDDFA]">
-
-              </span>
-            </div>
+            <h2 className="text-sm sm:text-base font-bold text-[#0F172A] tracking-tight">
+              AI Health Assistant
+            </h2>
             <p className="text-xs text-[#55647C]">
-
+              Health information and care navigation
             </p>
           </div>
         </div>

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title HealNSightLedger
- * @notice Immutable Audit Ledger for Telehealth Bangladesh Medical & Prescription Records.
+ * @notice Immutable Audit Ledger for HealNSight Medical & Prescription Records.
  * @dev Anchors SHA-256 cryptographic hashes of patient health records and prescriptions onto Ethereum Sepolia.
  */
 contract HealNSightLedger {

@@ -1204,6 +1204,13 @@ class MedicineOrderViewSet(APIView):
         if status_val in ['pending', 'confirmed', 'packing', 'shipping', 'out_for_delivery', 'delivered', 'cancelled']:
             order.status = status_val
             order.save()
+
+            # Synchronize linked PaymentTransaction status with order status
+            if status_val in ['confirmed', 'packing', 'shipping', 'out_for_delivery', 'delivered']:
+                PaymentTransaction.objects.filter(order=order, status='pending').update(status='completed')
+            elif status_val == 'cancelled':
+                PaymentTransaction.objects.filter(order=order, status__in=['pending', 'processing']).update(status='cancelled')
+
             write_audit_log(user, "UPDATE_ORDER_STATUS", f"Admin updated order ID: {order.id} to {status_val}", request)
             return Response(MedicineOrderSerializer(order).data)
         
@@ -1568,6 +1575,17 @@ class PaymentHistoryView(APIView):
     def get(self, request):
         user = request.user
         status_filter = request.query_params.get('status', 'all').strip().lower()
+
+        # Synchronize any legacy/existing transactions linked to confirmed or delivered orders
+        PaymentTransaction.objects.filter(
+            status='pending',
+            order__status__in=['confirmed', 'packing', 'shipping', 'out_for_delivery', 'delivered']
+        ).update(status='completed')
+
+        PaymentTransaction.objects.filter(
+            status__in=['pending', 'processing'],
+            order__status='cancelled'
+        ).update(status='cancelled')
 
         if user.role == 'admin':
             queryset = PaymentTransaction.objects.all()

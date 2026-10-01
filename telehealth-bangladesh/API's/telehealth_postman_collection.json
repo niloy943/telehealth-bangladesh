@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "healnsight-telehealth-58-apis",
-    "name": "HealNSight Telehealth Bangladesh \u2014 Complete 58 APIs Collection",
+    "name": "HealNSight HealNSight \u2014 Complete 58 APIs Collection",
     "description": "Complete collection of all 58 APIs across Django Backend (:8000), Node.js Auth Microservice (:5000), and FastAPI Worker (:6000). Includes headers, sample JSON payloads, parameters, and authentication tokens.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },

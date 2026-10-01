@@ -569,12 +569,6 @@ const MainApp = () => {
               <NotificationDropdown isOpen={notifOpen} onClose={() => setNotifOpen(false)} user={user} />
             </div>
 
-            {/* Language Toggle */}
-            <button onClick={() => toggleLanguage()}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-[10px] border border-[#1E293B] bg-[#1E293B] text-[#CBD5E1] hover:bg-[#334155] text-xs font-bold">
-              <Globe className="w-3.5 h-3.5 text-[#34D399]" />{lang === 'en' ? 'EN' : 'BN'}
-            </button>
-
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[#059669]/20 border border-[#059669]/50 text-[#34D399] text-xs font-semibold">
               <ShieldCheck className="w-3.5 h-3.5 text-[#34D399]" />Secure
             </div>
@@ -582,7 +576,7 @@ const MainApp = () => {
         </header>
 
         {/* Content Workspace */}
-        <div className="flex-1 overflow-y-auto bg-[#F4F6F9] text-[#0F172A]">
+        <div className="flex-1 overflow-y-auto bg-[#F4F6F9] text-[#0F172A] pb-28">
           <Suspense fallback={<DashboardSkeleton />}>
             {selectedConsultation ? (
               <ClinicalRoom token={token} user={user} consultationId={selectedConsultation.id}

@@ -577,18 +577,6 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
             </button>
           )}
 
-          {/* Language Toggle in Card */}
-          <div className="absolute top-6 right-6 hidden md:flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] border border-[#BDDDFA] text-xs font-bold text-[#0F172A] hover:bg-[#E7F0FC] cursor-pointer"
-            >
-              <Globe className="w-3.5 h-3.5 text-[#059669]" />
-              <span>{lang === 'en' ? 'বাংলা' : 'English'}</span>
-            </button>
-          </div>
-
           {/* Mobile Brand Header */}
           <div className="flex flex-col items-center mb-6 md:hidden">
             <div className="flex items-center gap-2.5">

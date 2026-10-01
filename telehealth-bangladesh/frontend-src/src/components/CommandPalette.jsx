@@ -23,8 +23,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
 
   const getCommands = () => {
     const common = [
-      { id: 'toggle-lang', title: 'Switch Language (EN / বাংলা)', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Settings', action: () => { toggleLanguage(); onClose(); } },
-      { id: 'go-profile-personal', title: 'Navigate: Account Details', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Profile', action: () => { onAction('profile_personal'); onClose(); } },
+      { id: 'go-profile-personal', title: 'Navigate: Account Details & Demographics', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Profile', action: () => { onAction('profile_personal'); onClose(); } },
       { id: 'go-profile-security', title: 'Navigate: Security Center & 2FA', icon: <Shield className="w-4 h-4 text-[#059669]" />, category: 'Profile', action: () => { onAction('profile_security'); onClose(); } },
       { id: 'go-profile-kyc', title: 'Navigate: KYC Verification Files', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Profile', action: () => { onAction('profile_kyc'); onClose(); } },
       { id: 'go-profile-activity', title: 'Navigate: Activity & Access Logs', icon: <Compass className="w-4 h-4 text-[#55647C]" />, category: 'Profile', action: () => { onAction('profile_activity'); onClose(); } },

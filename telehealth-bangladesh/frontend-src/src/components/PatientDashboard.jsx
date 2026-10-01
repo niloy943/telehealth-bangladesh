@@ -6,7 +6,7 @@ import {
   Search, Bot, Send, AlertTriangle, ArrowRight, User, PlusCircle, CheckCircle2,
   Trash2, Clock, Upload, Stethoscope, Video, MessageSquare, Phone, Lock,
   Download, Share2, FileText, Check, AlertCircle, Sparkles, X, ChevronRight,
-  Pill, Activity, RefreshCw, ShieldAlert, CreditCard, Award,
+  Pill, Activity, RefreshCw, ShieldAlert, CreditCard, Award, Package,
   ExternalLink, Printer, Scale, GlassWater, ChevronLeft, Star, Edit3, Plus, Minus
 } from 'lucide-react';
 import {
@@ -55,7 +55,7 @@ const downloadPrescriptionPDF = (p) => {
     <div style="border: 2px solid #168CF5; padding: 28px; border-radius: 12px; position: relative;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #168CF5; padding-bottom: 16px; margin-bottom: 20px;">
         <div>
-          <h1 style="margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Telehealth Bangladesh</h1>
+          <h1 style="margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">HealNSight</h1>
           <p style="margin: 3px 0 0 0; color: #55647C; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Verified National Telemedicine Network</p>
         </div>
         <div style="text-align: right;">
@@ -103,7 +103,7 @@ const downloadPrescriptionPDF = (p) => {
 
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #BDDDFA; padding-top: 14px; font-size: 11px; color: #55647C;">
         <div>
-          <p style="margin: 2px 0;">Issued securely via <strong>Telehealth Bangladesh</strong>.</p>
+          <p style="margin: 2px 0;">Issued securely via <strong>HealNSight</strong>.</p>
           <p style="margin: 2px 0; color: #059669; font-weight: 600;">End-to-End Encrypted Digital Medical Ledger</p>
         </div>
         <div style="text-align: right; border: 1px solid #BDDDFA; padding: 6px 12px; border-radius: 6px; background: #E7F0FC;">
@@ -345,6 +345,19 @@ export const PatientDashboard = ({
     fetchMedicinesCatalog();
     fetchPaymentHistory();
   }, [token]);
+
+  // Refresh data when navigating across dashboard sub-views
+  useEffect(() => {
+    if (subView === 'payments') {
+      fetchPaymentHistory(paymentFilter);
+    } else if (subView === 'pharmacy') {
+      fetchPrescriptionsAndOrders();
+      fetchMedicinesCatalog();
+    } else if (subView === 'overview') {
+      fetchPrescriptionsAndOrders();
+      fetchPaymentHistory();
+    }
+  }, [subView]);
 
   // Listener for SSLCommerz return redirects
   useEffect(() => {
@@ -793,7 +806,7 @@ export const PatientDashboard = ({
   const nextAppointment = upcomingAppointments[0];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 space-y-8">
 
       {/* ─── OVERVIEW HOME VIEW ─── */}
       {subView === 'overview' && (() => {
@@ -805,15 +818,9 @@ export const PatientDashboard = ({
             <div className="bg-white border border-[#BDDDFA] rounded-2xl p-6 sm:p-8 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider block mb-1">
-
-                  </span>
                   <h1 className="text-xl font-bold text-[#0F172A] tracking-tight">
                     {getGreeting()}, {user.first_name || user.username}
                   </h1>
-                  <p className="text-sm text-[#55647C] mt-0.5">
-
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -1410,7 +1417,7 @@ export const PatientDashboard = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-[#55647C] flex items-center gap-1.5 mr-1">
                 <Sparkles className="w-3.5 h-3.5 text-[#168CF5]" />
-
+                Departments:
               </span>
               <div className="bg-[#E7F0FC] p-1 rounded-xl flex items-center gap-1 border border-[#BDDDFA] overflow-x-auto max-w-full">
                 {['all', 'Cardiology', 'Pediatrics', 'General Practice', 'ENT'].map(spec => {
@@ -1516,8 +1523,8 @@ export const PatientDashboard = ({
       {subView === 'records' && (
         <div className="space-y-6">
           <PageHeader
-            title="Health Records"
-            subtitle=""
+            title="Encrypted Health Records"
+            subtitle="Your medical records are cryptographically protected."
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1598,29 +1605,17 @@ export const PatientDashboard = ({
             <div className="space-y-3">
               {records.map(rec => (
                 <Card key={rec.id}>
-                  <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-9 h-9 rounded-xl bg-[#E7F0FC] text-[#059669] flex items-center justify-center shrink-0 border border-[#BDDDFA]">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold text-[#0F172A]">{rec.record_type}</h4>
-                          <SecurityBadge text="AES-256 GCM" />
-                        </div>
-                        <p className="text-xs text-[#334155] mt-1 leading-relaxed">{rec.content}</p>
-                        <p className="text-[10px] text-[#55647C] mt-1">Record ID: #{rec.id} • SHA-256 Hash Protected</p>
-                      </div>
+                  <CardContent className="flex items-center gap-3.5 p-4 pr-5 sm:pr-6">
+                    <div className="w-9 h-9 rounded-xl bg-[#E7F0FC] text-[#059669] flex items-center justify-center shrink-0 border border-[#BDDDFA]">
+                      <FileText className="w-4 h-4" />
                     </div>
-
-                    <div className="shrink-0 flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleVerifyBlockchainRecord("health_record", rec.id)}
-                      >
-                        Audit Ledger
-                      </Button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-xs font-bold text-[#0F172A]">{rec.record_type}</h4>
+                        <SecurityBadge text="AES-256 GCM" />
+                      </div>
+                      <p className="text-xs text-[#334155] mt-1 leading-relaxed break-words">{rec.content}</p>
+                      <p className="text-[10px] text-[#55647C] mt-1">Record ID: #{rec.id} • SHA-256 Hash Protected</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1635,7 +1630,7 @@ export const PatientDashboard = ({
         <div className="space-y-6">
           <PageHeader
             title="Digital Prescriptions"
-            subtitle="View, download, and verify digital prescriptions"
+            subtitle="View, download, and verify digital prescriptions signed by certified doctors."
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1907,6 +1902,93 @@ export const PatientDashboard = ({
               </CardContent>
             </Card>
           </div>
+
+          {/* Patient's Medicine Orders & Courier Tracking */}
+          <div className="pt-6 border-t border-[#BDDDFA] space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
+                  <Package className="w-4 h-4 text-[#168CF5]" />
+                  My Medicine Orders &amp; Delivery Tracking
+                </h3>
+                <p className="text-xs text-[#55647C]">Track fulfillment progress and home delivery dispatch in real time.</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchPrescriptionsAndOrders}
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                Refresh Orders
+              </Button>
+            </div>
+
+            {orders.length === 0 ? (
+              <EmptyState
+                icon={Package}
+                title="No Medicine Orders Yet"
+                description="Your placed pharmacy orders and prescription deliveries will appear here."
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {orders.map(ord => {
+                  const s = (ord.status || 'pending').toLowerCase();
+                  const isDelivered = s === 'delivered';
+                  const isConfirmed = s === 'confirmed';
+                  const isInTransit = s === 'shipping' || s === 'out_for_delivery';
+                  const isPacking = s === 'packing';
+                  const isCancelled = s === 'cancelled';
+                  const isPending = s === 'pending';
+
+                  const badgeClass = isDelivered || isConfirmed
+                    ? 'bg-[#E7F0FC] text-[#059669] border border-[#059669]'
+                    : isInTransit || isPacking
+                      ? 'bg-blue-50 text-[#168CF5] border border-[#168CF5]/40'
+                      : isPending
+                        ? 'bg-amber-50 text-amber-700 border border-amber-300'
+                        : 'bg-slate-100 text-slate-700 border border-slate-300';
+
+                  const statusText = s === 'shipping' ? 'In Transit'
+                    : s === 'out_for_delivery' ? 'Out for Delivery'
+                      : s.charAt(0).toUpperCase() + s.slice(1);
+
+                  return (
+                    <Card key={ord.id} className="p-4 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="font-mono text-xs font-bold text-[#0F172A]">Order #{ord.id}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${badgeClass}`}>
+                            {statusText}
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-[#334155] space-y-1 mb-3 bg-[#E7F0FC] p-2.5 rounded-xl border border-[#BDDDFA]">
+                          <p className="font-semibold text-[#0F172A]">{Array.isArray(ord.items_breakdown) ? ord.items_breakdown.length : 1} item(s)</p>
+                          {Array.isArray(ord.items_breakdown) && ord.items_breakdown.map((item, idx) => (
+                            <p key={idx} className="text-[10px] text-[#55647C] truncate">
+                              • {item.name} ({item.quantity}x)
+                            </p>
+                          ))}
+                          <p className="text-[10px] text-[#55647C] pt-1 border-t border-[#BDDDFA] truncate">
+                            Delivery: {ord.delivery_address}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-[#BDDDFA] text-xs">
+                        <span className="text-[#55647C] font-mono text-[10px]">
+                          {ord.created_at ? new Date(ord.created_at).toLocaleDateString() : 'Recent'}
+                        </span>
+                        <span className="font-bold text-[#059669]">
+                          ৳{parseFloat(ord.total_price || 0).toFixed(2)} BDT
+                        </span>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -2002,10 +2084,36 @@ export const PatientDashboard = ({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {paymentHistory.map(txn => {
-                const isCompleted = txn.status === 'completed';
-                const isPending = txn.status === 'pending' || txn.status === 'processing';
+                const isOrder = !!txn.order || !!txn.order_details;
+                const rawOrderStatus = (txn.order_details?.order_status || txn.order_details?.status || '').toLowerCase();
+
+                // Determine completion, cancellation, and pending states
+                const isOrderCompleted = ['confirmed', 'delivered', 'packing', 'shipping', 'out_for_delivery'].includes(rawOrderStatus);
+                const isCompleted = txn.status === 'completed' || isOrderCompleted;
+                const isCancelled = txn.status === 'cancelled' || rawOrderStatus === 'cancelled';
                 const isFailed = txn.status === 'failed';
-                const isCancelled = txn.status === 'cancelled';
+                const isPending = !isCompleted && !isCancelled && !isFailed;
+
+                // Status label
+                let statusLabel = txn.status;
+                if (isOrder && rawOrderStatus) {
+                  if (rawOrderStatus === 'delivered') statusLabel = 'Delivered';
+                  else if (rawOrderStatus === 'shipping') statusLabel = 'In Transit';
+                  else if (rawOrderStatus === 'out_for_delivery') statusLabel = 'Out for Delivery';
+                  else if (rawOrderStatus === 'confirmed') statusLabel = 'Confirmed';
+                  else if (rawOrderStatus === 'packing') statusLabel = 'Packing';
+                  else statusLabel = rawOrderStatus;
+                } else if (isCompleted) {
+                  statusLabel = 'Completed';
+                }
+
+                const badgeClass = isCompleted
+                  ? 'bg-[#E7F0FC] text-[#059669] border border-[#059669]'
+                  : isPending
+                    ? 'bg-amber-50 text-amber-700 border border-amber-300'
+                    : isCancelled
+                      ? 'bg-slate-100 text-slate-700 border border-slate-300'
+                      : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30';
 
                 return (
                   <Card key={txn.id} className="p-4 flex flex-col justify-between">
@@ -2014,15 +2122,8 @@ export const PatientDashboard = ({
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#E7F0FC] text-[#0F172A]">
                           {txn.appointment ? 'Doctor Consultation' : txn.order ? 'Pharmacy Order' : 'Health Service'}
                         </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isCompleted
-                          ? 'bg-[#E7F0FC] text-[#059669] border border-[#059669]'
-                          : isPending
-                            ? 'bg-amber-50 text-amber-700 border border-amber-300'
-                            : isCancelled
-                              ? 'bg-slate-100 text-slate-700 border border-slate-300'
-                              : 'bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]/30'
-                          }`}>
-                          {txn.status}
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${badgeClass}`}>
+                          {statusLabel}
                         </span>
                       </div>
 
@@ -2044,8 +2145,15 @@ export const PatientDashboard = ({
                       )}
 
                       {txn.order_details && (
-                        <div className="text-xs text-[#334155] space-y-1 mb-3 bg-[#E7F0FC] p-2.5 rounded-xl border border-[#BDDDFA]">
-                          <p className="font-semibold text-[#0F172A]">Order #{txn.order_details.id} ({txn.order_details.items_count} items)</p>
+                        <div className="text-xs text-[#334155] space-y-1.5 mb-3 bg-[#E7F0FC] p-2.5 rounded-xl border border-[#BDDDFA]">
+                          <div className="flex items-center justify-between">
+                            <p className="font-semibold text-[#0F172A]">Order #{txn.order_details.id} ({txn.order_details.items_count} items)</p>
+                            {txn.order_details.order_status && (
+                              <span className="text-[10px] font-bold text-[#059669] uppercase bg-white px-2 py-0.5 rounded border border-[#BDDDFA]">
+                                Transit: {txn.order_details.order_status.replace(/_/g, ' ')}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-[#55647C] truncate">Delivery: {txn.order_details.delivery_address}</p>
                         </div>
                       )}
@@ -2273,7 +2381,7 @@ export const PatientDashboard = ({
             <Lock className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
             <div>
               <span className="font-bold text-[#0F172A] block">Bank-Grade 256-Bit TLS Encryption</span>
-              You will be redirected to the official SSLCommerz hosted checkout page. Telehealth Bangladesh never stores payment PINs or card CVVs.
+              You will be redirected to the official SSLCommerz hosted checkout page. HealNSight never stores payment PINs or card CVVs.
             </div>
           </div>
 
@@ -2429,13 +2537,13 @@ export const PatientDashboard = ({
       <Modal
         isOpen={!!receiptModalTxn}
         onClose={() => setReceiptModalTxn(null)}
-        title="Official Digital Receipt"
-        subtitle={`SSLCommerz Telemedicine Payment Voucher`}
+        title=" Digital Receipt"
+        subtitle={`Payment Voucher`}
       >
         <div id="receipt-print-area" className="space-y-4 p-2">
           {/* Header */}
           <div className="text-center pb-4 border-b border-[#BDDDFA] space-y-1">
-            <span className="text-xs font-bold text-[#059669] uppercase tracking-widest block">TELEHEALTH BANGLADESH</span>
+            <span className="text-xs font-bold text-[#059669] uppercase tracking-widest block">HealNSight</span>
             <h3 className="text-base font-bold text-[#0F172A]">Customer Payment Receipt</h3>
             <p className="text-[10px] text-[#55647C] font-mono">Date: {receiptModalTxn?.created_at ? new Date(receiptModalTxn.created_at).toLocaleString() : ''}</p>
           </div>
@@ -2473,7 +2581,7 @@ export const PatientDashboard = ({
           </div>
 
           <div className="p-2.5 rounded-xl bg-[#E7F0FC] border border-[#059669] text-center text-[10px] font-semibold text-[#059669]">
-            ✓ Verified Authentic Transaction • SSLCommerz Order Validation Complete
+            ✓
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-[#BDDDFA]">

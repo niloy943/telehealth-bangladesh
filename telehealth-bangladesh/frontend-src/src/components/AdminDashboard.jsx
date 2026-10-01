@@ -27,9 +27,8 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
   const [orders, setOrders] = useState([]);
   const [blockchainRecords, setBlockchainRecords] = useState([]);
 
-  // Audit tab search & filter
+  // Audit tab search
   const [searchAudit, setSearchAudit] = useState('');
-  const [auditFilter, setAuditFilter] = useState('all');
 
   // Doctor tab search, sort, filter & layout state
   const [searchDoctor, setSearchDoctor] = useState('');
@@ -563,12 +562,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
   const filteredLogs = (Array.isArray(logs) ? logs : []).filter(log => {
     const matchesSearch = (log.details || '').toLowerCase().includes(searchAudit.toLowerCase()) ||
       (log.user_details?.username || '').toLowerCase().includes(searchAudit.toLowerCase());
-    const matchesFilter = auditFilter === 'all' ||
-      (auditFilter === 'decrypt' && (log.action || '').includes('DECRYPT')) ||
-      (auditFilter === 'kyc' && (log.action || '').includes('KYC')) ||
-      (auditFilter === 'admin' && (log.action || '').includes('ADMIN')) ||
-      (auditFilter === 'auth' && ((log.action || '').includes('LOGIN') || (log.action || '').includes('LOGOUT')));
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   // Extract unique specialties from doctors
@@ -649,7 +643,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 space-y-8">
 
       {/* 1. Header & Navigation Pills */}
       <div className="bg-white border border-[#BDDDFA] rounded-2xl p-6 sm:p-8">
@@ -704,25 +698,9 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
           {/* Audit Logs Table (Full Width) */}
           <Card className="w-full">
             <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <CardTitle>Cryptographic Audit Trail</CardTitle>
-                  <CardDescription>Real-time security log of authentication, role updates, KYC, and clinical room events.</CardDescription>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {['all', 'admin', 'kyc', 'decrypt', 'auth'].map(f => (
-                    <button
-                      key={f}
-                      onClick={() => setAuditFilter(f)}
-                      className={`px-3 py-1 rounded-[10px] text-xs font-semibold uppercase border ${auditFilter === f
-                        ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
-                        : 'bg-white border-[#BDDDFA] text-[#55647C] hover:text-[#0F172A]'
-                        }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
+              <div>
+                <CardTitle>Cryptographic Audit Trail</CardTitle>
+                <CardDescription>Real-time security log of authentication, role updates, KYC, and clinical room events.</CardDescription>
               </div>
             </CardHeader>
 
@@ -1605,7 +1583,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
         isOpen={showOnboardModal}
         onClose={() => setShowOnboardModal(false)}
         title="Onboard Doctor Account"
-        subtitle="Provision a verified doctor account directly into Telehealth Bangladesh"
+        subtitle="Provision a verified physician account directly into HealNSight"
       >
         <form onSubmit={handleOnboardDoctorSubmit} className="space-y-4">
           {onboardError && (

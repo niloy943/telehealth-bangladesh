@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# HealNSight Telehealth Bangladesh — Complete 58 APIs cURL Runner
+# HealNSight HealNSight — Complete 58 APIs cURL Runner
 # ==============================================================================
 
 DJANGO_URL="http://127.0.0.1:8000"

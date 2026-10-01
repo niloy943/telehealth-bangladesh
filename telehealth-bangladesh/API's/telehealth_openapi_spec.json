@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "HealNSight Telehealth Bangladesh API",
+    "title": "HealNSight HealNSight API",
     "description": "Complete OpenAPI 3.0.3 specification covering all 58 endpoints across Django REST Framework, Node.js Auth Microservice, and FastAPI Worker.",
     "version": "1.0.0",
     "contact": {

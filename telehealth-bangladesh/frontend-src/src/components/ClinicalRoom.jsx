@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
+import { SecurityBadge } from './ui';
 import {
   Send, ShieldCheck, Video, VideoOff, Mic, MicOff, PhoneOff, Phone,
   Monitor, Play, Trash2, ArrowLeft, Terminal, AlertCircle, Volume2, Lock, User,
@@ -77,6 +78,30 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   const streamRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
+  const safeSendSocketMessage = (msgObj) => {
+    try {
+      const ws = socketRef.current;
+      if (!ws) return;
+      const data = typeof msgObj === 'string' ? msgObj : JSON.stringify(msgObj);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(data);
+      } else if (ws.readyState === WebSocket.CONNECTING) {
+        const sendWhenOpen = () => {
+          try {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(data);
+            }
+          } catch (e) {
+            console.warn("Queued WebSocket send failed:", e);
+          }
+        };
+        ws.addEventListener('open', sendWhenOpen, { once: true });
+      }
+    } catch (err) {
+      console.warn("WebSocket send prevented crash:", err);
+    }
+  };
+
   useEffect(() => {
     // Initialize End-to-End Encryption
     const initE2EE = async () => {
@@ -119,128 +144,132 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       const wsProto = apiBase.startsWith('https') ? 'wss:' : 'ws:';
       const cleanHost = apiBase.replace(/^https?:\/\//, '');
       const wsUrl = `${wsProto}//${cleanHost}/ws/consultation/${consultationId}/`;
+      const ws = new WebSocket(wsUrl);
+      socketRef.current = ws;
 
-      socketRef.current = new WebSocket(wsUrl);
-
-      socketRef.current.onmessage = async (e) => {
-        const payload = JSON.parse(e.data);
-        if (payload.action === 'encrypted_chat_message') {
-          const { sender, ciphertext, iv, aad, message_id, timestamp } = payload;
-
-          if (!sessionKeyRef.current) {
-            setMessages(prev => [...prev, {
-              sender: sender,
-              message: "Unable to decrypt message — integrity verification failed.",
-              isError: true
-            }]);
-            return;
-          }
-
-          try {
-            const decrypted = await decryptMessage(sessionKeyRef.current, ciphertext, iv, aad);
-            setMessages(prev => [...prev, { sender: sender, message: decrypted }]);
-          } catch (err) {
-            console.error("Decryption failed:", err);
-            setMessages(prev => [...prev, {
-              sender: sender,
-              message: "Unable to decrypt message — integrity verification failed.",
-              isError: true
-            }]);
-          }
-        } else if (payload.action === 'e2ee_key_exchange') {
-          const { sender, key_type, public_key, signature } = payload;
-          if (sender === user.username) return;
-
-          if (key_type === 'identity') {
-            if (peerIdentityKeyB64Ref.current === public_key) {
+      ws.onmessage = async (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.action === 'encrypted_chat_message') {
+            const { sender, ciphertext, iv, aad, message_id, timestamp } = payload;
+            
+            if (!sessionKeyRef.current) {
+              setMessages(prev => [...prev, {
+                sender: sender,
+                message: "Unable to decrypt message — integrity verification failed.",
+                isError: true
+              }]);
               return;
             }
-            peerIdentityKeyB64Ref.current = public_key;
-            addPbxLog(`[E2EE] Received Peer Identity Public Key from ${sender}.`);
+
             try {
-              const peerIdKey = await importPublicKey(public_key, "ECDSA", ["verify"]);
-              peerIdentityKeyRef.current = peerIdKey;
-
-              // Respond with our identity key
-              socketRef.current.send(JSON.stringify({
-                action: 'e2ee_key_exchange',
-                sender: user.username,
-                key_type: 'identity',
-                public_key: myIdPubB64Ref.current
-              }));
-
-              // Send our ephemeral public key signed with our identity private key
-              socketRef.current.send(JSON.stringify({
-                action: 'e2ee_key_exchange',
-                sender: user.username,
-                key_type: 'ephemeral',
-                public_key: myEpPubB64Ref.current,
-                signature: mySignatureRef.current
-              }));
+              const decrypted = await decryptMessage(sessionKeyRef.current, ciphertext, iv, aad);
+              setMessages(prev => [...prev, { sender: sender, message: decrypted }]);
             } catch (err) {
-              console.error("Failed to import peer identity key:", err);
-              addPbxLog("[E2EE] Peer identity verification failed.");
-              setE2eeStatus("failed");
+              console.error("Decryption failed:", err);
+              setMessages(prev => [...prev, {
+                sender: sender,
+                message: "Unable to decrypt message — integrity verification failed.",
+                isError: true
+              }]);
             }
-          } else if (key_type === 'ephemeral') {
-            addPbxLog(`[E2EE] Received Peer Ephemeral Public Key from ${sender}.`);
-            if (!peerIdentityKeyRef.current) {
-              addPbxLog("[E2EE] Ephemeral exchange failed: Peer Identity Key missing.");
-              setE2eeStatus("failed");
-              return;
-            }
-            try {
-              const isValid = await verifyKeyExchangeSignature(
-                peerIdentityKeyRef.current,
-                public_key,
-                signature
-              );
+          } else if (payload.action === 'e2ee_key_exchange') {
+            const { sender, key_type, public_key, signature } = payload;
+            if (sender === user.username) return;
 
-              if (!isValid) {
-                addPbxLog("[E2EE] Peer ephemeral signature verification failed!");
+            if (key_type === 'identity') {
+              if (peerIdentityKeyB64Ref.current === public_key) {
+                return;
+              }
+              peerIdentityKeyB64Ref.current = public_key;
+              addPbxLog(`[E2EE] Received Peer Identity Public Key from ${sender}.`);
+              try {
+                const peerIdKey = await importPublicKey(public_key, "ECDSA", ["verify"]);
+                peerIdentityKeyRef.current = peerIdKey;
+                
+                // Respond with our identity key
+                safeSendSocketMessage({
+                  action: 'e2ee_key_exchange',
+                  sender: user.username,
+                  key_type: 'identity',
+                  public_key: myIdPubB64Ref.current
+                });
+                
+                // Send our ephemeral public key signed with our identity private key
+                safeSendSocketMessage({
+                  action: 'e2ee_key_exchange',
+                  sender: user.username,
+                  key_type: 'ephemeral',
+                  public_key: myEpPubB64Ref.current,
+                  signature: mySignatureRef.current
+                });
+              } catch (err) {
+                console.error("Failed to import peer identity key:", err);
+                addPbxLog("[E2EE] Peer identity verification failed.");
+                setE2eeStatus("failed");
+              }
+            } else if (key_type === 'ephemeral') {
+              addPbxLog(`[E2EE] Received Peer Ephemeral Public Key from ${sender}.`);
+              if (!peerIdentityKeyRef.current) {
+                addPbxLog("[E2EE] Ephemeral exchange failed: Peer Identity Key missing.");
                 setE2eeStatus("failed");
                 return;
               }
-
-              addPbxLog("[E2EE] Ephemeral public key signature verified successfully.");
-
-              const peerEpKey = await importPublicKey(public_key, "ECDH", []);
-              const derivedKey = await deriveSessionKey(
-                myEpKeyPairRef.current.privateKey,
-                peerEpKey
-              );
-
-              sessionKeyRef.current = derivedKey;
-
-              const fp = generateFingerprint(myEpPubB64Ref.current, public_key);
-              setFingerprint(fp);
-              setE2eeStatus("secure");
-              addPbxLog(`[E2EE] End-to-End Encrypted channel established. Fingerprint: ${fp}`);
-              triggerNotification("E2EE Active", "Secure encrypted session established.", "security");
-            } catch (err) {
-              console.error("Ephemeral exchange failed:", err);
-              addPbxLog("[E2EE] Session key derivation failed.");
-              setE2eeStatus("failed");
+              try {
+                const isValid = await verifyKeyExchangeSignature(
+                  peerIdentityKeyRef.current,
+                  public_key,
+                  signature
+                );
+                
+                if (!isValid) {
+                  addPbxLog("[E2EE] Peer ephemeral signature verification failed!");
+                  setE2eeStatus("failed");
+                  return;
+                }
+                
+                addPbxLog("[E2EE] Ephemeral public key signature verified successfully.");
+                
+                const peerEpKey = await importPublicKey(public_key, "ECDH", []);
+                const derivedKey = await deriveSessionKey(
+                  myEpKeyPairRef.current.privateKey,
+                  peerEpKey
+                );
+                
+                sessionKeyRef.current = derivedKey;
+                
+                const fp = generateFingerprint(myEpPubB64Ref.current, public_key);
+                setFingerprint(fp);
+                setE2eeStatus("secure");
+                addPbxLog(`[E2EE] End-to-End Encrypted channel established. Fingerprint: ${fp}`);
+                triggerNotification("E2EE Active", "Secure encrypted session established.", "security");
+              } catch (err) {
+                console.error("Ephemeral exchange failed:", err);
+                addPbxLog("[E2EE] Session key derivation failed.");
+                setE2eeStatus("failed");
+              }
             }
+          } else if (payload.action === 'webrtc_signaling') {
+            handleWebRTCSignaling(payload.data, payload.sender);
           }
-        } else if (payload.action === 'webrtc_signaling') {
-          handleWebRTCSignaling(payload.data, payload.sender);
+        } catch (parseErr) {
+          console.warn("WebSocket message parse error:", parseErr);
         }
       };
 
-      socketRef.current.onopen = () => {
+      ws.onopen = () => {
         addPbxLog(`[SYS] WebSocket consultation channel #${consultationId} handshake completed.`);
         if (myIdPubB64Ref.current) {
-          socketRef.current.send(JSON.stringify({
+          safeSendSocketMessage({
             action: 'e2ee_key_exchange',
             sender: user.username,
             key_type: 'identity',
             public_key: myIdPubB64Ref.current
-          }));
+          });
         }
       };
 
-      socketRef.current.onerror = () => {
+      ws.onerror = () => {
         addPbxLog(`[ERR] WebSocket connection error on consultation #${consultationId}.`);
       };
     };
@@ -348,7 +377,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
       const encrypted = await encryptMessage(sessionKeyRef.current, text, aad);
 
-      socketRef.current.send(JSON.stringify({
+      safeSendSocketMessage({
         action: "encrypted_chat_message",
         sender: user.username,
         ciphertext: encrypted.ciphertext,
@@ -356,7 +385,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         aad: encrypted.aad,
         message_id: msgId,
         timestamp: timestamp
-      }));
+      });
       setInputVal("");
     } catch (err) {
       console.error("Encryption failed:", err);
@@ -389,13 +418,11 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   };
 
   const sendSignaling = (signal) => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        action: "webrtc_signaling",
-        sender: user.username,
-        data: signal
-      }));
-    }
+    safeSendSocketMessage({
+      action: "webrtc_signaling",
+      sender: user.username,
+      data: signal
+    });
   };
 
   // Video Suite setup

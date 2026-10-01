@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Telehealth Bangladesh - PostgreSQL Database Provisioner & Initializer
+HealNSight - PostgreSQL Database Provisioner & Initializer
 ---------------------------------------------------------------------
 Automates testing PostgreSQL connectivity, provisioning the database,
 applying schema migrations, and populating initial seed records.
@@ -97,12 +97,12 @@ def run_django_setup(config, seed=True):
         print("[✓] Database seeding complete.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Provision & Initialize PostgreSQL for Telehealth Bangladesh")
+    parser = argparse.ArgumentParser(description="Provision & Initialize PostgreSQL for HealNSight")
     parser.add_argument('--no-seed', action='store_true', help="Skip seeding initial mock data")
     args = parser.parse_args()
 
     print("=" * 70)
-    print("      TELEHEALTH BANGLADESH - POSTGRESQL BACKEND INITIALIZER         ")
+    print("      HealNSight - POSTGRESQL BACKEND INITIALIZER         ")
     print("=" * 70)
 
     config = get_postgres_config()

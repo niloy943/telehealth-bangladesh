@@ -1,5 +1,5 @@
 """
-Telehealth Bangladesh - Blockchain Ledger Module
+HealNSight - Blockchain Ledger Module
 ------------------------------------------------
 Provides cryptographic SHA-256 Merkle chain anchoring and Ethereum Sepolia smart contract
 integration for health records, prescriptions, and patient consent verification.

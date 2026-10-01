@@ -508,7 +508,7 @@ When presenting this project to your thesis committee, demonstrate the following
     - Show server-authoritative amount calculation (anti-fraud protection).
     - Complete the payment flow and view the "Verified & Confirmed" modal.
     - Open "Billing & Payments" tab and click "View Receipt" to display the printable 
-      official digital receipt voucher.
+       Digital Receipt voucher.
 
 [X] 3. Real-Time Clinical Consultation:
     - Log in as Doctor in one window and Patient in another.

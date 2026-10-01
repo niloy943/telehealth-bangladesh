@@ -1,6 +1,6 @@
-# HealNSight Telehealth Bangladesh — Complete 58 APIs Directory
+# HealNSight HealNSight — Complete 58 APIs Directory
 
-This directory contains the complete API specifications, Postman collection, OpenAPI 3.0 definitions, and cURL test scripts for all **58 APIs** across the Telehealth Bangladesh monorepo.
+This directory contains the complete API specifications, Postman collection, OpenAPI 3.0 definitions, and cURL test scripts for all **58 APIs** across the HealNSight monorepo.
 
 ---
 

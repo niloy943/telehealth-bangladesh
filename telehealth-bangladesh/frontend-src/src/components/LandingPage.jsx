@@ -60,16 +60,6 @@ const Navbar = ({ onLogin, onGetStarted }) => {
 
         {/* Desktop Actions & Toggles */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Language Switcher */}
-          <button
-            onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] border border-[#1E293B] bg-[#1E293B] text-[#CBD5E1] hover:bg-[#334155] text-xs font-bold cursor-pointer"
-            title="Switch Language"
-          >
-            <Globe className="w-3.5 h-3.5 text-[#34D399]" />
-            <span>{lang === 'en' ? 'বাংলা' : 'English'}</span>
-          </button>
-
           {/* Login Button */}
           <button
             onClick={onLogin}
@@ -113,13 +103,6 @@ const Navbar = ({ onLogin, onGetStarted }) => {
           </button>
 
           <div className="pt-3 border-t border-[#1E293B] flex flex-col gap-2">
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-[10px] border border-[#1E293B] bg-[#1E293B] text-xs font-semibold text-[#CBD5E1]"
-            >
-              <Globe className="w-4 h-4 text-[#34D399]" />
-              <span>{lang === 'en' ? 'বাংলায় দেখুন' : 'Switch to English'}</span>
-            </button>
             <button onClick={onLogin} className="w-full py-2.5 rounded-[10px] border border-[#1E293B] bg-[#1E293B] text-xs font-semibold text-white">
               Log In
             </button>
