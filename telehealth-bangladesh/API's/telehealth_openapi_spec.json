@@ -1,0 +1,2269 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "HealNSight Telehealth Bangladesh API",
+    "description": "Complete OpenAPI 3.0.3 specification covering all 58 endpoints across Django REST Framework, Node.js Auth Microservice, and FastAPI Worker.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "HealNSight Technical Team",
+      "url": "https://github.com/infectedsourav/telehealth-bangladesh"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "Django REST Backend (Core Clinical & Operations)"
+    },
+    {
+      "url": "http://localhost:5000",
+      "description": "Node.js Auth & OTP Microservice"
+    },
+    {
+      "url": "http://localhost:6000",
+      "description": "FastAPI AI & Vision Worker"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your JWT token (obtainable from /api/login/ or /api/auth/login)."
+      }
+    }
+  },
+  "paths": {
+    "/api/register/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "Register User Account",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "username": "user",
+                  "email": "user@example.com",
+                  "password": "Password123!",
+                  "role": "patient",
+                  "phone": "+8801700000001"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/login/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "Obtain JWT Token Pair",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "username": "kazi_patient",
+                  "password": "Password123!"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login-secure/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "MFA Stage 1 Secure Login",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "username": "sarah_doctor",
+                  "password": "Password123!"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/mfa-verify/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "MFA Stage 2 TOTP Verify",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "session_token": "TOKEN",
+                  "otp_code": "123456"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/token/refresh/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "Refresh Access Token",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "refresh": "REFRESH_TOKEN"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "Django Forgot Password",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "email": "user@example.com"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password/": {
+      "post": {
+        "tags": [
+          "Django Auth"
+        ],
+        "summary": "Django Reset Password",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "token": "RESET_TOKEN",
+                  "new_password": "NewPassword123!"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profile/": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "Get Current User Profile",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "Update User Profile Details",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "first_name": "Kazi",
+                  "last_name": "Anwar",
+                  "phone": "+8801712345678",
+                  "address": "Dhaka",
+                  "emergency_contact": "+8801811223344",
+                  "blood_group": "O+",
+                  "fees": 1200
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctors/": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "List Approved Doctors",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/admin/doctors/": {
+      "get": {
+        "tags": [
+          "Admin KYC"
+        ],
+        "summary": "List Doctors Pending KYC Verification",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/doctors/{id}/action/": {
+      "post": {
+        "tags": [
+          "Admin KYC"
+        ],
+        "summary": "Approve or Reject Doctor Credentials",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "action": "approve",
+                  "notes": "BMDC verified."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "List User Appointments",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Schedule Telehealth Appointment",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "doctor": 2,
+                  "scheduled_time": "2026-10-05T14:30:00Z",
+                  "reason": "Followup",
+                  "telehealth_mode": "video"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Retrieve Appointment Details",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Modify Appointment",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "status": "confirmed",
+                  "scheduled_time": "2026-10-06T15:00:00Z"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Cancel Scheduled Appointment",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/consultations/{id}/": {
+      "get": {
+        "tags": [
+          "Consultations"
+        ],
+        "summary": "Retrieve Consultation Session",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Consultations"
+        ],
+        "summary": "Save Clinical Consultation Notes",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "diagnosis": "Hypertension",
+                  "clinical_notes": "Prescribed ACE inhibitors.",
+                  "vitals": {
+                    "bp": "130/85",
+                    "pulse": 76
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/records/": {
+      "get": {
+        "tags": [
+          "E2EE Records"
+        ],
+        "summary": "List Patient Encrypted Health Records",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "E2EE Records"
+        ],
+        "summary": "Upload Encrypted Health Record",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "title": "Blood Test",
+                  "record_type": "lab_report",
+                  "encrypted_data": "BASE64_AES_CIPHERTEXT"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/consent/": {
+      "get": {
+        "tags": [
+          "Consent"
+        ],
+        "summary": "List Active Consent Grants",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Consent"
+        ],
+        "summary": "Grant Record Access to Doctor",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "doctor": 2,
+                  "permission_level": "full_access",
+                  "expires_at": "2026-10-15T23:59:59Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/consent/{id}/": {
+      "post": {
+        "tags": [
+          "Consent"
+        ],
+        "summary": "Revoke Doctor Consent",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "action": "revoke"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prescriptions/": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "List Prescriptions",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Create Digital E-Prescription",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "patient": 1,
+                  "diagnosis": "Viral Rhinitis",
+                  "medications": [
+                    {
+                      "name": "Paracetamol",
+                      "dosage": "500mg tid"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prescriptions/{id}/share/": {
+      "post": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Generate Pharmacy Share Token",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "expires_in_hours": 48
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prescriptions/shared/{token}/": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Public Pharmacy Prescription View",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/medicines/": {
+      "get": {
+        "tags": [
+          "Pharmacy"
+        ],
+        "summary": "Search Medicine Catalog",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/orders/": {
+      "get": {
+        "tags": [
+          "Pharmacy"
+        ],
+        "summary": "List Medicine Orders",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Pharmacy"
+        ],
+        "summary": "Place Medicine Order",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "delivery_address": "Dhaka",
+                  "items": [
+                    {
+                      "medicine_id": 1,
+                      "quantity": 2
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orders/{id}/": {
+      "get": {
+        "tags": [
+          "Pharmacy"
+        ],
+        "summary": "Track Order Status",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Pharmacy"
+        ],
+        "summary": "Update Order Delivery Status",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "status": "delivered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment/initiate/": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Initiate SSLCommerz Gateway Session",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "amount": 1000.0,
+                  "consultation_id": 1,
+                  "patient_name": "Kazi",
+                  "patient_phone": "+8801700000001"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment/callback/": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "SSLCommerz Browser Return Callback",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "tran_id": "TXN_123",
+                  "status": "VALID"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment/ipn/": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "SSLCommerz Instant Payment Notification",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "tran_id": "TXN_123",
+                  "status": "VALIDATED"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment/status/{transaction_ref}/": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Query Payment Status",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/payment/history/": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Get Patient Payment History",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/telephony/call/": {
+      "post": {
+        "tags": [
+          "Telephony"
+        ],
+        "summary": "Initiate Cellular Phone Bridge",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "doctor_phone": "+8801700000002",
+                  "patient_phone": "+8801700000001",
+                  "consultation_id": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/telephony/call/{call_sid}/terminate/": {
+      "post": {
+        "tags": [
+          "Telephony"
+        ],
+        "summary": "Terminate Active Voice Call",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/telephony/call/{call_sid}/status/": {
+      "get": {
+        "tags": [
+          "Telephony"
+        ],
+        "summary": "Get Call Status",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/telephony/calls/": {
+      "get": {
+        "tags": [
+          "Telephony"
+        ],
+        "summary": "List Telephony Call Records",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/telephony/twiml/": {
+      "post": {
+        "tags": [
+          "Telephony"
+        ],
+        "summary": "Dynamic Voice TwiML Instructions",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/telephony/twiml/{consultation_id}/": {
+      "post": {
+        "tags": [
+          "Telephony"
+        ],
+        "summary": "Consultation Conference TwiML",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/gov/verify-nid/": {
+      "post": {
+        "tags": [
+          "Government"
+        ],
+        "summary": "Verify Bangladesh National ID (NID)",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "nid": "19942691234567890",
+                  "dob": "1994-05-12"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gov/verify-bmdc/": {
+      "post": {
+        "tags": [
+          "Government"
+        ],
+        "summary": "Verify Doctor BMDC License",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "bmdc_reg_no": "BMDC/A-45892",
+                  "doctor_name": "Dr. Sarah"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/upload/": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Upload Encrypted File",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "file_name": "report.pdf",
+                  "file_data": "BASE64_DATA"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/file/{filename}/": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Download Stored Encrypted File",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/blockchain/records/": {
+      "get": {
+        "tags": [
+          "Blockchain"
+        ],
+        "summary": "Query Blockchain Audit Ledger",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/blockchain/verify-record/": {
+      "post": {
+        "tags": [
+          "Blockchain"
+        ],
+        "summary": "Verify Cryptographic SHA-256 Hash",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "record_id": 1,
+                  "expected_hash": "HASH"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blockchain/transaction/{tx_hash}/": {
+      "get": {
+        "tags": [
+          "Blockchain"
+        ],
+        "summary": "Get Blockchain Transaction Receipt",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/audit-logs/": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "Query Administrative Audit Logs",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/image-profiles/": {
+      "get": {
+        "tags": [
+          "Image Profiles"
+        ],
+        "summary": "List Patient Diagnostic Image Scans",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Image Profiles"
+        ],
+        "summary": "Save Diagnostic Image Scan Summary",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "patient": 1,
+                  "image_name": "ecg.png",
+                  "image_file": "BASE64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/health-assistant/": {
+      "post": {
+        "tags": [
+          "AI Assistant"
+        ],
+        "summary": "Bilingual Symptom Triage Assessment",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "message": "Severe fever and headache",
+                  "conversation_id": "CONV-123",
+                  "language": "en"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/health-assistant/conversations/": {
+      "get": {
+        "tags": [
+          "AI Assistant"
+        ],
+        "summary": "List User AI Conversations",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/ai/health-assistant/conversations/{conversation_id}/": {
+      "get": {
+        "tags": [
+          "AI Assistant"
+        ],
+        "summary": "Get AI Conversation Transcript",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Node Microservice Health Check",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Node Registration",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "username": "tanvir",
+                  "email": "tanvir@example.com",
+                  "password": "Demo@12345",
+                  "role": "patient"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Node Authentication",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "username": "tanvir",
+                  "password": "Demo@12345"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Request 6-Digit Password Reset OTP",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "email": "tanvir@example.com"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify-otp": {
+      "post": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Verify 6-Digit OTP Code",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "email": "tanvir@example.com",
+                  "otp": "123456"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Complete Password Reset with Django PBKDF2 Hash",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "email": "tanvir@example.com",
+                  "otp": "123456",
+                  "new_password": "NewPassword123!"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/audit-logs": {
+      "get": {
+        "tags": [
+          "Node.js Auth"
+        ],
+        "summary": "Query OTP Challenge Audit Logs",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "FastAPI Worker"
+        ],
+        "summary": "FastAPI Worker Status",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/vision/analyze": {
+      "post": {
+        "tags": [
+          "FastAPI Worker"
+        ],
+        "summary": "Multimodal ECG/CBC Chart Extraction",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Validation or format error"
+          },
+          "401": {
+            "description": "Authentication credentials missing or invalid"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "patient": 1,
+                  "image_name": "ecg_scan.png",
+                  "image_file": "BASE64"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

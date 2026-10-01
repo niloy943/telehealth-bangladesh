@@ -1,0 +1,2077 @@
+{
+  "info": {
+    "_postman_id": "healnsight-telehealth-58-apis",
+    "name": "HealNSight Telehealth Bangladesh \u2014 Complete 58 APIs Collection",
+    "description": "Complete collection of all 58 APIs across Django Backend (:8000), Node.js Auth Microservice (:5000), and FastAPI Worker (:6000). Includes headers, sample JSON payloads, parameters, and authentication tokens.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "django_base",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "node_base",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "fastapi_base",
+      "value": "http://localhost:6000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "YOUR_JWT_ACCESS_TOKEN_HERE",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Django Authentication & Security",
+      "description": "User registration, SimpleJWT tokens, TOTP Multi-Factor Authentication, and password reset.",
+      "item": [
+        {
+          "name": "1.1 Register New User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/register/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "register"
+              ]
+            },
+            "description": "Registers a new patient, doctor, or admin account.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kazi_patient\",\n  \"email\": \"kazi@example.com\",\n  \"password\": \"Password123!\",\n  \"password_confirm\": \"Password123!\",\n  \"role\": \"patient\",\n  \"phone\": \"+8801712345678\",\n  \"first_name\": \"Kazi\",\n  \"last_name\": \"Anwar\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Standard JWT Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/login/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Authenticates credentials and returns JWT access and refresh tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kazi_patient\",\n  \"password\": \"Password123!\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Secure Login (MFA Stage 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/auth/login-secure/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login-secure"
+              ]
+            },
+            "description": "Initiates MFA-enforced login. Returns session_token if MFA is enabled.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"sarah_doctor\",\n  \"password\": \"Password123!\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Verify MFA TOTP Code (MFA Stage 2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/auth/mfa-verify/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "mfa-verify"
+              ]
+            },
+            "description": "Verifies the 6-digit TOTP code and issues JWT tokens upon success.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_token\": \"MFA_SESSION_TOKEN_FROM_STAGE_1\",\n  \"otp_code\": \"123456\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Refresh JWT Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/token/refresh/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "token",
+                "refresh"
+              ]
+            },
+            "description": "Obtains a new access token using a valid refresh token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"YOUR_REFRESH_TOKEN_HERE\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Django Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/auth/forgot-password/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Requests a password reset token from Django backend.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"kazi@example.com\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Django Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/auth/reset-password/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Resets account password using Django token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"RESET_TOKEN_STRING\",\n  \"new_password\": \"NewSecurePassword123!\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. User Profiles & Doctor KYC",
+      "description": "User profile management and admin doctor credential verification.",
+      "item": [
+        {
+          "name": "2.1 Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/profile/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Fetches full demographic, patient, or doctor profile details."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Update Profile & Demographics",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/profile/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Updates demographic and role-specific profile fields (patient/doctor).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Kazi\",\n  \"last_name\": \"Anwar\",\n  \"phone\": \"+8801712345678\",\n  \"address\": \"Dhanmondi, Dhaka\",\n  \"emergency_contact\": \"+8801811223344\",\n  \"blood_group\": \"O+\",\n  \"specialty\": \"Cardiology\",\n  \"hospital\": \"Dhaka Medical College Hospital\",\n  \"fees\": 1200\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Public Doctors Directory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/doctors/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "doctors"
+              ]
+            },
+            "description": "Returns directory of approved doctors with specialty, hospital, and fees."
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Admin - Doctor KYC Pending List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/admin/doctors/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "doctors"
+              ]
+            },
+            "description": "Admin endpoint listing doctors pending verification review."
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Admin - Approve or Reject Doctor KYC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/admin/doctors/1/action/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "doctors",
+                "1",
+                "action"
+              ]
+            },
+            "description": "Approves or rejects doctor registration credentials.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\",\n  \"notes\": \"BMDC license verified against council registry.\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Appointments & Clinical Consultations",
+      "description": "Telemedicine appointment scheduling, modification, and consultation session management.",
+      "item": [
+        {
+          "name": "3.1 List / Book Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/appointments/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "appointments"
+              ]
+            },
+            "description": "Lists upcoming appointments for current user."
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Book Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/appointments/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "appointments"
+              ]
+            },
+            "description": "Schedules a new appointment with a doctor.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor\": 2,\n  \"scheduled_time\": \"2026-10-05T14:30:00Z\",\n  \"reason\": \"Chest tightness and persistent dry cough\",\n  \"telehealth_mode\": \"video\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Manage Appointment (Reschedule / Cancel)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/appointments/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "1"
+              ]
+            },
+            "description": "Reschedules, confirms, or updates appointment status.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\",\n  \"scheduled_time\": \"2026-10-06T15:00:00Z\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Cancel Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/appointments/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "1"
+              ]
+            },
+            "description": "Cancels the scheduled appointment."
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Get Consultation Clinical Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/consultations/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "consultations",
+                "1"
+              ]
+            },
+            "description": "Retrieves clinical session notes, vitals, and diagnosis for a consultation."
+          },
+          "response": []
+        },
+        {
+          "name": "3.6 Update Consultation Clinical Notes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/consultations/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "consultations",
+                "1"
+              ]
+            },
+            "description": "Doctor records clinical findings, vitals, and diagnosis during or after call.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diagnosis\": \"Mild sinus bradycardia with stress-induced palpitations\",\n  \"clinical_notes\": \"Patient advised to reduce caffeine intake and monitor BP morning and evening.\",\n  \"vitals\": {\n    \"bp\": \"120/80\",\n    \"pulse\": 72,\n    \"spo2\": 99,\n    \"temp\": \"98.4 F\"\n  }\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. E2EE Medical Records & Patient Consent",
+      "description": "Encrypted health record storage and patient consent management for doctor access.",
+      "item": [
+        {
+          "name": "4.1 List Encrypted Medical Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/records/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "records"
+              ]
+            },
+            "description": "Lists patient's medical records and test reports."
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Upload Encrypted Health Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/records/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "records"
+              ]
+            },
+            "description": "Stores patient health record with end-to-end encryption metadata.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Lipid Profile & Blood Sugar Report\",\n  \"record_type\": \"lab_report\",\n  \"encrypted_data\": \"U2FsdGVkX1+...[BASE64_AES_CIPHERTEXT]...\",\n  \"notes\": \"Fasting blood sugar 5.4 mmol/L\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 List Active Consent Grants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/consent/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "consent"
+              ]
+            },
+            "description": "Lists all doctors who currently hold access consent to patient records."
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Grant Consent to Doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/consent/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "consent"
+              ]
+            },
+            "description": "Explicitly authorizes a doctor to view patient medical history.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor\": 2,\n  \"permission_level\": \"full_access\",\n  \"expires_at\": \"2026-10-15T23:59:59Z\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 Revoke Doctor Consent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/consent/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "consent",
+                "1"
+              ]
+            },
+            "description": "Revokes a doctor's access to patient records immediately.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"revoke\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Digital E-Prescriptions & Pharmacy Sharing",
+      "description": "Issue digital prescriptions and create cryptographic time-limited share links for pharmacies.",
+      "item": [
+        {
+          "name": "5.1 List E-Prescriptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/prescriptions/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "prescriptions"
+              ]
+            },
+            "description": "Lists all issued or received digital prescriptions."
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Issue New E-Prescription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/prescriptions/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "prescriptions"
+              ]
+            },
+            "description": "Doctor generates an authenticated digital prescription.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": 1,\n  \"diagnosis\": \"Seasonal Allergic Rhinitis\",\n  \"medications\": [\n    {\n      \"name\": \"Fexofenadine 120mg\",\n      \"dosage\": \"1 tablet daily\",\n      \"duration\": \"14 days\"\n    },\n    {\n      \"name\": \"Fluticasone Nasal Spray\",\n      \"dosage\": \"2 sprays per nostril daily\",\n      \"duration\": \"1 month\"\n    }\n  ],\n  \"advice\": \"Avoid direct dust exposure and drink warm water.\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Generate Prescription Share Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/prescriptions/1/share/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "prescriptions",
+                "1",
+                "share"
+              ]
+            },
+            "description": "Generates a secure cryptographic share token for pharmacy dispensing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expires_in_hours\": 48\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 View Shared Prescription (Public)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/prescriptions/shared/SECURE_SHARE_TOKEN_HERE/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "prescriptions",
+                "shared",
+                "SECURE_SHARE_TOKEN_HERE"
+              ]
+            },
+            "description": "Public verification endpoint allowing pharmacies to view verified prescription."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Pharmacy Catalog & Medicine Orders",
+      "description": "Search available pharmaceuticals and manage home delivery orders.",
+      "item": [
+        {
+          "name": "6.1 Browse Medicine Catalog",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/medicines/?search=paracetamol",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "medicines"
+              ]
+            },
+            "description": "Search medicine inventory with dosage, manufacturer, and pricing."
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 List Medicine Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/orders/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Lists user's medicine orders and delivery status."
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 Place Medicine Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/orders/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Submits medicine order for pharmacy packaging and home delivery.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"delivery_address\": \"House 12, Road 5, Dhanmondi, Dhaka\",\n  \"items\": [\n    {\n      \"medicine_id\": 1,\n      \"quantity\": 2\n    },\n    {\n      \"medicine_id\": 4,\n      \"quantity\": 1\n    }\n  ],\n  \"prescription\": 1\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.4 Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/orders/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "1"
+              ]
+            },
+            "description": "Updates delivery progress (processing, dispatched, delivered).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"dispatched\",\n  \"tracking_number\": \"REDX-DH-992381\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Payment Gateway (SSLCommerz V4)",
+      "description": "Payment session initiation, callback handlers, IPN webhooks, status queries, and billing history.",
+      "item": [
+        {
+          "name": "7.1 Initiate Payment Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/payment/initiate/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "initiate"
+              ]
+            },
+            "description": "Generates SSLCommerz payment gateway session URL (supports bKash, Nagad, cards).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000.0,\n  \"consultation_id\": 1,\n  \"patient_name\": \"Kazi Anwar\",\n  \"patient_email\": \"kazi@example.com\",\n  \"patient_phone\": \"+8801712345678\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 Payment Callback Return",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/payment/callback/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "callback"
+              ]
+            },
+            "description": "Browser return callback upon customer completion at payment gateway.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_id\": \"TXN_HEAL_1727395000\",\n  \"status\": \"VALID\",\n  \"val_id\": \"2609270100223\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 Instant Payment Notification (IPN Webhook)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/payment/ipn/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "ipn"
+              ]
+            },
+            "description": "Server-to-server instant payment notification handler from SSLCommerz.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_id\": \"TXN_HEAL_1727395000\",\n  \"val_id\": \"2609270100223\",\n  \"amount\": \"1000.00\",\n  \"card_type\": \"BKASH-BKash\",\n  \"status\": \"VALIDATED\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.4 Query Transaction Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/payment/status/TXN_HEAL_1727395000/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "status",
+                "TXN_HEAL_1727395000"
+              ]
+            },
+            "description": "Real-time check on payment settlement status."
+          },
+          "response": []
+        },
+        {
+          "name": "7.5 Patient Billing History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/payment/history/?status=VALID",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "payment",
+                "history"
+              ]
+            },
+            "description": "Retrieves patient's past transaction history and invoices."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Telephony & Cellular Voice Consultations",
+      "description": "Cellular bridge for rural patients without stable internet connectivity via Twilio PSTN.",
+      "item": [
+        {
+          "name": "8.1 Initiate Phone Call Bridge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/telephony/call/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "telephony",
+                "call"
+              ]
+            },
+            "description": "Bridges doctor and patient on a live cellular telephone call.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor_phone\": \"+8801700000002\",\n  \"patient_phone\": \"+8801700000001\",\n  \"consultation_id\": 1\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.2 Terminate Phone Call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/telephony/call/CA1234567890abcdef/terminate/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "telephony",
+                "call",
+                "CA1234567890abcdef",
+                "terminate"
+              ]
+            },
+            "description": "Hangs up active telephone bridge call."
+          },
+          "response": []
+        },
+        {
+          "name": "8.3 Check Call Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/telephony/call/CA1234567890abcdef/status/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "telephony",
+                "call",
+                "CA1234567890abcdef",
+                "status"
+              ]
+            },
+            "description": "Queries live call state (queued, ringing, in-progress, completed)."
+          },
+          "response": []
+        },
+        {
+          "name": "8.4 List Call History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/telephony/calls/?consultation_id=1",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "telephony",
+                "calls"
+              ]
+            },
+            "description": "Lists voice call records and duration for a consultation."
+          },
+          "response": []
+        },
+        {
+          "name": "8.5 Dynamic TwiML Voice Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/telephony/twiml/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "telephony",
+                "twiml"
+              ]
+            },
+            "description": "Serves dynamic TwiML XML instructions to Twilio telephony server."
+          },
+          "response": []
+        },
+        {
+          "name": "8.6 Consultation-Specific TwiML",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/telephony/twiml/1/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "telephony",
+                "twiml",
+                "1"
+              ]
+            },
+            "description": "Generates consultation audio conference room TwiML XML."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. Government Healthcare Registry Verification",
+      "description": "Integration with Bangladesh Directorate General of Health Services (DGHS), NID, and BMDC.",
+      "item": [
+        {
+          "name": "9.1 Verify Bangladesh National ID (NID)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/gov/verify-nid/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "gov",
+                "verify-nid"
+              ]
+            },
+            "description": "Verifies 10/13/17 digit Bangladeshi National ID against DGHS/Election Commission records.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nid\": \"19942691234567890\",\n  \"dob\": \"1994-05-12\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9.2 Verify BMDC Doctor Medical License",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/gov/verify-bmdc/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "gov",
+                "verify-bmdc"
+              ]
+            },
+            "description": "Validates Bangladesh Medical & Dental Council medical practitioner registration.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bmdc_reg_no\": \"BMDC/A-45892\",\n  \"doctor_name\": \"Dr. Sarah Jenkins\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Encrypted File Storage",
+      "description": "Upload and download encrypted diagnostic imaging and clinical documents.",
+      "item": [
+        {
+          "name": "10.1 Upload Encrypted File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/storage/upload/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "storage",
+                "upload"
+              ]
+            },
+            "description": "Uploads encrypted binary or base64 file to secure medical storage.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_name\": \"chest_xray_scan.png\",\n  \"file_data\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...\",\n  \"record_type\": \"diagnostic_imaging\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10.2 Stream / Download Stored File",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/storage/file/chest_xray_scan.png/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "storage",
+                "file",
+                "chest_xray_scan.png"
+              ]
+            },
+            "description": "Downloads or streams encrypted file for authorized clinical inspection."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Blockchain & Cryptographic Audit Ledger",
+      "description": "Tamper-evident SHA-256 hash-chain ledger with Ethereum smart contract notarization.",
+      "item": [
+        {
+          "name": "11.1 Query Blockchain Ledger Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/blockchain/records/?limit=20",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "records"
+              ]
+            },
+            "description": "Lists immutable blockchain audit blocks with SHA-256 current and previous hashes."
+          },
+          "response": []
+        },
+        {
+          "name": "11.2 Verify Record Cryptographic Integrity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/blockchain/verify-record/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "verify-record"
+              ]
+            },
+            "description": "Recomputes SHA-256 block hash and validates link against preceding block.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"record_id\": 1,\n  \"expected_hash\": \"a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11.3 Get Blockchain Transaction Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/blockchain/transaction/0x8f3c72b192837492...",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "transaction",
+                "0x8f3c72b192837492..."
+              ]
+            },
+            "description": "Inspects on-chain Ethereum / Sepolia transaction receipt and block timestamp."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Audit Logs & Diagnostic Image Profiles",
+      "description": "System access audit trail and multi-modal image profile storage.",
+      "item": [
+        {
+          "name": "12.1 Get System Administrative Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/audit-logs/?action=UPDATE_PROFILE",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ]
+            },
+            "description": "Admin endpoint querying security, profile, and clinical action audit trails."
+          },
+          "response": []
+        },
+        {
+          "name": "12.2 List Diagnostic Image Profiles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/image-profiles/?patient_id=1",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "image-profiles"
+              ]
+            },
+            "description": "Lists patient diagnostic scans (ECG, CBC) and digitized summaries."
+          },
+          "response": []
+        },
+        {
+          "name": "12.3 Create Diagnostic Image Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/image-profiles/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "image-profiles"
+              ]
+            },
+            "description": "Creates diagnostic scan record with pre-extracted clinical summary.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": 1,\n  \"image_name\": \"ecg_lead_ii_scan.png\",\n  \"image_file\": \"data:image/png;base64,...\",\n  \"previous_data\": {\n    \"images\": {\n      \"ecg_summary\": \"Normal Sinus Rhythm at 74 bpm. No ST-segment elevation.\"\n    }\n  }\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13. AI Health Assistant & Symptom Triage",
+      "description": "Bilingual Bengali/English clinical triage with OpenAI and local deterministic fallback.",
+      "item": [
+        {
+          "name": "13.1 AI Symptom Triage Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/ai/health-assistant/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "health-assistant"
+              ]
+            },
+            "description": "Evaluates symptoms in Bengali or English and provides triage urgency (EMERGENCY, URGENT, ROUTINE).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"\\u0986\\u09ae\\u09be\\u09b0 \\u09e8 \\u09a6\\u09bf\\u09a8 \\u09a7\\u09b0\\u09c7 \\u09a4\\u09c0\\u09ac\\u09cd\\u09b0 \\u099c\\u09cd\\u09ac\\u09b0 (\\u09e7\\u09e6\\u09e8 \\u09a1\\u09bf\\u0997\\u09cd\\u09b0\\u09bf) \\u098f\\u09ac\\u0982 \\u09b6\\u09c1\\u09b7\\u09cd\\u0995 \\u0995\\u09be\\u09b6\\u09bf \\u09b9\\u099a\\u09cd\\u099b\\u09c7\\u0964 \\u0995\\u09bf \\u0995\\u09b0\\u09a4\\u09c7 \\u09b9\\u09ac\\u09c7?\",\n  \"conversation_id\": \"CONV-1727396000\",\n  \"language\": \"bn\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13.2 List User AI Chat Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/ai/health-assistant/conversations/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "health-assistant",
+                "conversations"
+              ]
+            },
+            "description": "Lists previous symptom assessment conversations."
+          },
+          "response": []
+        },
+        {
+          "name": "13.3 Get Conversation Transcript",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{django_base}}/api/ai/health-assistant/conversations/CONV-1727396000/",
+              "host": [
+                "{{django_base}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "health-assistant",
+                "conversations",
+                "CONV-1727396000"
+              ]
+            },
+            "description": "Retrieves dialogue messages and clinical recommendations for a conversation session."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14. Django Channels Real-Time WebSockets",
+      "description": "Real-time consultation signaling and in-call messaging.",
+      "item": [
+        {
+          "name": "14.1 Consultation WebRTC Signaling WebSocket",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Upgrade",
+                "value": "websocket"
+              }
+            ],
+            "url": {
+              "raw": "ws://127.0.0.1:8000/ws/consultation/1/",
+              "protocol": "ws",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1:8000"
+              ],
+              "path": [
+                "ws",
+                "consultation",
+                "1",
+                ""
+              ]
+            },
+            "description": "WebSocket endpoint handling WebRTC SDP offer/answer exchanges, ICE candidate negotiation, and live room text chat."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "15. Node.js Authentication & OTP Microservice",
+      "description": "Dedicated microservice on Port 5000 managing rate-limited OTP challenges and password reset.",
+      "item": [
+        {
+          "name": "15.1 Node Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/health",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Returns microservice health status and service identity."
+          },
+          "response": []
+        },
+        {
+          "name": "15.2 Node Sandbox Registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/api/auth/register",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registers user directly in shared database with Django PBKDF2 hash.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"tanvir_patient\",\n  \"email\": \"tanvir@example.com\",\n  \"password\": \"Demo@12345\",\n  \"phone\": \"+8801819998877\",\n  \"role\": \"patient\",\n  \"first_name\": \"Tanvir\",\n  \"last_name\": \"Hasan\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15.3 Node Authentication Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/api/auth/login",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticates credentials and returns JWT bearer token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"tanvir_patient\",\n  \"password\": \"Demo@12345\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15.4 Request 6-Digit Password Reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/api/auth/forgot-password",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Generates 6-digit cryptographic OTP, logs challenge, and dispatches via SMS/email (Rate-limited).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tanvir@example.com\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15.5 Verify 6-Digit OTP Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/api/auth/verify-otp",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Validates submitted OTP code against active 10-minute challenge window.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tanvir@example.com\",\n  \"otp\": \"482910\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15.6 Complete Password Reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/api/auth/reset-password",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Applies new password, hashes with pbkdf2_sha256 matching Django format, and invalidates OTP.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tanvir@example.com\",\n  \"otp\": \"482910\",\n  \"new_password\": \"NewUpdatedPassword123!\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15.7 Node OTP Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{node_base}}/api/auth/audit-logs",
+              "host": [
+                "{{node_base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "audit-logs"
+              ]
+            },
+            "description": "Queries OTP challenge attempts, IP addresses, and verification statuses."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "16. FastAPI AI & Multimodal Worker",
+      "description": "High-throughput asynchronous service on Port 6000 for multimodal ECG/CBC extraction and Speech-to-Text streaming.",
+      "item": [
+        {
+          "name": "16.1 FastAPI Service Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{fastapi_base}}/",
+              "host": [
+                "{{fastapi_base}}"
+              ],
+              "path": []
+            },
+            "description": "Checks FastAPI worker uptime and connectivity."
+          },
+          "response": []
+        },
+        {
+          "name": "16.2 Multimodal Vision Chart Analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{fastapi_base}}/api/vision/analyze",
+              "host": [
+                "{{fastapi_base}}"
+              ],
+              "path": [
+                "api",
+                "vision",
+                "analyze"
+              ]
+            },
+            "description": "Simulates multimodal LLaVA/GPT-4o vision extraction of ECG rhythm or CBC blood count values, committing findings directly to database.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": 1,\n  \"image_name\": \"patient_lead_ii_ecg.png\",\n  \"image_file\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "16.3 Real-Time Speech-to-Text Streaming WebSocket",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Upgrade",
+                "value": "websocket"
+              }
+            ],
+            "url": {
+              "raw": "ws://localhost:6000/ws/audio",
+              "protocol": "ws",
+              "host": [
+                "localhost:6000"
+              ],
+              "path": [
+                "ws",
+                "audio"
+              ]
+            },
+            "description": "Accepts 100ms binary PCM audio packets from browser microphone and streams back clinical dialogue transcription segments."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

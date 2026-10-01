@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO Elements -->
+  <title>HealNSight – Secure Telemedicine Platform</title>
+  <meta name="description"
+    content="HealNSight is a highly secure, end-to-end encrypted telemedicine platform connecting patients, BMDC-certified doctors, and healthcare providers across Bangladesh.">
+  <meta name="keywords"
+    content="HealNSight, telehealth, telemedicine, Bangladesh, BMDC doctor, secure prescription, E2EE doctor consultation, digital healthcare">
+
+  <!-- PWA Elements -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="theme-color" content="#0284c7">
+
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <!-- Google Fonts for Modern UX -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:ital,wght@0,300..900;1,300..900&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- HTML2PDF library for E-Prescription PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Global Error Logger -->
+  <script>
+    window.addEventListener('error', function (e) {
+      console.error('Captured Global Window Error:', e.error || e.message);
+      var errDiv = document.getElementById('global-fatal-error');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'global-fatal-error';
+        errDiv.style = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:white;padding:24px;z-index:999999;font-family:monospace;white-space:pre-wrap;box-shadow:0 10px 25px rgba(0,0,0,0.5);max-height:80vh;overflow-y:auto;';
+        document.body.prepend(errDiv);
+      }
+      errDiv.innerHTML = '<h2 style="font-weight:bold;font-size:18px;margin-bottom:8px;">⚠️ Fatal Script Error Detected:</h2>' +
+        '<div><strong>Message:</strong> ' + (e.message || 'Unknown Error') + '</div>' +
+        '<div><strong>Source:</strong> ' + (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || '') + '</div>' +
+        (e.error && e.error.stack ? '<pre style="background:#7f1d1d;padding:10px;margin-top:10px;border-radius:6px;">' + e.error.stack + '</pre>' : '');
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      console.error('Captured Global Unhandled Rejection:', e.reason);
+      var errDiv = document.getElementById('global-fatal-error');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'global-fatal-error';
+        errDiv.style = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:white;padding:24px;z-index:999999;font-family:monospace;white-space:pre-wrap;box-shadow:0 10px 25px rgba(0,0,0,0.5);max-height:80vh;overflow-y:auto;';
+        document.body.prepend(errDiv);
+      }
+      errDiv.innerHTML = '<h2 style="font-weight:bold;font-size:18px;margin-bottom:8px;">⚠️ Unhandled Promise Rejection:</h2>' +
+        '<pre style="background:#7f1d1d;padding:10px;margin-top:10px;border-radius:6px;">' + (e.reason ? (e.reason.stack || e.reason) : 'Unknown reason') + '</pre>';
+    });
+  </script>
+  <script type="module" crossorigin src="/assets/index-CNFftd69.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DE8hQ1KO.css">
+</head>
+
+<body class="bg-[#F4F6F9] text-[#0F172A] antialiased min-h-screen"
+  style="font-family: 'Inter', 'Plus Jakarta Sans', 'Nunito', 'Hind Siliguri', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.5;">
+
+  <div id="root"></div>
+
+  <!-- Global Sound Alerts -->
+  <audio id="audioRingtone" loop src="https://assets.mixkit.co/active_storage/sfx/1358/1358-84.wav"
+    preload="auto"></audio>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+          .catch((err) => console.error('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+
+  <!-- Vite entry script -->
+</body>
+
+</html>

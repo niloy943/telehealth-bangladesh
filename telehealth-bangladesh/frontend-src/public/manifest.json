@@ -1,0 +1,17 @@
+{
+  "short_name": "HealNSight",
+  "name": "HealNsightTelemedicine Platform",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0b0f19",
+  "theme_color": "#14b8a6",
+  "display": "standalone",
+  "orientation": "portrait"
+}
