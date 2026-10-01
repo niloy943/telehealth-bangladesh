@@ -2,7 +2,12 @@ import random
 import uuid
 import hashlib
 import json
+import secrets
 from datetime import datetime
+
+def generate_anonymous_session_id():
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(chars) for _ in range(6))
 from decimal import Decimal
 from django.utils import timezone
 from rest_framework import status, permissions, generics, throttling
@@ -802,17 +807,19 @@ class AppointmentViewSet(APIView):
         else:
             appts = Appointment.objects.all().order_by('-date')
         
-        data = AppointmentSerializer(appts, many=True).data
+        data = AppointmentSerializer(appts, many=True, context={'request': request}).data
 
         # Anonymous Consultation identity masking for doctors
         if user.role == 'doctor':
             for item in data:
                 if item.get('is_anonymous'):
+                    anon_token = item.get('anonymous_session_id') or f"A{item.get('id', 0):04d}"
+                    item['patient'] = None  # Prevent IDOR leakage of patient ID
                     item['patient_details'] = {
-                        "id": item['patient'],
-                        "username": f"Anonymous Patient #{item['patient']}",
+                        "id": None,
+                        "username": f"Anonymous Patient #{anon_token}",
                         "first_name": "Anonymous",
-                        "last_name": f"Patient #{item['patient']}",
+                        "last_name": f"Patient #{anon_token}",
                         "role": "patient",
                         "phone": "HIDDEN_ANONYMOUS",
                         "email": "anonymous@healnsight.com.bd"
@@ -857,25 +864,38 @@ class AppointmentViewSet(APIView):
                 except ValueError:
                     continue
 
-        serializer = AppointmentSerializer(data=data)
+        serializer = AppointmentSerializer(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         appt = serializer.save()
 
-        is_anon = data.get('is_anonymous', False)
+        consult_type = request.data.get('consultation_type', 'chat')
+        is_anon = bool(data.get('is_anonymous', False))
+        if consult_type == 'audio':
+            # Audio consultations are anonymous by requirement
+            is_anon = True
+
+        anon_id = None
         if is_anon:
+            anon_id = generate_anonymous_session_id()
             appt.is_anonymous = True
-            appt.save()
+            appt.anonymous_session_id = anon_id
+        
+        appt.consultation_type = consult_type
+        appt.save()
 
         # Create linked Consultation entry
+        audio_only = (consult_type == 'audio' or bool(request.data.get('audio_only', False)))
         Consultation.objects.create(
             appointment=appt,
-            type=request.data.get('consultation_type', 'chat'),
+            type=consult_type,
             status='pending',
-            is_anonymous=is_anon
+            is_anonymous=is_anon,
+            anonymous_session_id=anon_id,
+            audio_only=audio_only
         )
 
-        write_audit_log(user, "BOOK_APPOINTMENT", f"Patient booked appointment ID: {appt.id} (Anonymous: {is_anon})", request)
-        return Response(AppointmentSerializer(appt).data, status=status.HTTP_201_CREATED)
+        write_audit_log(user, "BOOK_APPOINTMENT", f"Patient booked appointment ID: {appt.id} (Anonymous: {is_anon}, Mode: {consult_type})", request)
+        return Response(AppointmentSerializer(appt, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
     def put(self, request, pk):
         try:
@@ -1922,6 +1942,8 @@ class ConsultationDetailView(APIView):
     """
     GET /api/consultations/<int:pk>/
     Returns consultation metadata and participant details for Clinical Room.
+    PATCH/PUT /api/consultations/<int:pk>/
+    Updates consultation status/started_at/ended_at/duration.
     """
     permission_classes = [permissions.IsAuthenticated]
 
@@ -1939,11 +1961,40 @@ class ConsultationDetailView(APIView):
         if user != appt.doctor and user != appt.patient and user.role != 'admin':
             raise PermissionDenied("You are not a participant in this consultation.")
 
+        anon_token = consultation.anonymous_session_id or (appt.anonymous_session_id if appt else None) or f"A{consultation.id:04d}"
+
+        # If user is doctor and consultation is anonymous, mask patient details completely (zero IDOR/PII leak)
+        is_doctor = (user == appt.doctor)
+        if consultation.is_anonymous and is_doctor:
+            patient_info = {
+                "id": None,
+                "name": f"Anonymous Patient #{anon_token}",
+                "phone": "",
+                "blood_group": "",
+                "is_anonymous": True,
+                "anonymous_session_id": anon_token
+            }
+        else:
+            patient_info = {
+                "id": appt.patient.id,
+                "name": f"{appt.patient.first_name} {appt.patient.last_name}".strip() or appt.patient.username,
+                "phone": appt.patient.phone or "",
+                "blood_group": getattr(getattr(appt.patient, 'patient_profile', None), 'blood_group', ''),
+                "is_anonymous": consultation.is_anonymous,
+                "anonymous_session_id": anon_token if consultation.is_anonymous else None
+            }
+
         data = {
             "id": consultation.id,
             "type": consultation.type,
             "status": consultation.status,
             "is_anonymous": consultation.is_anonymous,
+            "anonymous_session_id": anon_token if consultation.is_anonymous else None,
+            "anonymous_identifier": f"Anonymous Patient #{anon_token}" if consultation.is_anonymous else None,
+            "audio_only": consultation.audio_only or (consultation.type == 'audio'),
+            "started_at": consultation.started_at,
+            "ended_at": consultation.ended_at,
+            "duration": consultation.duration,
             "appointment_id": appt.id,
             "appointment_date": str(appt.date),
             "appointment_time": appt.time,
@@ -1953,14 +2004,51 @@ class ConsultationDetailView(APIView):
                 "phone": appt.doctor.phone or "",
                 "specialty": getattr(getattr(appt.doctor, 'doctor_profile', None), 'specialty', 'General Doctor')
             },
-            "patient": {
-                "id": appt.patient.id,
-                "name": f"{appt.patient.first_name} {appt.patient.last_name}".strip() or appt.patient.username if not consultation.is_anonymous else f"Anonymous Patient #{appt.patient.id}",
-                "phone": appt.patient.phone if not consultation.is_anonymous else "",
-                "blood_group": getattr(getattr(appt.patient, 'patient_profile', None), 'blood_group', '')
-            }
+            "patient": patient_info
         }
         return Response(data)
+
+    def put(self, request, pk):
+        return self.patch(request, pk)
+
+    def patch(self, request, pk):
+        try:
+            consultation = Consultation.objects.select_related('appointment__doctor', 'appointment__patient').get(pk=pk)
+        except Consultation.DoesNotExist:
+            return Response({"error": "Consultation not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        appt = consultation.appointment
+        if user != appt.doctor and user != appt.patient and user.role != 'admin':
+            raise PermissionDenied("You are not a participant in this consultation.")
+
+        action = request.data.get('action')
+        now = timezone.now()
+
+        if action == 'start':
+            if not consultation.started_at:
+                consultation.started_at = now
+            consultation.status = 'active'
+            consultation.save()
+            write_audit_log(user, "START_CONSULTATION", f"Consultation #{consultation.id} started", request)
+        elif action == 'end':
+            consultation.ended_at = now
+            consultation.status = 'ended'
+            if consultation.started_at:
+                diff = (now - consultation.started_at).total_seconds()
+                consultation.duration = max(1, int(diff))
+            elif request.data.get('duration'):
+                try:
+                    consultation.duration = int(request.data.get('duration'))
+                except (ValueError, TypeError):
+                    pass
+            consultation.save()
+            if appt.status != 'completed':
+                appt.status = 'completed'
+                appt.save()
+            write_audit_log(user, "END_CONSULTATION", f"Consultation #{consultation.id} ended (Duration: {consultation.duration}s)", request)
+
+        return self.get(request, pk)
 
 
 class GovNIDVerifyView(APIView):

@@ -7,7 +7,8 @@ import {
   Trash2, Clock, Upload, Stethoscope, Video, MessageSquare, Phone, Lock,
   Download, Share2, FileText, Check, AlertCircle, Sparkles, X, ChevronRight,
   Pill, Activity, RefreshCw, ShieldAlert, CreditCard, Award,
-  ExternalLink, Printer, Scale, GlassWater, ChevronLeft, Star, Edit3, Plus, Minus
+  ExternalLink, Printer, Scale, GlassWater, ChevronLeft, Star, Edit3, Plus, Minus,
+  Mic, MicOff
 } from 'lucide-react';
 import {
   Button, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
@@ -157,6 +158,7 @@ export const PatientDashboard = ({
   const [bookingModalDoc, setBookingModalDoc] = useState(null);
   const [apptForm, setApptForm] = useState({ date: "", time: "10:00 AM", reason: "", consultation_type: "video" });
   const [isAnonymousAppt, setIsAnonymousAppt] = useState(false);
+  const [hasAgreedConsent, setHasAgreedConsent] = useState(true);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
 
   // Consents state
@@ -495,6 +497,14 @@ export const PatientDashboard = ({
       return;
     }
 
+    const isAudioMode = apptForm.consultation_type === 'audio';
+    const isAnon = isAnonymousAppt || isAudioMode;
+
+    if (isAnon && !hasAgreedConsent) {
+      triggerNotification("Consent Required", "Please accept the anonymous consultation consent terms.", "warning");
+      return;
+    }
+
     setIsBookingLoading(true);
     try {
       const resp = await fetch(`${API_BASE}/api/appointments/`, {
@@ -509,7 +519,8 @@ export const PatientDashboard = ({
           time: apptForm.time,
           reason: apptForm.reason,
           consultation_type: apptForm.consultation_type,
-          is_anonymous: isAnonymousAppt
+          is_anonymous: isAnon,
+          audio_only: isAudioMode
         })
       });
 
@@ -518,6 +529,7 @@ export const PatientDashboard = ({
         triggerNotification("Appointment Created", "Consultation slot reserved. Complete payment to confirm.", "appointment");
         setApptForm({ date: "", time: "10:00 AM", reason: "", consultation_type: "video" });
         setIsAnonymousAppt(false);
+        setHasAgreedConsent(true);
         const docObj = bookingModalDoc;
         setSelectedDocId(null);
         setBookingModalDoc(null);
@@ -534,7 +546,7 @@ export const PatientDashboard = ({
             { label: "Doctor", value: `Dr. ${docObj?.user?.first_name || ''} ${docObj?.user?.last_name || ''}`.trim() },
             { label: "Specialty", value: docObj?.specialty || 'General Practice' },
             { label: "Date & Time", value: `${newAppt.date} • ${newAppt.time}` },
-            { label: "Session Type", value: (apptForm.consultation_type || "video").toUpperCase() }
+            { label: "Session Type", value: isAudioMode ? 'ANONYMOUS AUDIO' : (apptForm.consultation_type || "video").toUpperCase() }
           ]
         });
       } else {
@@ -1030,8 +1042,18 @@ export const PatientDashboard = ({
                                 {appt.time}
                               </span>
                               <span className="capitalize text-[11px] font-semibold text-[#168CF5]">
-                                {appt.consultation_type === 'video' ? '📹 Video Call' : '💬 Encrypted Chat'}
+                                {appt.consultation_type === 'audio'
+                                  ? '🎙️ Anonymous Audio'
+                                  : appt.consultation_type === 'video'
+                                    ? '📹 Video Call'
+                                    : '💬 Encrypted Chat'}
                               </span>
+                              {appt.is_anonymous && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
+                                  <Lock className="w-2.5 h-2.5" />
+                                  <span>Anonymous {appt.anonymous_session_id ? `#${appt.anonymous_session_id}` : ''}</span>
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1042,10 +1064,10 @@ export const PatientDashboard = ({
                               variant="primary"
                               size="sm"
                               onClick={() => onSelectConsultation({ id: appt.consultation.id, mode: appt.consultation.type })}
-                              icon={Video}
+                              icon={appt.consultation_type === 'audio' ? Mic : Video}
                               className="w-full sm:w-auto font-bold"
                             >
-                              Join Room
+                              {appt.consultation_type === 'audio' ? 'Join Audio Room' : 'Join Room'}
                             </Button>
                           ) : (
                             <span className="text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-lg border border-[#BDDDFA] text-center font-medium">
@@ -1448,7 +1470,7 @@ export const PatientDashboard = ({
                       <div className="w-10 h-10 rounded-xl bg-[#E7F0FC] text-[#0F172A] font-bold flex items-center justify-center text-sm border border-[#BDDDFA]">
                         {doc.user?.first_name?.[0] || 'D'}
                       </div>
-                      <VerifiedBadge text={`BMDC: ${doc.bmdc_reg || 'Verified'}`} />
+                      <VerifiedBadge text={` ${doc.bmdc_reg || 'Verified'}`} />
                     </div>
                     <CardTitle className="mt-3">
                       Dr. {doc.user?.first_name} {doc.user?.last_name}
@@ -1658,7 +1680,7 @@ export const PatientDashboard = ({
                       <div>
                         <span className="text-[10px] font-bold text-[#059669] uppercase">Prescription #{p.id}</span>
                         <CardTitle>Dr. {p.doctor_details?.first_name || 'Specialist'} {p.doctor_details?.last_name || ''}</CardTitle>
-                        <p className="text-xs text-[#55647C]">{p.doctor_details?.specialty || 'General Practice'} • BMDC: {p.doctor_details?.bmdc_reg || 'Verified'}</p>
+                        <p className="text-xs text-[#55647C]">{p.doctor_details?.specialty || 'General Practice'} •  {p.doctor_details?.bmdc_reg || 'Verified'}</p>
                       </div>
                       <VerifiedBadge text="Digitally Signed" />
                     </div>
@@ -2137,26 +2159,42 @@ export const PatientDashboard = ({
 
           <div>
             <label className="block text-xs font-semibold text-[#0F172A] mb-1">Consultation Mode</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setApptForm({ ...apptForm, consultation_type: 'video' })}
-                className={`p-2.5 rounded-[10px] border text-xs font-bold flex items-center justify-center gap-1.5 ${apptForm.consultation_type === 'video'
-                  ? 'bg-[#059669] border-[#059669] text-white'
-                  : 'bg-white border-[#BDDDFA] text-[#55647C]'
+                className={`p-2 rounded-[10px] border text-[11px] font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${apptForm.consultation_type === 'video'
+                    ? 'bg-[#059669] border-[#059669] text-white shadow-sm'
+                    : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-[#F4F6F9]'
                   }`}
               >
-                <Video className="w-4 h-4" /> Video Call
+                <Video className="w-3.5 h-3.5" />
+                <span>Video Call</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setApptForm({ ...apptForm, consultation_type: 'audio' });
+                  setIsAnonymousAppt(true);
+                }}
+                className={`p-2 rounded-[10px] border text-[11px] font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${apptForm.consultation_type === 'audio'
+                    ? 'bg-purple-700 border-purple-700 text-white shadow-sm'
+                    : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-purple-50'
+                  }`}
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span>Audio (Anonymous)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setApptForm({ ...apptForm, consultation_type: 'chat' })}
-                className={`p-2.5 rounded-[10px] border text-xs font-bold flex items-center justify-center gap-1.5 ${apptForm.consultation_type === 'chat'
-                  ? 'bg-[#059669] border-[#059669] text-white'
-                  : 'bg-white border-[#BDDDFA] text-[#55647C]'
+                className={`p-2 rounded-[10px] border text-[11px] font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${apptForm.consultation_type === 'chat'
+                    ? 'bg-[#059669] border-[#059669] text-white shadow-sm'
+                    : 'bg-white border-[#BDDDFA] text-[#55647C] hover:bg-[#F4F6F9]'
                   }`}
               >
-                <MessageSquare className="w-4 h-4" /> Encrypted Chat
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Encrypted Chat</span>
               </button>
             </div>
           </div>
@@ -2173,18 +2211,44 @@ export const PatientDashboard = ({
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="anonAppt"
-              checked={isAnonymousAppt}
-              onChange={e => setIsAnonymousAppt(e.target.checked)}
-              className="rounded text-[#059669] focus:ring-[#059669]"
-            />
-            <label htmlFor="anonAppt" className="text-xs text-[#55647C]">
-              Anonymous consultation (pseudonymize profile for this visit)
-            </label>
-          </div>
+          {/* Anonymous Consultation Consent & Confirmation */}
+          {(isAnonymousAppt || apptForm.consultation_type === 'audio') && (
+            <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold text-purple-900">
+                <ShieldCheck className="w-4 h-4 text-purple-700 shrink-0" />
+                <span>Start Anonymous Consultation?</span>
+              </div>
+              <ul className="text-purple-800 space-y-1 pl-4 list-disc text-[11px] leading-relaxed">
+                <li>The doctor will not see your real identity (real name, email, phone, and photo remain hidden).</li>
+                <li>Audio communication is required for the consultation (microphone permission only, camera is disabled).</li>
+                <li>Your consultation may still generate a medical record according to healthcare regulations.</li>
+              </ul>
+              <label className="flex items-center gap-2 pt-1 font-semibold text-purple-900 cursor-pointer text-[11px]">
+                <input
+                  type="checkbox"
+                  checked={hasAgreedConsent}
+                  onChange={e => setHasAgreedConsent(e.target.checked)}
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <span>I confirm and consent to the anonymous consultation terms</span>
+              </label>
+            </div>
+          )}
+
+          {apptForm.consultation_type !== 'audio' && (
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="anonAppt"
+                checked={isAnonymousAppt}
+                onChange={e => setIsAnonymousAppt(e.target.checked)}
+                className="rounded text-[#059669] focus:ring-[#059669]"
+              />
+              <label htmlFor="anonAppt" className="text-xs text-[#55647C]">
+                Anonymous consultation (pseudonymize profile for this visit)
+              </label>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-3">
             <Button variant="outline" size="sm" type="button" onClick={() => setBookingModalDoc(null)}>

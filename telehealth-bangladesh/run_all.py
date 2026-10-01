@@ -53,7 +53,7 @@ def main():
     print("\n=======================================================")
     print(" HealNSight Telemedicine Platform is running!")
     print(" Django Backend API: http://127.0.0.1:8000")
-    print(" Node.js Auth API: http://localhost:5001")
+    print(" Node.js Auth API: http://localhost:5000")
     print(" FastAPI Upstream Worker: http://localhost:6000")
     print(" Frontend Web Application: http://localhost:3000")
     print(" Press Ctrl+C in this terminal to stop all servers.")

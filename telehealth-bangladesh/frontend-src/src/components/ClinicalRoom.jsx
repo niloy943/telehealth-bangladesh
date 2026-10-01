@@ -4,8 +4,9 @@ import { useNotifications } from './NotificationCenter';
 import {
   Send, ShieldCheck, Video, VideoOff, Mic, MicOff, PhoneOff, Phone,
   Monitor, Play, Trash2, ArrowLeft, Terminal, AlertCircle, Volume2, Lock, User,
-  Activity, Clock
+  Activity, Clock, RefreshCw, Radio, UserCheck, Shield, CheckCircle
 } from 'lucide-react';
+import { SecurityBadge } from './ui';
 import {
   getOrCreateIdentityKeyPair,
   generateEphemeralKeyPair,
@@ -73,9 +74,16 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   const scrollRef = useRef(null);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
   const pcRef = useRef(null);
   const streamRef = useRef(null);
   const timerIntervalRef = useRef(null);
+
+  const [webrtcStatus, setWebrtcStatus] = useState("disconnected"); // disconnected, connecting, connected, reconnecting
+
+  const isAudioOnly = appointmentMode === 'audio' || consultationData?.audio_only || (consultationData?.type === 'audio');
+  const isAnonymous = Boolean(consultationData?.is_anonymous || isAudioOnly);
+  const anonIdentifier = consultationData?.anonymous_identifier || (consultationData?.anonymous_session_id ? `Anonymous Patient #${consultationData.anonymous_session_id}` : `Anonymous Patient #${consultationId}`);
 
   useEffect(() => {
     // Initialize End-to-End Encryption
@@ -398,7 +406,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     }
   };
 
-  // Video Suite setup
+  // Media driver setup
   const startCameraPreview = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -412,35 +420,115 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     }
   };
 
+  const startAudioPreview = async () => {
+    try {
+      // Audio-only: request microphone only, CAMERA IS NEVER ACCESSED
+      const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+      streamRef.current = stream;
+      addPbxLog(`[MEDIA] Microphone driver initialized for Audio Consultation (Camera disabled).`);
+    } catch (err) {
+      addPbxLog(`[WARN] Microphone access blocked or hardware unavailable. Simulating audio stream.`);
+    }
+  };
+
   useEffect(() => {
-    if (appointmentMode === 'video' && setupScreen) {
+    if (isAudioOnly && setupScreen) {
+      startAudioPreview();
+    } else if (appointmentMode === 'video' && setupScreen) {
       startCameraPreview();
     }
-  }, [appointmentMode, setupScreen]);
+  }, [appointmentMode, isAudioOnly, setupScreen]);
+
+  const toggleMic = () => {
+    const nextState = !micActive;
+    setMicActive(nextState);
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks().forEach(t => {
+        t.enabled = nextState;
+      });
+    }
+    addPbxLog(`[AUDIO] Microphone ${nextState ? 'unmuted' : 'muted'}.`);
+  };
+
+  const handleReconnect = async () => {
+    addPbxLog(`[RTC] User requested session reconnection...`);
+    setWebrtcStatus("reconnecting");
+    if (pcRef.current) {
+      try {
+        pcRef.current.close();
+      } catch (e) {}
+      pcRef.current = null;
+    }
+    await handleJoinCall();
+  };
 
   const handleJoinCall = async () => {
     setSetupScreen(false);
     setActiveCall(true);
+    setWebrtcStatus("connecting");
+
+    // Inform backend consultation is starting
+    try {
+      fetch(`${API_BASE}/api/consultations/${consultationId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ action: 'start' })
+      }).catch(() => {});
+    } catch (e) {}
 
     const ring = document.getElementById("audioRingtone");
     if (ring) {
       ring.play().catch(e => { });
     }
 
-    addPbxLog(`[RTC] Initiating E2EE video room exchange...`);
+    addPbxLog(isAudioOnly ? `[RTC] Initiating Anonymous Audio WebRTC session...` : `[RTC] Initiating E2EE video room exchange...`);
 
-    // Setup RTCPeerConnection
+    // Setup RTCPeerConnection with existing STUN infrastructure
     const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
     const pc = new RTCPeerConnection(config);
     pcRef.current = pc;
+
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
+      if (state === 'connected') {
+        setWebrtcStatus('connected');
+        addPbxLog('[RTC] WebRTC connection established.');
+      } else if (state === 'connecting') {
+        setWebrtcStatus('connecting');
+      } else if (state === 'disconnected' || state === 'failed') {
+        setWebrtcStatus('reconnecting');
+        addPbxLog('[RTC] WebRTC connection dropped, ready to reconnect.');
+      }
+    };
+
+    // Ensure audio or video media tracks are acquired
+    if (!streamRef.current) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(
+          isAudioOnly ? { audio: true, video: false } : { audio: true, video: true }
+        );
+        streamRef.current = stream;
+        if (!isAudioOnly && localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        addPbxLog(`[WARN] Hardware media fallback.`);
+      }
+    }
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => pc.addTrack(track, streamRef.current));
     }
 
     pc.ontrack = (event) => {
-      if (remoteVideoRef.current) {
+      if (!isAudioOnly && remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = event.streams[0];
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = event.streams[0];
       }
     };
 
@@ -462,9 +550,11 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         addPbxLog(`[RTC] Simulating signaling loop...`);
       }
 
-      addPbxLog(`[RTC] Encrypted secure tunnel established.`);
+      setWebrtcStatus('connected');
+      addPbxLog(`[RTC] Encrypted secure ${isAudioOnly ? 'audio' : 'video'} tunnel established.`);
 
       let duration = 0;
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = setInterval(() => {
         duration++;
         const mins = Math.floor(duration / 60).toString().padStart(2, '0');
@@ -472,7 +562,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         setCallTimer(`${mins}:${secs}`);
       }, 1000);
 
-    }, 2500);
+    }, 2000);
 
     // Trigger audio capture and live wss:// streaming
     startAudioStreaming();
@@ -563,7 +653,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     }
   };
 
-  const handleHangup = () => {
+  const handleHangup = async () => {
     const ring = document.getElementById("audioRingtone");
     if (ring) ring.pause();
 
@@ -579,9 +669,24 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
 
     setActiveCall(false);
     setSetupScreen(true);
+    setWebrtcStatus("disconnected");
     setCallTimer("00:00");
     addPbxLog(`[RTC] Secure clinical session disconnected.`);
     stopAudioStreaming();
+
+    // Call backend to record ended_at and duration
+    try {
+      await fetch(`${API_BASE}/api/consultations/${consultationId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ action: 'end' })
+      });
+    } catch (err) {
+      console.warn("Failed to notify backend of consultation end:", err);
+    }
   };
 
   // VoIP Dialer actions with real Twilio Telephony REST API
@@ -753,15 +858,23 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-bold text-[#0F172A]">
-                Clinical Consultation Room #{consultationId}
+                {isAudioOnly
+                  ? (user.role === 'doctor' ? anonIdentifier : 'Anonymous Consultation')
+                  : `Clinical Consultation Room #${consultationId}`}
               </h3>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E7F0FC] text-[#059669] border border-[#BDDDFA]">
-                {appointmentMode === 'video' ? 'Live Video' : appointmentMode === 'phone' ? 'Cellular VoIP' : 'Encrypted Chat'}
+                {isAudioOnly ? 'Audio Consultation' : appointmentMode === 'video' ? 'Live Video' : appointmentMode === 'phone' ? 'Cellular VoIP' : 'Encrypted Chat'}
               </span>
             </div>
             <p className="text-xs text-[#55647C] mt-0.5 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#059669]" />
-              <span>Session Connected • Patient: {user.role === 'doctor' ? 'Clinical Patient' : user.username}</span>
+              <span>
+                {isAnonymous
+                  ? (user.role === 'doctor'
+                      ? `Patient: ${anonIdentifier} • Identity Protected`
+                      : 'During Consultation, Your identity is hidden from the doctor')
+                  : `Session Connected • Patient: ${user.role === 'doctor' ? (consultationData?.patient?.name || 'Clinical Patient') : user.username}`}
+              </span>
             </p>
           </div>
         </div>
@@ -841,9 +954,12 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                   );
                 }
                 const isMe = msg.sender === user.username;
+                const displayName = isMe
+                  ? 'You'
+                  : (isAnonymous && user.role === 'doctor' ? anonIdentifier : msg.sender);
                 return (
                   <div key={i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                    <span className="text-[10px] text-[#94A3B8] mb-0.5 px-1 font-semibold">{msg.sender}</span>
+                    <span className="text-[10px] text-[#94A3B8] mb-0.5 px-1 font-semibold">{displayName}</span>
                     <div className={`p-3 rounded-2xl text-xs leading-relaxed ${isMe
                         ? 'bg-[#059669] text-white rounded-br-sm'
                         : 'bg-[#E7F0FC] text-[#0F172A] rounded-bl-sm border border-[#BDDDFA]'
@@ -881,8 +997,224 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         {appointmentMode !== 'chat' && (
           <div className="lg:col-span-2 space-y-6">
 
-            {/* --- CASE A: WEBRTC VIDEO consultation --- */}
-            {appointmentMode === 'video' && (
+            {/* --- CASE A1: ANONYMOUS CONSULTATION (AUDIO ONLY) --- */}
+            {isAudioOnly && (
+              <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px]">
+                {/* Hidden Audio Element for incoming remote peer stream */}
+                <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+
+                {/* Header Status Bar */}
+                <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2.5 mb-4 text-xs font-semibold">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-pulse" />
+                    <span className="text-[#059669] font-bold">
+                      Audio Consultation
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                      webrtcStatus === 'connected' ? 'bg-emerald-50 text-[#059669] border border-emerald-200' :
+                      webrtcStatus === 'connecting' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                      webrtcStatus === 'reconnecting' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
+                      'bg-slate-100 text-slate-600 border border-slate-200'
+                    }`}>
+                      {webrtcStatus === 'connected' ? 'Connected' : webrtcStatus.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleReconnect}
+                      title="Reconnect Audio"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#BDDDFA] hover:bg-[#E7F0FC] text-[11px] text-[#55647C] font-semibold cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>Reconnect</span>
+                    </button>
+                    <SecurityBadge text="End-to-End Encrypted" />
+                  </div>
+                </div>
+
+                {/* Pre-Call Setup Screen */}
+                {setupScreen ? (
+                  <div className="flex-grow flex flex-col items-center justify-center p-6 border border-[#BDDDFA] rounded-2xl bg-gradient-to-b from-[#F4F6F9] to-[#E7F0FC]/40 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center mb-3.5 shadow-sm">
+                      <Mic className="w-8 h-8" />
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200 mb-2">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{user.role === 'doctor' ? anonIdentifier : 'Anonymous Consultation'}</span>
+                    </div>
+
+                    <h3 className="text-base sm:text-lg font-bold text-[#0F172A] mb-1">
+                      {user.role === 'doctor' ? 'Pre-Consultation Audio Check' : 'Start Anonymous Consultation'}
+                    </h3>
+
+                    <p className="text-xs text-[#55647C] max-w-md mb-4 leading-relaxed">
+                      {user.role === 'doctor'
+                        ? 'You are conducting an audio consultation with an anonymous patient. Video is disabled to protect patient privacy.'
+                        : 'Your microphone will be enabled for doctor communication. Camera and personal details remain completely hidden.'}
+                    </p>
+
+                    {/* Patient Privacy Notice */}
+                    {user.role !== 'doctor' && (
+                      <div className="p-3 mb-4 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 max-w-md flex items-center gap-2.5">
+                        <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
+                        <span className="font-semibold text-[11px]">
+                          During Consultation, Your identity is hidden from the doctor
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Microphone Preview Box */}
+                    <div className="w-72 p-3.5 rounded-xl bg-white border border-[#BDDDFA] shadow-sm mb-5 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#059669] flex items-center justify-center">
+                          <Mic className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-[#0F172A]">Microphone Ready</p>
+                          <p className="text-[10px] text-[#55647C]">Audio-only stream (No Camera)</p>
+                        </div>
+                      </div>
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-pulse" />
+                    </div>
+
+                    <button
+                      onClick={handleJoinCall}
+                      className="px-6 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm cursor-pointer"
+                    >
+                      <Mic className="w-4 h-4" />
+                      <span>Join Audio Consultation</span>
+                    </button>
+                  </div>
+                ) : (
+                  /* Active Audio Consultation Stage */
+                  <div className="flex-grow flex flex-col justify-between">
+                    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] border border-[#1E293B] min-h-[380px] flex flex-col items-center justify-center p-6 text-center shadow-inner">
+                      
+                      {/* Top Overlay Badge */}
+                      <div className="absolute top-3 left-3 bg-[#0F172A]/90 px-3 py-1 rounded-lg text-[10px] text-white font-semibold flex items-center gap-1.5 border border-[#334155]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
+                        <span>Anonymous Audio Stream • AES-256 E2EE</span>
+                      </div>
+
+                      {/* Call Duration Pill */}
+                      <div className="absolute top-3 right-3 bg-black/60 px-3 py-1 rounded-lg text-xs font-mono font-bold text-[#34D399] flex items-center gap-1.5 border border-white/10">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{callTimer}</span>
+                      </div>
+
+                      {/* Doctor vs Patient View Center Display */}
+                      {user.role === 'doctor' ? (
+                        /* Doctor View: Strictly anonymous, zero patient PII */
+                        <div className="space-y-3 max-w-sm">
+                          <div className="w-24 h-24 rounded-full bg-purple-900/60 border-2 border-purple-400 text-purple-300 flex items-center justify-center mx-auto shadow-lg shadow-purple-900/30">
+                            <Shield className="w-12 h-12" />
+                          </div>
+                          <div>
+                            <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">
+                              {anonIdentifier}
+                            </h2>
+                            <p className="text-xs sm:text-sm font-semibold text-purple-300 mt-0.5">
+                              Audio Consultation
+                            </p>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-bold mt-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>Connected</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Patient View: Clear privacy confirmation and Doctor's profile */
+                        <div className="space-y-3 max-w-md">
+                          <div className="w-20 h-20 rounded-full bg-emerald-900/50 border-2 border-[#34D399] text-[#34D399] flex items-center justify-center mx-auto shadow-lg shadow-emerald-900/30">
+                            <Mic className="w-10 h-10" />
+                          </div>
+
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-900/60 border border-purple-400/30 text-purple-200 text-xs font-bold">
+                            <Lock className="w-3.5 h-3.5 text-purple-300" />
+                            <span>Your Session: {anonIdentifier}</span>
+                          </div>
+
+                          <div>
+                            <h2 className="text-lg sm:text-xl font-black text-white">
+                              {consultationData?.doctor?.name ? `Dr. ${consultationData.doctor.name}` : 'Consulting Doctor'}
+                            </h2>
+                            <p className="text-xs text-slate-300">
+                              {consultationData?.doctor?.specialty || 'General Telemedicine Specialist'}
+                            </p>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-bold mt-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>Connected</span>
+                            </div>
+                          </div>
+
+                          {/* Privacy message banner */}
+                          <div className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-500/30 text-[11px] text-purple-200 max-w-xs mx-auto">
+                            <p className="font-semibold flex items-center justify-center gap-1.5">
+                              <ShieldCheck className="w-4 h-4 text-purple-300" />
+                              <span>During Consultation, Your identity is hidden from the doctor</span>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Real-time Dynamic Sound Wave Visualizer */}
+                      <div className="flex items-center justify-center gap-1.5 h-10 mt-6 mb-2">
+                        {[35, 65, 40, 85, 55, 95, 75, 45, 90, 60, 100, 70, 50, 80, 30].map((h, i) => (
+                          <div
+                            key={i}
+                            className={`w-1.5 rounded-full transition-all duration-300 ${
+                              micActive
+                                ? 'bg-gradient-to-t from-[#059669] to-[#34D399] animate-pulse'
+                                : 'bg-slate-700'
+                            }`}
+                            style={{
+                              height: micActive ? `${h}%` : '20%',
+                              animationDelay: `${i * 60}ms`
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                    </div>
+
+                    {/* Bottom Controls HUD */}
+                    <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-[#BDDDFA]/60">
+                      <button
+                        onClick={toggleMic}
+                        className={`p-3 rounded-full border cursor-pointer transition-colors ${
+                          micActive
+                            ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]'
+                            : 'bg-red-500 border-red-600 text-white'
+                        }`}
+                        title={micActive ? "Mute Microphone" : "Unmute Microphone"}
+                      >
+                        {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                      </button>
+
+                      <button
+                        onClick={handleReconnect}
+                        className="p-3 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA] cursor-pointer"
+                        title="Reconnect Session"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={handleHangup}
+                        className="p-3 rounded-full bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer shadow-sm hover:shadow"
+                        title="End Consultation"
+                      >
+                        <PhoneOff className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* --- CASE A2: WEBRTC VIDEO consultation --- */}
+            {!isAudioOnly && appointmentMode === 'video' && (
               <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px]">
 
                 {/* Header Status Bar */}

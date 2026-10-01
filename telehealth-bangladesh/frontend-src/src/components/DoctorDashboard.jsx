@@ -6,7 +6,7 @@ import {
   CheckCircle2, User, RefreshCcw, Save, Search, ArrowLeft, Video,
   MessageSquare, Stethoscope, Plus, Trash2, Download, Share2, AlertCircle,
   X, Check, Lock, ChevronRight, Eye, PhoneCall, Award, DollarSign, Settings,
-  CheckCircle, CalendarDays
+  CheckCircle, CalendarDays, Mic, Shield
 } from 'lucide-react';
 import {
   Button, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
@@ -291,6 +291,10 @@ export const DoctorDashboard = ({
   };
 
   const startInspectPatient = async (appt) => {
+    if (appt.is_anonymous) {
+      triggerNotification("Anonymous Patient", "Historical health records are protected and sealed for anonymous consultations.", "warning");
+      return;
+    }
     setInspectPatientId(appt.patient);
     setInspectPatientName(`${appt.patient_details?.first_name || ''} ${appt.patient_details?.last_name || ''}`.trim() || appt.patient_details?.username || 'Patient');
     setInspectError("");
@@ -407,7 +411,7 @@ export const DoctorDashboard = ({
               Dr. {user.first_name} {user.last_name}
             </h1>
             <p className="text-sm text-[#55647C] mt-0.5">
-              {user.doctor_profile?.specialty || 'General Practitioner'} • {user.doctor_profile?.hospital || 'Certified Telemedicine Specialist'} • <span className="font-semibold text-[#059669] font-mono">Fee: ৳{user.doctor_profile?.fees || 500} BDT</span>
+              {[user.doctor_profile?.specialty || 'General Practitioner', user.doctor_profile?.hospital].filter(Boolean).join(' • ')} • <span className="font-semibold text-[#059669] font-mono">Fee: ৳{user.doctor_profile?.fees || 500} BDT</span>
             </p>
           </div>
 
@@ -497,16 +501,33 @@ export const DoctorDashboard = ({
                   >
                     {/* Patient Info */}
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-[#E7F0FC] text-[#0F172A] font-bold flex items-center justify-center text-sm shrink-0 border border-[#BDDDFA]">
-                        {appt.patient_details?.first_name?.[0] || appt.patient_details?.username?.[0] || 'P'}
+                      <div className={`w-10 h-10 rounded-xl font-bold flex items-center justify-center text-sm shrink-0 border ${
+                        appt.is_anonymous
+                          ? 'bg-purple-100 text-purple-700 border-purple-300'
+                          : 'bg-[#E7F0FC] text-[#0F172A] border-[#BDDDFA]'
+                      }`}>
+                        {appt.is_anonymous ? <Shield className="w-5 h-5 text-purple-700" /> : (appt.patient_details?.first_name?.[0] || appt.patient_details?.username?.[0] || 'P')}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-bold text-[#0F172A]">
-                            {appt.patient_details?.first_name || ''} {appt.patient_details?.last_name || ''}
-                            <span className="text-xs font-normal text-[#55647C] ml-1">(@{appt.patient_details?.username})</span>
+                            {appt.is_anonymous ? (
+                              <span className="text-purple-900 font-extrabold flex items-center gap-1.5">
+                                <span>Anonymous Patient #{appt.anonymous_session_id || (appt.patient_details?.username?.replace('Anonymous Patient #', '') || 'ACTIVE')}</span>
+                              </span>
+                            ) : (
+                              <>
+                                {appt.patient_details?.first_name || ''} {appt.patient_details?.last_name || ''}
+                                <span className="text-xs font-normal text-[#55647C] ml-1">(@{appt.patient_details?.username})</span>
+                              </>
+                            )}
                           </h4>
                           <StatusBadge status={appt.status} size="sm" />
+                          {appt.is_anonymous && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
+                              <Lock className="w-2.5 h-2.5" /> Identity Hidden
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 text-xs text-[#55647C] mt-1">
@@ -515,8 +536,16 @@ export const DoctorDashboard = ({
                             {appt.date} • {appt.time}
                           </span>
                           <span className="flex items-center gap-1">
-                            {appt.consultation_type === 'video' ? <Video className="w-3.5 h-3.5 text-[#168CF5]" /> : <MessageSquare className="w-3.5 h-3.5 text-[#059669]" />}
-                            <span className="capitalize">{appt.consultation_type || 'Video'} Consultation</span>
+                            {appt.consultation_type === 'audio' ? (
+                              <Mic className="w-3.5 h-3.5 text-purple-600" />
+                            ) : appt.consultation_type === 'video' ? (
+                              <Video className="w-3.5 h-3.5 text-[#168CF5]" />
+                            ) : (
+                              <MessageSquare className="w-3.5 h-3.5 text-[#059669]" />
+                            )}
+                            <span className="capitalize font-semibold text-[#0F172A]">
+                              {appt.consultation_type === 'audio' ? 'Audio Consultation (Anonymous)' : `${appt.consultation_type || 'Video'} Consultation`}
+                            </span>
                           </span>
                         </div>
 
@@ -530,15 +559,17 @@ export const DoctorDashboard = ({
 
                     {/* Actions Bar */}
                     <div className="flex flex-wrap items-center gap-2 lg:shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#BDDDFA]">
-                      {/* Inspect Records Action */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Eye}
-                        onClick={() => startInspectPatient(appt)}
-                      >
-                        Records
-                      </Button>
+                      {/* Inspect Records Action - Hidden for anonymous to protect patient history */}
+                      {!appt.is_anonymous && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          icon={Eye}
+                          onClick={() => startInspectPatient(appt)}
+                        >
+                          Records
+                        </Button>
+                      )}
 
                       {/* Pending actions */}
                       {appt.status === 'pending' && (
@@ -566,10 +597,10 @@ export const DoctorDashboard = ({
                           <Button
                             variant="primary"
                             size="sm"
-                            icon={Video}
+                            icon={appt.consultation_type === 'audio' ? Mic : Video}
                             onClick={() => onSelectConsultation({ id: appt.consultation.id, mode: appt.consultation.type })}
                           >
-                            Open Room
+                            {appt.consultation_type === 'audio' ? 'Open Audio Room' : 'Open Room'}
                           </Button>
                           <Button
                             variant="secondary"
@@ -657,23 +688,7 @@ export const DoctorDashboard = ({
                       <span className="absolute right-3.5 top-3 text-xs font-bold text-[#55647C]">BDT</span>
                     </div>
 
-                    {/* Quick Preset Buttons */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-[#55647C] font-semibold mr-1">Quick Presets:</span>
-                      {[300, 500, 800, 1000, 1500, 2000].map(val => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={() => setConsultationFee(val)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${Number(consultationFee) === val
-                              ? 'bg-[#059669] text-white border-[#059669]'
-                              : 'bg-white text-[#0F172A] border-[#BDDDFA] hover:bg-[#E7F0FC]'
-                            }`}
-                        >
-                          ৳{val}
-                        </button>
-                      ))}
-                    </div>
+
                   </div>
 
                   <div className="p-3 bg-[#E7F0FC] rounded-xl border border-[#BDDDFA] text-xs text-[#55647C] flex items-center gap-2">

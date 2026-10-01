@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Compass, Shield, Eye, Settings, Keyboard, Activity, RefreshCw } from 'lucide-react';
+import { Search, Compass, Shield, Eye, Settings, Keyboard, Activity, RefreshCw, Video } from 'lucide-react';
 import { useLanguage } from './LanguageContext';
 
 export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, toggleLanguage }) => {
@@ -35,6 +35,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
     if (user?.role === 'patient') {
       return [
         { id: 'go-dash', title: 'Navigate: Citizen Health Dashboard', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
+        { id: 'go-consultation', title: 'Navigate: Telemedicine Consultations (Audio/Video)', icon: <Video className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('consultation'); onClose(); } },
         { id: 'go-book', title: 'Action: Book Specialist Consultation', icon: <Activity className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('booking'); onClose(); } },
         { id: 'go-records', title: 'Navigate: Encrypted Medical Records', icon: <Eye className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('records'); onClose(); } },
         { id: 'go-prescriptions', title: 'Navigate: Digital Prescription', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('prescriptions'); onClose(); } },
@@ -50,6 +51,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
     if (user?.role === 'doctor') {
       return [
         { id: 'go-dash', title: 'Navigate: Clinical Workspace & Queue', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
+        { id: 'go-consultation', title: 'Navigate: Consultation Hub & Live Queue', icon: <Video className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('consultation'); onClose(); } },
         { id: 'go-schedule', title: 'Navigate: Consultation Fee & Weekly Schedule', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('schedule'); onClose(); } },
         { id: 'toggle-status', title: 'Action: Toggle Online Availability', icon: <Activity className="w-4 h-4 text-[#059669]" />, category: 'Availability', action: () => { onAction('toggle-availability'); onClose(); } },
         { id: 'rekey-node', title: 'Action: Rotate Cryptographic Session Keys', icon: <RefreshCw className="w-4 h-4 text-[#168CF5]" />, category: 'Security', action: () => { onAction('rekey'); onClose(); } },

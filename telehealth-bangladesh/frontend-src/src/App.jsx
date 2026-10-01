@@ -11,7 +11,8 @@ import {
   ShoppingBag, ShieldAlert, LogOut, Home, Bell, Globe,
   AlertCircle, Search, Menu, ChevronLeft, ChevronRight, User, HelpCircle,
   X, Heart, UserCheck, Bot, Sparkles, CreditCard, CalendarDays, Clock,
-  FileText, Shield, History, Lock, Award, DollarSign, Stethoscope, Users
+  FileText, Shield, History, Lock, Award, DollarSign, Stethoscope, Users,
+  Video
 } from 'lucide-react';
 
 const PatientDashboard = lazy(() => import('./components/PatientDashboard').then(m => ({ default: m.PatientDashboard })));
@@ -19,6 +20,7 @@ const DoctorDashboard = lazy(() => import('./components/DoctorDashboard').then(m
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const ClinicalRoom = lazy(() => import('./components/ClinicalRoom').then(m => ({ default: m.ClinicalRoom })));
 const ProfileManagement = lazy(() => import('./components/ProfileManagement').then(m => ({ default: m.ProfileManagement })));
+const ConsultationPortal = lazy(() => import('./components/ConsultationPortal').then(m => ({ default: m.ConsultationPortal })));
 
 const DashboardSkeleton = () => (
   <div className="space-y-6 w-full p-6">
@@ -260,6 +262,7 @@ const MainApp = () => {
     if (selectedConsultation) return 'Consultation Room';
     const titles = {
       dashboard: user.role === 'doctor' ? 'Clinical Workspace & Queue' : user.role === 'admin' ? 'Security & Executive Console' : 'My Health Home',
+      consultation: user.role === 'doctor' ? 'Clinical Consultations & Queue' : 'My Consultations',
       ai: 'AI Health Assistant',
       booking: 'Find a Doctor & Specialty Directory',
       records: 'Health Records',
@@ -335,6 +338,11 @@ const MainApp = () => {
               <LayoutDashboard className="w-4.5 h-4.5 shrink-0" />
               {!sidebarCollapsed && <span>My Health Home</span>}
             </button>
+            <button onClick={() => { setActiveTab("consultation"); setSelectedConsultation(null); }}
+              className={navBtn('consultation', activeTab === 'consultation' && !selectedConsultation)}>
+              <Video className="w-4.5 h-4.5 shrink-0" />
+              {!sidebarCollapsed && <span>Consultation</span>}
+            </button>
             <button onClick={() => { setActiveTab("ai"); setSelectedConsultation(null); }}
               className={navBtn('ai', activeTab === 'ai')}>
               <Bot className="w-4.5 h-4.5 shrink-0" />
@@ -381,6 +389,11 @@ const MainApp = () => {
               className={navBtn('dashboard', activeTab === 'dashboard' && !selectedConsultation)}>
               <Home className="w-4.5 h-4.5 shrink-0" />
               {!sidebarCollapsed && <span>Clinical Queue</span>}
+            </button>
+            <button onClick={() => { setActiveTab("consultation"); setSelectedConsultation(null); }}
+              className={navBtn('consultation', activeTab === 'consultation' && !selectedConsultation)}>
+              <Video className="w-4.5 h-4.5 shrink-0" />
+              {!sidebarCollapsed && <span>Consultation</span>}
             </button>
             <button onClick={() => { setActiveTab("schedule"); setSelectedConsultation(null); }}
               className={navBtn('schedule', activeTab === 'schedule')}>
@@ -538,12 +551,16 @@ const MainApp = () => {
                 <div className="absolute right-0 top-11 w-52 bg-white border border-[#BDDDFA] rounded-2xl py-2 z-30 shadow-xl">
                   <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider px-3.5 py-1">Quick Shortcuts</p>
                   {user.role === 'patient' && (<>
+                    <button onClick={() => { setActiveTab('consultation'); setQuickActionsOpen(false); }}
+                      className="w-full text-left px-3.5 py-2 text-xs text-[#0F172A] hover:bg-[#E7F0FC]">My Consultations</button>
                     <button onClick={() => { setActiveTab('booking'); setQuickActionsOpen(false); }}
                       className="w-full text-left px-3.5 py-2 text-xs text-[#0F172A] hover:bg-[#E7F0FC]">Find a Doctor</button>
                     <button onClick={() => { handlePaletteAction('sos'); setQuickActionsOpen(false); }}
                       className="w-full text-left px-3.5 py-2 text-xs text-[#DC2626] font-semibold hover:bg-red-50">Emergency Alert</button>
                   </>)}
                   {user.role === 'doctor' && (<>
+                    <button onClick={() => { setActiveTab('consultation'); setQuickActionsOpen(false); }}
+                      className="w-full text-left px-3.5 py-2 text-xs text-[#0F172A] hover:bg-[#E7F0FC]">Consultation Hub</button>
                     <button onClick={() => { handlePaletteAction('toggle-availability'); setQuickActionsOpen(false); }}
                       className="w-full text-left px-3.5 py-2 text-xs text-[#0F172A] hover:bg-[#E7F0FC]">Toggle Availability</button>
                     <button onClick={() => { setActiveTab('schedule'); setQuickActionsOpen(false); }}
@@ -601,16 +618,27 @@ const MainApp = () => {
                   onTabChange={handleTabChange}
                 />
               )}
-              {user.role === 'patient' && !activeTab.startsWith('profile') && (
+              {activeTab === 'consultation' && (
+                <ConsultationPortal
+                  token={token}
+                  user={user}
+                  appointments={appointments}
+                  onApptAction={handleApptAction}
+                  onSelectConsultation={setSelectedConsultation}
+                  onTabChange={handleTabChange}
+                  fetchAppointments={fetchAppointments}
+                />
+              )}
+              {user.role === 'patient' && !activeTab.startsWith('profile') && activeTab !== 'consultation' && (
                 <PatientDashboard token={token} user={user} appointments={appointments}
                   onSelectConsultation={setSelectedConsultation} onTabChange={handleTabChange} activeTab={activeTab} />
               )}
-              {user.role === 'doctor' && !activeTab.startsWith('profile') && (
+              {user.role === 'doctor' && !activeTab.startsWith('profile') && activeTab !== 'consultation' && (
                 <DoctorDashboard token={token} user={user} appointments={appointments}
                   onApptAction={handleApptAction} onSelectConsultation={setSelectedConsultation}
                   activeTab={activeTab} onTabChange={handleTabChange} />
               )}
-              {user.role === 'admin' && !activeTab.startsWith('profile') && (
+              {user.role === 'admin' && !activeTab.startsWith('profile') && activeTab !== 'consultation' && (
                 <AdminDashboard token={token} activeTab={activeTab} onTabChange={handleTabChange} />
               )}
             </>)}

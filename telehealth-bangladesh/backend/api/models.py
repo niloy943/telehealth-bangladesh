@@ -70,6 +70,8 @@ class Appointment(models.Model):
     reason = models.TextField()
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
     is_anonymous = models.BooleanField(default=False, help_text="Whether patient identity is hidden from doctor")
+    anonymous_session_id = models.CharField(max_length=64, blank=True, null=True, help_text="Unique non-sequential session token, e.g. A7F3K2")
+    consultation_type = models.CharField(max_length=20, default='video', help_text="Consultation mode: video, audio, chat, phone")
     PAYMENT_STATUS_CHOICES = (
         ('unpaid', 'Unpaid'),
         ('pending', 'Payment Pending'),
@@ -86,6 +88,7 @@ class Consultation(models.Model):
     TYPE_CHOICES = (
         ('chat', 'Chat'),
         ('video', 'Video'),
+        ('audio', 'Audio'),
         ('phone', 'Phone'),
     )
     STATUS_CHOICES = (
@@ -97,11 +100,23 @@ class Consultation(models.Model):
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='chat')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     is_anonymous = models.BooleanField(default=False)
+    anonymous_session_id = models.CharField(max_length=64, blank=True, null=True, help_text="Unique anonymous identifier e.g. A7F3K2")
+    audio_only = models.BooleanField(default=False, help_text="True if consultation is audio-only without video")
+    started_at = models.DateTimeField(blank=True, null=True)
+    ended_at = models.DateTimeField(blank=True, null=True)
+    duration = models.PositiveIntegerField(default=0, help_text="Consultation duration in seconds")
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
 
+    @property
+    def anonymous_identifier(self):
+        if self.anonymous_session_id:
+            return f"Anonymous Patient #{self.anonymous_session_id}"
+        return "Anonymous Patient"
+
     def __str__(self):
-        return f"Consultation {self.id} ({self.type}) for Appointment {self.appointment.id}"
+        anon_str = f" [Anonymous #{self.anonymous_session_id}]" if self.is_anonymous else ""
+        return f"Consultation {self.id} ({self.type}){anon_str} for Appointment {self.appointment.id}"
 
 class Prescription(models.Model):
     consultation = models.OneToOneField(Consultation, on_delete=models.CASCADE, related_name='prescription')

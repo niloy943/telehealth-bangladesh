@@ -201,12 +201,18 @@ class PatientProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ConsultationMinimalSerializer(serializers.ModelSerializer):
+    anonymous_identifier = serializers.CharField(read_only=True)
+
     class Meta:
         model = Consultation
-        fields = ('id', 'type', 'status', 'is_anonymous', 'start_time', 'end_time')
+        fields = (
+            'id', 'type', 'status', 'is_anonymous', 'anonymous_session_id',
+            'anonymous_identifier', 'audio_only', 'started_at', 'ended_at',
+            'duration', 'start_time', 'end_time'
+        )
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    patient_details = UserSerializer(source='patient', read_only=True)
+    patient_details = serializers.SerializerMethodField()
     doctor_details = UserSerializer(source='doctor', read_only=True)
     consultation = ConsultationMinimalSerializer(read_only=True)
     
@@ -214,18 +220,105 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = '__all__'
 
+    def get_patient_details(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+
+        if obj.is_anonymous:
+            # Patient themselves or admin/staff see their own profile marked with anonymous metadata
+            if user and (user == obj.patient or user.is_staff or user.is_superuser or getattr(user, 'role', '') == 'admin'):
+                data = UserSerializer(obj.patient).data
+                data['is_anonymous'] = True
+                data['anonymous_session_id'] = obj.anonymous_session_id
+                data['anonymous_identifier'] = f"Anonymous Patient #{obj.anonymous_session_id}" if obj.anonymous_session_id else "Anonymous Patient"
+                return data
+
+            # For doctors and unauthorized callers: strictly sanitize and redact all PII
+            anon_code = obj.anonymous_session_id
+            if not anon_code and hasattr(obj, 'consultation') and obj.consultation:
+                anon_code = obj.consultation.anonymous_session_id
+            if not anon_code:
+                anon_code = "A7F3K2"
+
+            return {
+                "id": None,
+                "username": f"Anonymous Patient #{anon_code}",
+                "first_name": "Anonymous",
+                "last_name": f"Patient #{anon_code}",
+                "display_name": f"Anonymous Patient #{anon_code}",
+                "role": "patient",
+                "phone": "",
+                "email": "",
+                "address": "",
+                "nid": "",
+                "bmdc_reg": "",
+                "blood_group": "",
+                "date_of_birth": None,
+                "emergency_contact": "",
+                "is_anonymous": True,
+                "anonymous_session_id": anon_code
+            }
+
+        return UserSerializer(obj.patient).data
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+
+        # Mask patient integer ID for doctors on anonymous appointments to eliminate IDOR and linkability
+        if instance.is_anonymous and user and getattr(user, 'role', '') == 'doctor' and not (user.is_staff or user.is_superuser):
+            data['patient'] = None
+
+        return data
+
 class ConsultationSerializer(serializers.ModelSerializer):
-    appointment_details = AppointmentSerializer(source='appointment', read_only=True)
+    appointment_details = serializers.SerializerMethodField()
+    anonymous_identifier = serializers.CharField(read_only=True)
+
     class Meta:
         model = Consultation
         fields = '__all__'
 
+    def get_appointment_details(self, obj):
+        return AppointmentSerializer(obj.appointment, context=self.context).data
+
 class PrescriptionSerializer(serializers.ModelSerializer):
     doctor_details = UserSerializer(source='doctor', read_only=True)
-    patient_details = UserSerializer(source='patient', read_only=True)
+    patient_details = serializers.SerializerMethodField()
+
     class Meta:
         model = Prescription
         fields = '__all__'
+
+    def get_patient_details(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        consultation = getattr(obj, 'consultation', None)
+        is_anon = bool(getattr(consultation, 'is_anonymous', False) or getattr(getattr(consultation, 'appointment', None), 'is_anonymous', False))
+
+        if is_anon and user and getattr(user, 'role', '') == 'doctor' and not (user.is_staff or user.is_superuser):
+            anon_code = getattr(consultation, 'anonymous_session_id', None) or getattr(getattr(consultation, 'appointment', None), 'anonymous_session_id', None) or 'A7F3K2'
+            return {
+                "id": None,
+                "username": f"Anonymous Patient #{anon_code}",
+                "first_name": "Anonymous",
+                "last_name": f"Patient #{anon_code}",
+                "display_name": f"Anonymous Patient #{anon_code}",
+                "role": "patient",
+                "phone": "",
+                "email": "",
+                "address": "",
+                "nid": "",
+                "bmdc_reg": "",
+                "blood_group": "",
+                "date_of_birth": None,
+                "emergency_contact": "",
+                "is_anonymous": True,
+                "anonymous_session_id": anon_code
+            }
+
+        return UserSerializer(obj.patient).data
 
 class HealthRecordSerializer(serializers.ModelSerializer):
     patient_details = UserSerializer(source='patient', read_only=True)
