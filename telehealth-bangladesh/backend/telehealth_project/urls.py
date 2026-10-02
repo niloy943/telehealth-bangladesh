@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Auth & Security Endpoints
+    path('api/otp/', include('otp_security.urls')),
     path('api/register/', UserRegistrationView.as_view(), name='api_register'),
     path('api/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/login-secure/', SecureLoginView.as_view(), name='secure_login'),

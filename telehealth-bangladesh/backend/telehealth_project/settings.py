@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     
     # App
     'api',
+    'otp_security',
 ]
 
 MIDDLEWARE = [
@@ -139,6 +140,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+        'otp_ip': '10/minute',
+        'otp_identifier': '5/minute',
+    },
 }
 
 # JWT configurations
@@ -170,3 +181,69 @@ DEFAULT_FROM_EMAIL = 'noreply@HealNSight.com'
 
 # Token expiry for password reset in seconds (15 minutes = 900 seconds)
 PASSWORD_RESET_TIMEOUT = 900
+
+# ==============================================================================
+# OTP SECURITY & CRYPTOGRAPHIC AUDIT CONFIGURATION
+# ==============================================================================
+from django.core.exceptions import ImproperlyConfigured
+
+# OTP Cryptographic Pepper: Mandatory environment variable. Fail-fast if missing.
+OTP_PEPPER = os.environ.get('OTP_PEPPER')
+if not OTP_PEPPER:
+    raise ImproperlyConfigured(
+        "CRITICAL SECURITY CONFIGURATION ERROR: 'OTP_PEPPER' environment variable "
+        "is required and cannot be empty. Define OTP_PEPPER before starting."
+    )
+if len(OTP_PEPPER.encode('utf-8')) < 32:
+    raise ImproperlyConfigured(
+        "CRITICAL SECURITY CONFIGURATION ERROR: 'OTP_PEPPER' must be at least "
+        "32 bytes (256 bits) in length."
+    )
+
+# Cache setup (Redis for distributed rate-limiting and Celery broker)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache' if DEBUG else 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+    }
+}
+
+# Celery Task Queue Settings
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BEAT_SCHEDULE = {
+    'daily-audit-merkle-anchor': {
+        'task': 'otp_security.tasks.daily_merkle_anchor_task',
+        'schedule': 86400.0, # Every 24 hours (Daily at midnight UTC)
+    },
+}
+
+# SMS Provider Credentials
+SMS_PROVIDER = os.environ.get('SMS_PROVIDER', 'stub')
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
+TWILIO_FROM_NUMBER = os.environ.get('TWILIO_FROM_NUMBER', '')
+SSL_WIRELESS_API_TOKEN = os.environ.get('SSL_WIRELESS_API_TOKEN', '')
+SSL_WIRELESS_SID = os.environ.get('SSL_WIRELESS_SID', '')
+
+# Tamper-Evident Ledger Anchoring (Polygon / Ethereum)
+ANCHOR_ENABLED = os.environ.get('ANCHOR_ENABLED', 'False').lower() == 'true'
+WEB3_PROVIDER_URI = os.environ.get('WEB3_PROVIDER_URI', 'https://polygon-rpc.com')
+ANCHOR_CONTRACT_ADDRESS = os.environ.get('ANCHOR_CONTRACT_ADDRESS', '')
+ANCHOR_SIGNER_PRIVATE_KEY = os.environ.get('ANCHOR_SIGNER_PRIVATE_KEY', '')
+
+# Production HTTPS / HSTS Hardening
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000 # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+

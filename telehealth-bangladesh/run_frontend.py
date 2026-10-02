@@ -24,7 +24,7 @@ def main():
 
     env = os.environ.copy()
     env.setdefault("VITE_API_BASE", "http://localhost:8000")
-    env.setdefault("VITE_AUTH_API_BASE", os.environ.get("VITE_AUTH_API_BASE", "http://localhost:5001"))
+    env.setdefault("VITE_AUTH_API_BASE", os.environ.get("VITE_AUTH_API_BASE", "http://localhost:5000"))
     env.setdefault("VITE_FASTAPI_BASE", "http://localhost:6000")
 
     print("\n--- HealNSight: Starting High-Performance Vite Frontend Server on Port 3000 ---")

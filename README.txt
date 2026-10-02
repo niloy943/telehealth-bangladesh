@@ -81,13 +81,11 @@ ROLE 3: SYSTEM ADMINISTRATOR
 ------------------------------------------------------------------------
 * Usernames:        admin1, admin2
 * Password:         password123
-* Security Gate:    Requires Administrative Org Passcode: ADMIN-SN-2026
 
 ------------------------------------------------------------------------
 MOCK VERIFICATION & MFA BYPASS CODES
 ------------------------------------------------------------------------
 * SMS/Email OTP Code:    123456
-* Admin Org Passcode:    ADMIN-SN-2026
 * Email Link Match:      Simulated Gmail link validation (resolves 
                          automatically 2 seconds after dispatch).
 
