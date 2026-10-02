@@ -401,18 +401,23 @@ export const ConsultationPortal = ({
 
         {/* Search Input */}
         <div className="relative max-w-sm w-full">
-          <Search className="w-4 h-4 text-[#55647C] absolute left-3.5 top-3 pointer-events-none" />
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Search className="w-4 h-4 text-[#55647C]" />
+          </div>
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={isDoctor ? "Search patient, anonymous ID, symptoms..." : "Search doctor, specialty, complaints..."}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#BDDDFA] rounded-[15px] text-xs font-medium text-[#0F172A] placeholder-[#94A3B8] outline-none focus:border-[#059669] shadow-xs"
+            className="w-full pr-9 py-2.5 bg-white border border-[#BDDDFA] rounded-[15px] text-xs font-medium text-[#0F172A] placeholder-[#94A3B8] outline-none focus:border-[#059669] shadow-xs transition-all"
+            style={{ paddingLeft: '2.5rem' }}
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-3 text-[#94A3B8] hover:text-[#0F172A]"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#0F172A]"
+              title="Clear search"
             >
               <X className="w-3.5 h-3.5" />
             </button>

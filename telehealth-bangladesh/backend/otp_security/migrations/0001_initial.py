@@ -5,6 +5,31 @@ from django.db import migrations, models
 import django.utils.timezone
 
 
+def create_pg_trigger(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute("""
+            CREATE OR REPLACE FUNCTION prevent_auditblock_modification()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                RAISE EXCEPTION 'AuditBlock records are strictly append-only. UPDATE and DELETE operations are prohibited.';
+            END;
+            $$ LANGUAGE plpgsql;
+
+            DROP TRIGGER IF EXISTS trg_prevent_auditblock_tamper ON otp_security_auditblock;
+            CREATE TRIGGER trg_prevent_auditblock_tamper
+            BEFORE UPDATE OR DELETE ON otp_security_auditblock
+            FOR EACH ROW
+            EXECUTE FUNCTION prevent_auditblock_modification();
+        """)
+
+def drop_pg_trigger(apps, schema_editor):
+    if schema_editor.connection.vendor == 'postgresql':
+        schema_editor.execute("""
+            DROP TRIGGER IF EXISTS trg_prevent_auditblock_tamper ON otp_security_auditblock;
+            DROP FUNCTION IF EXISTS prevent_auditblock_modification();
+        """)
+
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -88,25 +113,6 @@ class Migration(migrations.Migration):
             model_name="otprequest",
             index=models.Index(fields=["identifier", "purpose", "created_at"], name="otp_req_lookup_idx"),
         ),
-        migrations.RunSQL(
-            sql="""
-            -- PostgreSQL Trigger: Enforce immutable, append-only security for AuditBlock
-            CREATE OR REPLACE FUNCTION prevent_auditblock_modification()
-            RETURNS TRIGGER AS $$
-            BEGIN
-                RAISE EXCEPTION 'AuditBlock records are strictly append-only. UPDATE and DELETE operations are prohibited.';
-            END;
-            $$ LANGUAGE plpgsql;
-
-            DROP TRIGGER IF EXISTS trg_prevent_auditblock_tamper ON otp_security_auditblock;
-            CREATE TRIGGER trg_prevent_auditblock_tamper
-            BEFORE UPDATE OR DELETE ON otp_security_auditblock
-            FOR EACH ROW
-            EXECUTE FUNCTION prevent_auditblock_modification();
-            """,
-            reverse_sql="""
-            DROP TRIGGER IF EXISTS trg_prevent_auditblock_tamper ON otp_security_auditblock;
-            DROP FUNCTION IF EXISTS prevent_auditblock_modification();
-            """,
-        ),
+        migrations.RunPython(create_pg_trigger, drop_pg_trigger),
     ]
+

@@ -3,9 +3,9 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-let sequelize;
+const dbDialect = process.env.DB_DIALECT || 'sqlite';
 
-if (process.env.DB_DIALECT === 'sqlite') {
+if (dbDialect === 'sqlite') {
   // Enforce configuration path directory creation
   const dbPath = path.resolve(__dirname, '..', '..', process.env.DB_SQLITE_PATH || './src/config/database.sqlite');
   const dbDir = path.dirname(dbPath);

@@ -188,7 +188,7 @@ PASSWORD_RESET_TIMEOUT = 900
 from django.core.exceptions import ImproperlyConfigured
 
 # OTP Cryptographic Pepper: Mandatory environment variable. Fail-fast if missing.
-OTP_PEPPER = os.environ.get('OTP_PEPPER')
+OTP_PEPPER = os.environ.get('OTP_PEPPER') or ('healnsight_dev_otp_pepper_256bit_secure_seed_2026_key' if DEBUG else None)
 if not OTP_PEPPER:
     raise ImproperlyConfigured(
         "CRITICAL SECURITY CONFIGURATION ERROR: 'OTP_PEPPER' environment variable "
