@@ -8,7 +8,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { SupportWidget } from './components/SupportWidget';
 import {
   Activity, LayoutDashboard, CalendarPlus, FileHeart, ShieldCheck,
-  ShoppingBag, ShieldAlert, LogOut, Home, Bell, Globe,
+  ShoppingBag, ShieldAlert, LogOut, Home, Bell, BellOff, Globe,
   AlertCircle, Search, Menu, ChevronLeft, ChevronRight, User, HelpCircle,
   X, Heart, UserCheck, Bot, Sparkles, CreditCard, CalendarDays, Clock,
   FileText, Shield, History, Lock, Award, DollarSign, Stethoscope, Users,
@@ -55,7 +55,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
 const MainApp = () => {
   const { lang, toggleLanguage, t } = useLanguage();
-  const { notifications, triggerNotification } = useNotifications();
+  const { notifications, triggerNotification, isMuted } = useNotifications();
   const [token, setToken] = useState(localStorage.getItem("tv_token") || "");
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -574,11 +574,12 @@ const MainApp = () => {
 
             <div className="relative">
               <button onClick={() => setNotifOpen(!notifOpen)}
-                className="relative p-2.5 rounded-[10px] border border-[#1E293B] bg-[#1E293B] text-[#CBD5E1] hover:bg-[#334155]"
-                aria-label="Notifications">
-                <Bell className="w-4 h-4" />
+                className={`relative p-2.5 rounded-[10px] border border-[#1E293B] bg-[#1E293B] ${isMuted ? 'text-amber-400' : 'text-[#CBD5E1]'} hover:bg-[#334155]`}
+                aria-label="Notifications"
+                title={isMuted ? "Notifications (Muted)" : "Notifications"}>
+                {isMuted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                 {unreadNotifCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#DC2626] text-white text-[9px] font-bold flex items-center justify-center">
+                  <span className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center ${isMuted ? 'bg-amber-500' : 'bg-[#DC2626]'}`}>
                     {unreadNotifCount}
                   </span>
                 )}

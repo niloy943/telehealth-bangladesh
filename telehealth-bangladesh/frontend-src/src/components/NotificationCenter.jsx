@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Bell, ShieldAlert, Calendar, FileText, ShoppingBag, X } from 'lucide-react';
+import { Bell, BellOff, Volume2, VolumeX, ShieldAlert, Calendar, FileText, ShoppingBag, X } from 'lucide-react';
 
 const NotificationContext = createContext();
 
@@ -11,9 +11,52 @@ export const useNotifications = () => {
   return context;
 };
 
+// Subtle Web Audio notification chime
+const playNotificationChime = () => {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) {
+    // AudioContext blocked or unsupported
+  }
+};
+
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [toasts, setToasts] = useState([]);
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      return localStorage.getItem('healnsight_notifications_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleMute = () => {
+    setIsMuted(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('healnsight_notifications_muted', String(next));
+      } catch (e) {}
+      if (!next) {
+        // Feedback chime when unmuting
+        playNotificationChime();
+      }
+      return next;
+    });
+  };
 
   const triggerNotification = (title, message, category = 'system') => {
     const newNotif = {
@@ -26,11 +69,16 @@ export const NotificationProvider = ({ children }) => {
     };
 
     setNotifications(prev => [newNotif, ...prev]);
-    setToasts(prev => [...prev, newNotif]);
 
-    setTimeout(() => {
-      removeToast(newNotif.id);
-    }, 4500);
+    // Only display popup toast and play sound when not muted
+    if (!isMuted) {
+      setToasts(prev => [...prev, newNotif]);
+      setTimeout(() => {
+        removeToast(newNotif.id);
+      }, 4500);
+
+      playNotificationChime();
+    }
   };
 
   const removeToast = (id) => {
@@ -53,6 +101,9 @@ export const NotificationProvider = ({ children }) => {
     <NotificationContext.Provider value={{
       notifications,
       toasts,
+      isMuted,
+      setIsMuted,
+      toggleMute,
       triggerNotification,
       markAsRead,
       markAllRead,
@@ -122,7 +173,7 @@ export const NotificationProvider = ({ children }) => {
 
 // Dropdown Notification Panel Component
 export const NotificationDropdown = ({ isOpen, onClose, user }) => {
-  const { notifications, markAsRead, markAllRead, clearNotifications } = useNotifications();
+  const { notifications, markAsRead, markAllRead, clearNotifications, isMuted, toggleMute } = useNotifications();
   const [filter, setFilter] = useState('all');
 
   const filtered = notifications.filter(n => filter === 'all' || n.category === filter);
@@ -136,18 +187,57 @@ export const NotificationDropdown = ({ isOpen, onClose, user }) => {
       <div className="px-4 py-3.5 border-b border-[#BDDDFA]/60 flex justify-between items-center bg-[#F4F6F9]">
         <div>
           <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
-            <Bell className="w-4 h-4 text-[#059669]" />
+            {isMuted ? (
+              <BellOff className="w-4 h-4 text-amber-600" />
+            ) : (
+              <Bell className="w-4 h-4 text-[#059669]" />
+            )}
             <span>Notifications</span>
+            {isMuted && (
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                Muted
+              </span>
+            )}
           </h3>
-          {unreadCount > 0 && (
-            <p className="text-[10px] text-[#059669] font-bold mt-0.5">{unreadCount} unread alerts</p>
-          )}
+          {unreadCount > 0 ? (
+            <p className="text-[10px] text-[#059669] font-bold mt-0.5 flex items-center gap-1">
+              <span>{unreadCount} unread alerts</span>
+              {isMuted && <span className="text-amber-600 font-medium">• Silenced</span>}
+            </p>
+          ) : isMuted ? (
+            <p className="text-[10px] text-amber-600 font-medium mt-0.5">
+              Alerts silenced
+            </p>
+          ) : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Mute/Unmute Action Button */}
+          <button
+            onClick={toggleMute}
+            title={isMuted ? "Unmute alerts and popups" : "Mute alerts and popups"}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-[8px] text-[11px] font-semibold transition-all cursor-pointer border ${
+              isMuted
+                ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 shadow-xs'
+                : 'bg-white text-[#55647C] border-[#BDDDFA] hover:text-[#0F172A] hover:bg-[#E7F0FC]'
+            }`}
+          >
+            {isMuted ? (
+              <>
+                <BellOff className="w-3.5 h-3.5 text-amber-600" />
+                <span>Unmute</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-[#55647C]" />
+                <span>Mute</span>
+              </>
+            )}
+          </button>
+
           {unreadCount > 0 && (
             <button 
               onClick={markAllRead} 
-              className="text-[11px] text-[#059669] hover:underline font-semibold cursor-pointer"
+              className="text-[11px] text-[#059669] hover:underline font-semibold cursor-pointer px-1"
             >
               Mark Read
             </button>
@@ -155,7 +245,7 @@ export const NotificationDropdown = ({ isOpen, onClose, user }) => {
           {notifications.length > 0 && (
             <button 
               onClick={clearNotifications} 
-              className="text-[11px] text-[#55647C] hover:text-[#0F172A] font-semibold cursor-pointer"
+              className="text-[11px] text-[#55647C] hover:text-[#0F172A] font-semibold cursor-pointer px-1"
             >
               Clear
             </button>

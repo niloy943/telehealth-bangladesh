@@ -633,7 +633,7 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                   Professional Profile &amp; Consultation Availability
                 </h3>
                 <p className="text-xs text-[#55647C] mt-1">
-                  Configure your medical specialty, hospital affiliation, consultation fee, and weekly availability schedule.
+                  C
                 </p>
               </div>
 

@@ -656,7 +656,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
               Security &amp; Executive Console
             </h1>
             <p className="text-sm text-[#55647C] mt-0.5">
-              Comprehensive role administration, doctor KYC license verification, audit trail, and dispatch.
+
             </p>
           </div>
 
@@ -700,7 +700,7 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
             <CardHeader>
               <div>
                 <CardTitle>Cryptographic Audit Trail</CardTitle>
-                <CardDescription>Real-time security log of authentication, role updates, KYC, and clinical room events.</CardDescription>
+                <CardDescription>.</CardDescription>
               </div>
             </CardHeader>
 

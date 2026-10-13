@@ -300,7 +300,7 @@ export const ConsultationPortal = ({
             </h1>
             <p className="text-xs sm:text-sm text-[#55647C] max-w-2xl leading-relaxed">
               {isDoctor
-                ? "Manage your patient visits, open encrypted video consultation rooms, connect to anonymous audio callers, inspect patient records, and digitally sign prescriptions."
+                ? "Manage appointments, talk to patients, review records, and sign prescriptions."
                 : ""}
             </p>
           </div>

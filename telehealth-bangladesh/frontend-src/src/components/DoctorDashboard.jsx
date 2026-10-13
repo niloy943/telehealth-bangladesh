@@ -420,8 +420,8 @@ export const DoctorDashboard = ({
             <button
               onClick={handleToggleOnline}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-[10px] text-xs font-bold border ${onlineStatus
-                  ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
-                  : 'bg-[#F4F6F9] border-[#BDDDFA] text-[#55647C]'
+                ? 'bg-[#E7F0FC] border-[#059669] text-[#059669]'
+                : 'bg-[#F4F6F9] border-[#BDDDFA] text-[#55647C]'
                 }`}
             >
               <span className={`w-2 h-2 rounded-full ${onlineStatus ? 'bg-[#059669]' : 'bg-[#94A3B8]'}`} />
@@ -501,11 +501,10 @@ export const DoctorDashboard = ({
                   >
                     {/* Patient Info */}
                     <div className="flex items-start gap-3.5">
-                      <div className={`w-10 h-10 rounded-xl font-bold flex items-center justify-center text-sm shrink-0 border ${
-                        appt.is_anonymous
-                          ? 'bg-purple-100 text-purple-700 border-purple-300'
-                          : 'bg-[#E7F0FC] text-[#0F172A] border-[#BDDDFA]'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl font-bold flex items-center justify-center text-sm shrink-0 border ${appt.is_anonymous
+                        ? 'bg-purple-100 text-purple-700 border-purple-300'
+                        : 'bg-[#E7F0FC] text-[#0F172A] border-[#BDDDFA]'
+                        }`}>
                         {appt.is_anonymous ? <Shield className="w-5 h-5 text-purple-700" /> : (appt.patient_details?.first_name?.[0] || appt.patient_details?.username?.[0] || 'P')}
                       </div>
                       <div>
@@ -661,7 +660,7 @@ export const DoctorDashboard = ({
                   <div>
                     <CardTitle>Consultation Fee Rate</CardTitle>
                     <CardDescription>
-                      Set your standard consultation fee in Bangladeshi Taka (৳ BDT). This amount is displayed on patient booking.
+
                     </CardDescription>
                   </div>
                 </div>
@@ -711,7 +710,7 @@ export const DoctorDashboard = ({
                   <div>
                     <CardTitle>Weekly Availability Schedule (Days &amp; Time Slots)</CardTitle>
                     <CardDescription>
-                      Configure your active consultation days and appointment hours. Patients can choose slots within these windows.
+
                     </CardDescription>
                   </div>
                 </div>
@@ -723,8 +722,8 @@ export const DoctorDashboard = ({
                     <div
                       key={slot.day || idx}
                       className={`p-4 rounded-xl border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${slot.active
-                          ? 'bg-white border-[#BDDDFA]'
-                          : 'bg-[#F4F6F9] border-[#BDDDFA]/60 opacity-75'
+                        ? 'bg-white border-[#BDDDFA]'
+                        : 'bg-[#F4F6F9] border-[#BDDDFA]/60 opacity-75'
                         }`}
                     >
                       {/* Day & Toggle */}
@@ -832,8 +831,8 @@ export const DoctorDashboard = ({
         <form onSubmit={handleWritePrescription} className="space-y-4">
           {prescNotif && (
             <div className={`p-3 rounded-xl text-xs font-semibold ${prescNotif.includes("successfully")
-                ? "bg-[#E7F0FC] text-[#059669] border border-[#059669]"
-                : "bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]"
+              ? "bg-[#E7F0FC] text-[#059669] border border-[#059669]"
+              : "bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]"
               }`}>
               {prescNotif}
             </div>

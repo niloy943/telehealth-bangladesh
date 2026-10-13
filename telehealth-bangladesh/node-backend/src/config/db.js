@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+let sequelize;
 const dbDialect = process.env.DB_DIALECT || 'sqlite';
 
 if (dbDialect === 'sqlite') {
