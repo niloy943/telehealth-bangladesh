@@ -7,8 +7,10 @@ let sequelize;
 const dbDialect = process.env.DB_DIALECT || 'sqlite';
 
 if (dbDialect === 'sqlite') {
-  // Enforce configuration path directory creation
-  const dbPath = path.resolve(__dirname, '..', '..', process.env.DB_SQLITE_PATH || './src/config/database.sqlite');
+  const djangoDbPath = path.resolve(__dirname, '../../../backend/db.sqlite3');
+  const dbPath = process.env.DB_SQLITE_PATH
+    ? path.resolve(process.env.DB_SQLITE_PATH)
+    : (fs.existsSync(djangoDbPath) ? djangoDbPath : path.resolve(__dirname, 'database.sqlite'));
   const dbDir = path.dirname(dbPath);
   
   if (!fs.existsSync(dbDir)) {

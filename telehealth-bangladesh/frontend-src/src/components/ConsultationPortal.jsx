@@ -296,7 +296,7 @@ export const ConsultationPortal = ({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">
-              {isDoctor ? "Clinical Consultations & Queue" : "My Consultations"}
+              {isDoctor ? "Consultations & Queue" : "My Consultations"}
             </h1>
             <p className="text-xs sm:text-sm text-[#55647C] max-w-2xl leading-relaxed">
               {isDoctor

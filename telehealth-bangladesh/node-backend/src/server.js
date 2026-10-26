@@ -110,12 +110,28 @@ const startServer = async () => {
     // Seed default telehealth profiles
     await seedDefaultUsers();
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log('\n======================================================');
       console.log(`🚀 HealNsightAuth Service Running on Port ${PORT}`);
       console.log(`   Health endpoint: http://localhost:${PORT}/health`);
       console.log(`   API prefix: http://localhost:${PORT}/api/auth`);
       console.log('======================================================\n');
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE' && PORT == 5000) {
+        console.warn(`[WARNING] Port 5000 is in use (often macOS AirPlay). Retrying on port 5001...`);
+        app.listen(5001, () => {
+          console.log('\n======================================================');
+          console.log(`🚀 HealNsightAuth Service Running on Port 5001`);
+          console.log(`   Health endpoint: http://localhost:5001/health`);
+          console.log(`   API prefix: http://localhost:5001/api/auth`);
+          console.log('======================================================\n');
+        });
+      } else {
+        console.error('Failed to launch server:', err);
+        process.exit(1);
+      }
     });
   } catch (error) {
     console.error('Failed to sync DB and launch server:', error);

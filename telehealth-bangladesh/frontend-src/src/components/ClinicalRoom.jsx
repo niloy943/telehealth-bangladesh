@@ -347,9 +347,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       peerIdentityKeyRef.current = null;
       peerIdentityKeyB64Ref.current = "";
 
-      // Pause ringtone just in case
-      const ring = document.getElementById("audioRingtone");
-      if (ring) ring.pause();
+
     };
   }, [consultationId]);
 
@@ -506,10 +504,6 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       }).catch(() => {});
     } catch (e) {}
 
-    const ring = document.getElementById("audioRingtone");
-    if (ring) {
-      ring.play().catch(e => { });
-    }
 
     addPbxLog(isAudioOnly ? `[RTC] Initiating Anonymous Audio WebRTC session...` : `[RTC] Initiating E2EE video room exchange...`);
 
@@ -565,9 +559,8 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       }
     };
 
-    // Auto terminate ringing sound and start timing
+    // Start consultation timing and exchange SDP offer
     setTimeout(async () => {
-      if (ring) ring.pause();
 
       try {
         const offer = await pc.createOffer();
@@ -681,8 +674,6 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   };
 
   const handleHangup = async () => {
-    const ring = document.getElementById("audioRingtone");
-    if (ring) ring.pause();
 
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (pcRef.current) {

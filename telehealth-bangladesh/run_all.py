@@ -38,22 +38,33 @@ def main():
 
     print("\n>>> Launching Django Backend, Node.js Auth, FastAPI Worker, & Frontend services...")
 
+    import socket
+    auth_port = 5000
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if s.connect_ex(('127.0.0.1', 5000)) == 0:
+            auth_port = 5001
+
+    node_env = os.environ.copy()
+    node_env["PORT"] = str(auth_port)
+    frontend_env = os.environ.copy()
+    frontend_env["VITE_AUTH_API_BASE"] = f"http://localhost:{auth_port}"
+
     # Spawn backend
     backend_proc = subprocess.Popen([py_exe, backend_script])
     
     # Spawn Node.js Auth
-    node_backend_proc = subprocess.Popen([py_exe, node_backend_script])
+    node_backend_proc = subprocess.Popen([py_exe, node_backend_script], env=node_env)
     
     # Spawn FastAPI Upstream Worker
     fastapi_proc = subprocess.Popen([py_exe, fastapi_script])
     
     # Spawn frontend
-    frontend_proc = subprocess.Popen([py_exe, frontend_script])
+    frontend_proc = subprocess.Popen([py_exe, frontend_script], env=frontend_env)
 
     print("\n=======================================================")
     print(" HealNSight Telemedicine Platform is running!")
     print(" Django Backend API: http://127.0.0.1:8000")
-    print(" Node.js Auth API: http://localhost:5000")
+    print(f" Node.js Auth API: http://localhost:{auth_port}")
     print(" FastAPI Upstream Worker: http://localhost:6000")
     print(" Frontend Web Application: http://localhost:3000")
     print(" Press Ctrl+C in this terminal to stop all servers.")

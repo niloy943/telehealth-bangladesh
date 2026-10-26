@@ -783,11 +783,6 @@ export const PatientDashboard = ({
 
   const handleTriggerSOS = () => {
     triggerNotification("EMERGENCY ALERT BROADCAST", "SOS coordinates transmitted to emergency contacts and nearby medical facilities.", "security");
-    const alarm = document.getElementById("audioRingtone");
-    if (alarm) {
-      alarm.play().catch(() => { });
-      setTimeout(() => alarm.pause(), 4000);
-    }
   };
 
   const handleVerifyBlockchainRecord = (recordType, recordId) => {

@@ -11,27 +11,8 @@ export const useNotifications = () => {
   return context;
 };
 
-// Subtle Web Audio notification chime
-const playNotificationChime = () => {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
-    gain.gain.setValueAtTime(0.06, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.3);
-  } catch (e) {
-    // AudioContext blocked or unsupported
-  }
-};
+// Notifications are strictly silent (all sounds removed per project requirements)
+const playNotificationChime = () => {};
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -50,10 +31,6 @@ export const NotificationProvider = ({ children }) => {
       try {
         localStorage.setItem('healnsight_notifications_muted', String(next));
       } catch (e) {}
-      if (!next) {
-        // Feedback chime when unmuting
-        playNotificationChime();
-      }
       return next;
     });
   };
@@ -70,14 +47,12 @@ export const NotificationProvider = ({ children }) => {
 
     setNotifications(prev => [newNotif, ...prev]);
 
-    // Only display popup toast and play sound when not muted
+    // Display popup toast when not muted
     if (!isMuted) {
       setToasts(prev => [...prev, newNotif]);
       setTimeout(() => {
         removeToast(newNotif.id);
       }, 4500);
-
-      playNotificationChime();
     }
   };
 

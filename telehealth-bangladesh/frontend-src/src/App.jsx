@@ -228,8 +228,6 @@ const MainApp = () => {
   const handlePaletteAction = (actionId) => {
     if (actionId === 'logout') { setLogoutModalOpen(true); }
     else if (actionId === 'sos') {
-      const alarm = document.getElementById("audioRingtone");
-      if (alarm) { alarm.play().catch(() => { }); setTimeout(() => alarm.pause(), 4000); }
       triggerNotification("Emergency SOS Alert", "Broadcasting location to emergency contacts.", "security");
     } else if (actionId === 'toggle-availability') {
       triggerNotification("Availability Updated", "Your status has been updated.", "system");
@@ -262,7 +260,7 @@ const MainApp = () => {
     if (selectedConsultation) return 'Consultation Room';
     const titles = {
       dashboard: user.role === 'doctor' ? 'Clinical Workspace & Queue' : user.role === 'admin' ? 'Security & Executive Console' : 'My Health Home',
-      consultation: user.role === 'doctor' ? 'Clinical Consultations & Queue' : 'My Consultations',
+      consultation: user.role === 'doctor' ? 'Consultations & Queue' : 'My Consultations',
       ai: 'AI Health Assistant',
       booking: 'Find a Doctor & Specialty Directory',
       records: 'Health Records',

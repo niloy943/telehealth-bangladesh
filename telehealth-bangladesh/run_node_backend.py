@@ -6,7 +6,8 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     node_dir = os.path.join(base_dir, "node-backend")
 
-    print("--- HealNSight: Starting Node.js Authentication Service at http://localhost:5000 ---")
+    port = os.environ.get("PORT", "5000")
+    print(f"--- HealNSight: Starting Node.js Authentication Service at http://localhost:{port} ---")
     try:
         import shutil
         node_exe = os.environ.get("NODE_EXE", "node")

@@ -5,7 +5,7 @@ import logging
 import os
 import secrets
 from datetime import timedelta
-from typing import Tuple
+from typing import Tuple, Optional
 
 from django.conf import settings
 from django.db import transaction
@@ -119,7 +119,7 @@ def append_audit_block(event: str, identifier: str) -> AuditBlock:
         return block
 
 
-def verify_chain() -> Tuple[bool, str | None]:
+def verify_chain() -> Tuple[bool, Optional[str]]:
     """
     Verifies the integrity of the entire AuditBlock hash chain from Genesis to tip.
     Re-hashes canonical JSON for each block and validates predecessor pointers.
