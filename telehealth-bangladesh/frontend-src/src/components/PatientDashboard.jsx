@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 import {
-  Heart, Droplet, Moon, Calendar, FileHeart, ShieldCheck, ShoppingBag,
+  Moon, Calendar, FileHeart, ShieldCheck, ShoppingBag,
   Search, Bot, Send, AlertTriangle, ArrowRight, User, PlusCircle, CheckCircle2,
   Trash2, Clock, Upload, Stethoscope, Video, MessageSquare, Phone, Lock,
   Download, Share2, FileText, Check, AlertCircle, Sparkles, X, ChevronRight,
   Pill, Activity, RefreshCw, ShieldAlert, CreditCard, Award, Package,
-  ExternalLink, Printer, Scale, GlassWater, ChevronLeft, Star, Edit3, Plus, Minus,
+  ExternalLink, Printer, Scale, ChevronLeft, Star, Edit3, Plus, Minus,
   Mic, MicOff
 } from 'lucide-react';
 import {
@@ -16,123 +16,18 @@ import {
   EmptyState, LoadingState, ErrorState, Modal
 } from './ui';
 import { AIHealthAssistant } from './AIHealthAssistant';
+import { PatientPrescriptionVault } from './PatientPrescriptionVault';
+import { PatientEncryptedHealthRecords } from './PatientEncryptedHealthRecords';
+import { PatientConsultationRecordsModal } from './PatientConsultationRecordsModal';
+import { DocumentViewerModal } from './DocumentViewerModal';
+import { PatientConsentManager } from './PatientConsentManager';
+import { downloadPrescriptionPdfFile } from '../utils/pdfGenerator';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 /* ─── Digital Prescription PDF Download Utility ─── */
 const downloadPrescriptionPDF = (p) => {
-  const docName = p.doctor_details ? `Dr. ${p.doctor_details.first_name} ${p.doctor_details.last_name}` : "Certified Doctor";
-  const docSpecialty = p.doctor_details ? p.doctor_details.specialty : "General Doctor";
-  const docReg = p.doctor_details ? p.doctor_details.bmdc_reg : "BMDC Verified";
-
-  const patName = p.patient_details ? `${p.patient_details.first_name || ''} ${p.patient_details.last_name || ''}`.trim() || p.patient_details.username : "Patient";
-  const patPhone = p.patient_details ? p.patient_details.phone || "" : "";
-
-  let medsHtml = "";
-  try {
-    const medsList = JSON.parse(p.medicines);
-    if (Array.isArray(medsList)) {
-      medsHtml = medsList.map((m, idx) => `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #BDDDFA; text-align: left; font-weight: bold; color: #0F172A;">${idx + 1}. ${m.name}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #BDDDFA; text-align: center; color: #334155;">${m.dosage}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #BDDDFA; text-align: right; color: #334155;">${m.timing}</td>
-        </tr>
-      `).join("");
-    } else {
-      medsHtml = `<tr><td colspan="3" style="padding: 10px; color: #334155;">${p.medicines}</td></tr>`;
-    }
-  } catch (e) {
-    medsHtml = `<tr><td colspan="3" style="padding: 10px; color: #334155;">${p.medicines}</td></tr>`;
-  }
-
-  const element = document.createElement('div');
-  element.style.padding = '36px';
-  element.style.fontFamily = "'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif";
-  element.style.color = '#0F172A';
-  element.style.background = '#ffffff';
-
-  element.innerHTML = `
-    <div style="border: 2px solid #168CF5; padding: 28px; border-radius: 12px; position: relative;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #168CF5; padding-bottom: 16px; margin-bottom: 20px;">
-        <div>
-          <h1 style="margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">HealNSight</h1>
-          <p style="margin: 3px 0 0 0; color: #55647C; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Verified National Telemedicine Network</p>
-        </div>
-        <div style="text-align: right;">
-          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0F172A;">${docName}</h3>
-          <p style="margin: 2px 0; font-size: 13px; color: #168CF5; font-weight: 600;">${docSpecialty}</p>
-          <p style="margin: 0; font-size: 11px; color: #55647C;">BMDC Reg: ${docReg}</p>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #E7F0FC; padding: 14px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid #BDDDFA;">
-        <div>
-          <p style="margin: 3px 0;"><strong style="color: #0F172A;">Patient Name:</strong> ${patName}</p>
-          <p style="margin: 3px 0;"><strong style="color: #0F172A;">Contact:</strong> ${patPhone || 'N/A'}</p>
-        </div>
-        <div style="text-align: right;">
-          <p style="margin: 3px 0;"><strong style="color: #0F172A;">Date:</strong> ${new Date(p.created_at || Date.now()).toLocaleDateString()}</p>
-          <p style="margin: 3px 0;"><strong style="color: #0F172A;">Prescription ID:</strong> #${p.id || 'NEW'}</p>
-        </div>
-      </div>
-
-      <div style="margin-bottom: 20px; font-size: 13.5px;">
-        <p style="margin: 6px 0;"><strong style="color: #0F172A;">Chief Complaints:</strong> ${p.symptoms || 'General Consultation'}</p>
-        <p style="margin: 6px 0;"><strong style="color: #0F172A;">Diagnosis:</strong> ${p.diagnosis || 'Clinical evaluation completed'}</p>
-      </div>
-
-      <div style="font-size: 22px; font-weight: 800; color: #059669; margin-bottom: 8px; font-style: italic;">Rx</div>
-
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-        <thead>
-          <tr style="background: #0F172A; color: #ffffff;">
-            <th style="padding: 10px; text-align: left; font-weight: 600; border-top-left-radius: 6px;">Medicine</th>
-            <th style="padding: 10px; text-align: center; font-weight: 600;">Dosage</th>
-            <th style="padding: 10px; text-align: right; font-weight: 600; border-top-right-radius: 6px;">Timing / Instructions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${medsHtml}
-        </tbody>
-      </table>
-
-      <div style="background: #E7F0FC; border-left: 4px solid #168CF5; padding: 12px 14px; border-radius: 6px; margin-bottom: 24px; font-size: 13px; color: #0F172A;">
-        <strong style="display: block; margin-bottom: 3px; font-size: 13px; color: #0F172A;">Doctor Instructions:</strong>
-        ${p.instructions || "Follow prescribed dosage. Stay hydrated and schedule a follow-up if symptoms persist."}
-      </div>
-
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #BDDDFA; padding-top: 14px; font-size: 11px; color: #55647C;">
-        <div>
-          <p style="margin: 2px 0;">Issued securely via <strong>HealNSight</strong>.</p>
-          <p style="margin: 2px 0; color: #059669; font-weight: 600;">End-to-End Encrypted Digital Medical Ledger</p>
-        </div>
-        <div style="text-align: right; border: 1px solid #BDDDFA; padding: 6px 12px; border-radius: 6px; background: #E7F0FC;">
-          <strong style="color: #0F172A; font-size: 10px; text-transform: uppercase;">BMDC Digitally Verified</strong>
-          <p style="margin: 2px 0 0 0; color: #55647C; font-size: 9px;">Handshake Token: TB-2026-${p.id || 'NEW'}</p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const opt = {
-    margin: 10,
-    filename: `Prescription_${p.id || 'TelehealthBD'}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  if (window.html2pdf) {
-    window.html2pdf().set(opt).from(element).save();
-  } else {
-    const printWin = window.open("", "_blank");
-    if (printWin) {
-      printWin.document.write(element.innerHTML);
-      printWin.document.close();
-      printWin.print();
-    }
-  }
+  downloadPrescriptionPdfFile(p);
 };
 
 /* ─── Main PatientDashboard Component ─── */
@@ -142,13 +37,24 @@ export const PatientDashboard = ({
   appointments = [],
   onSelectConsultation,
   onTabChange,
-  activeTab = 'dashboard'
+  activeTab = 'dashboard',
+  fetchAppointments
 }) => {
   const { t, lang } = useLanguage();
   const { triggerNotification } = useNotifications();
 
   // Navigation sub-view state
   const [subView, setSubView] = useState("overview");
+  const lastSubViewFetchRef = useRef({});
+
+  const fetchApptsRef = useRef(fetchAppointments);
+  useEffect(() => {
+    fetchApptsRef.current = fetchAppointments;
+  }, [fetchAppointments]);
+
+  // Patient Consultation Records Sharing Modal State
+  const [patientRecordsAppt, setPatientRecordsAppt] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   // Doctors and booking state
   const [doctors, setDoctors] = useState([]);
@@ -348,16 +254,81 @@ export const PatientDashboard = ({
     fetchPaymentHistory();
   }, [token]);
 
-  // Refresh data when navigating across dashboard sub-views
+  // Real-time synchronization listeners across Portals and Tabs
   useEffect(() => {
+    const handlePrescriptionSync = () => {
+      fetchPrescriptionsAndOrders();
+    };
+    const handleRecordsSync = () => {
+      fetchRecords();
+      fetchConsents();
+    };
+    const handleApptSync = () => {
+      if (fetchApptsRef.current) fetchApptsRef.current();
+    };
+
+    window.addEventListener('healnsight_prescription_updated', handlePrescriptionSync);
+    window.addEventListener('healnsight_records_updated', handleRecordsSync);
+    window.addEventListener('healnsight_appointment_updated', handleApptSync);
+
+    const handleStorageSync = (e) => {
+      if (e.key === 'healnsight_last_prescription_sync') {
+        fetchPrescriptionsAndOrders();
+      } else if (e.key === 'healnsight_last_record_sync') {
+        fetchRecords();
+        fetchConsents();
+      } else if (e.key === 'healnsight_last_appointment_sync') {
+        if (fetchApptsRef.current) fetchApptsRef.current();
+      }
+    };
+    window.addEventListener('storage', handleStorageSync);
+
+    // Periodic background sync safety net while patient dashboard is active (paused when tab hidden)
+    const syncInterval = setInterval(() => {
+      if (!document.hidden) {
+        fetchPrescriptionsAndOrders();
+        fetchRecords();
+      }
+    }, 25000);
+
+    return () => {
+      window.removeEventListener('healnsight_prescription_updated', handlePrescriptionSync);
+      window.removeEventListener('healnsight_records_updated', handleRecordsSync);
+      window.removeEventListener('healnsight_appointment_updated', handleApptSync);
+      window.removeEventListener('storage', handleStorageSync);
+      clearInterval(syncInterval);
+    };
+  }, []);
+
+  // Refresh data whenever navigating across dashboard sub-views (cached within 12s window)
+  useEffect(() => {
+    const now = Date.now();
+    const last = lastSubViewFetchRef.current[subView] || 0;
+    if (now - last < 12000) return;
+    lastSubViewFetchRef.current[subView] = now;
+
     if (subView === 'payments') {
       fetchPaymentHistory(paymentFilter);
     } else if (subView === 'pharmacy') {
       fetchPrescriptionsAndOrders();
       fetchMedicinesCatalog();
     } else if (subView === 'overview') {
+      fetchRecords();
       fetchPrescriptionsAndOrders();
+      fetchConsents();
       fetchPaymentHistory();
+      if (fetchApptsRef.current) fetchApptsRef.current();
+    } else if (subView === 'prescriptions') {
+      fetchPrescriptionsAndOrders();
+    } else if (subView === 'records') {
+      fetchRecords();
+      fetchConsents();
+    } else if (subView === 'consultations') {
+      if (fetchApptsRef.current) fetchApptsRef.current();
+      fetchRecords();
+    } else if (subView === 'consent') {
+      fetchConsents();
+      fetchDoctors();
     }
   }, [subView]);
 
@@ -472,18 +443,28 @@ export const PatientDashboard = ({
 
   const fetchPrescriptionsAndOrders = async () => {
     try {
-      const rPresc = await fetch(`${API_BASE}/api/prescriptions/`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const prescData = await rPresc.json();
+      const patUser = String(user?.username || 'niloy');
+      const patId = String(user?.id || '198');
+      const headers = {
+        'X-Patient-Username': patUser,
+        'X-Patient-ID': patId
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      let rPresc = await fetch(`${API_BASE}/api/prescriptions/?patientUsername=${encodeURIComponent(patUser)}&patientId=${encodeURIComponent(patId)}`, { headers });
+      if (!rPresc.ok && API_BASE !== 'http://localhost:8000') {
+        rPresc = await fetch(`http://localhost:8000/api/prescriptions/?patientUsername=${encodeURIComponent(patUser)}&patientId=${encodeURIComponent(patId)}`, { headers });
+      }
+      const prescData = await rPresc.json().catch(() => []);
       setPrescriptions(Array.isArray(prescData) ? prescData : []);
 
-      const rOrders = await fetch(`${API_BASE}/api/orders/`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const ordersData = await rOrders.json();
+      let rOrders = await fetch(`${API_BASE}/api/orders/`, { headers });
+      if (!rOrders.ok && API_BASE !== 'http://localhost:8000') {
+        rOrders = await fetch(`http://localhost:8000/api/orders/`, { headers });
+      }
+      const ordersData = await rOrders.json().catch(() => []);
       setOrders(Array.isArray(ordersData) ? ordersData : []);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("fetchPrescriptionsAndOrders error:", err); }
   };
 
   const fetchMedicinesCatalog = async () => {
@@ -539,6 +520,9 @@ export const PatientDashboard = ({
 
       if (resp.status === 201) {
         const newAppt = await resp.json();
+        if (fetchAppointments) fetchAppointments();
+        window.dispatchEvent(new CustomEvent('healnsight_appointment_updated'));
+        try { localStorage.setItem('healnsight_last_appointment_sync', Date.now().toString()); } catch {}
         triggerNotification("Appointment Created", "Consultation slot reserved. Complete payment to confirm.", "appointment");
         setApptForm({ date: "", time: "10:00 AM", reason: "", consultation_type: "video" });
         setIsAnonymousAppt(false);
@@ -605,6 +589,31 @@ export const PatientDashboard = ({
         fetchConsents();
       }
     } catch (err) { console.error(err); }
+  };
+
+  const handleApproveConsent = async (id, docName) => {
+    try {
+      const resp = await fetch(`${API_BASE}/api/consent/${id}/approve/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: "approve",
+          expires_hours: 24
+        })
+      });
+      if (resp.ok) {
+        triggerNotification("Authorization Granted", `Dr. ${docName || 'Specialist'} has been granted 24-hour access to your health records.`, "security");
+        fetchConsents();
+      } else {
+        triggerNotification("Action Failed", "Could not authorize access request.", "warning");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification("Network Error", "Could not reach consent server.", "warning");
+    }
   };
 
   const handleRevokeConsent = async (id) => {
@@ -859,7 +868,7 @@ export const PatientDashboard = ({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* 1. Age Card */}
                   <div className="p-4 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA] flex items-center justify-between">
                     <div className="space-y-1">
@@ -905,88 +914,6 @@ export const PatientDashboard = ({
                       <Activity className="w-5 h-5" />
                     </div>
                   </div>
-
-                  {/* 4. Water Drank (Hydration Tracker) Card */}
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-[#E7F0FC] to-[#DBEAFE] border border-[#BDDDFA] flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-semibold text-[#55647C] uppercase tracking-wider">Water Intake</span>
-                        <div className="w-7 h-7 rounded-lg bg-white text-[#168CF5] flex items-center justify-center border border-[#BDDDFA] shadow-xs">
-                          <Droplet className="w-3.5 h-3.5" />
-                        </div>
-                      </div>
-                      <div className="text-2xl font-extrabold text-[#0F172A]">
-                        {vitals.waterDrank} <span className="text-xs font-normal text-[#55647C]">/ {vitals.waterGoal} L</span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full bg-white/80 rounded-full h-2 mt-2 overflow-hidden border border-[#BDDDFA]/60">
-                        <div
-                          className="bg-gradient-to-r from-[#168CF5] to-[#059669] h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(100, Math.round((vitals.waterDrank / vitals.waterGoal) * 100))}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] text-[#55647C] mt-1 font-medium">
-                        <span>{Math.round((vitals.waterDrank / vitals.waterGoal) * 100)}% of goal</span>
-                        <span>≈ {Math.round(vitals.waterDrank / 0.25)} glasses</span>
-                      </div>
-                    </div>
-
-                    {/* Quick Increment Buttons */}
-                    <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-[#BDDDFA]/60">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateWater(0.25)}
-                        className="flex-1 py-1 px-1.5 rounded-lg bg-white hover:bg-[#168CF5] hover:text-white border border-[#BDDDFA] text-[10px] font-bold text-[#0F172A] transition-colors flex items-center justify-center gap-1"
-                        title="Add 1 glass (250 ml)"
-                      >
-                        <Plus className="w-3 h-3" /> +0.25L
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateWater(0.5)}
-                        className="flex-1 py-1 px-1.5 rounded-lg bg-white hover:bg-[#168CF5] hover:text-white border border-[#BDDDFA] text-[10px] font-bold text-[#0F172A] transition-colors flex items-center justify-center gap-1"
-                        title="Add 1 bottle (500 ml)"
-                      >
-                        <Plus className="w-3 h-3" /> +0.5L
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateWater(-0.25)}
-                        disabled={vitals.waterDrank <= 0}
-                        className="py-1 px-2 rounded-lg bg-white hover:bg-rose-50 hover:text-rose-600 border border-[#BDDDFA] text-[10px] font-bold text-[#55647C] transition-colors disabled:opacity-40"
-                        title="Undo 250 ml"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Secondary Vitals Strip: BP, Heart Rate, Summary */}
-                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="py-2 px-3 rounded-xl bg-white border border-[#BDDDFA] flex items-center justify-between">
-                    <span className="text-[#55647C] font-medium flex items-center gap-1">
-                      <Heart className="w-3.5 h-3.5 text-rose-500" /> BP:
-                    </span>
-                    <span className="font-bold text-[#0F172A] font-mono">{vitals.bloodPressureSys}/{vitals.bloodPressureDia} mmHg</span>
-                  </div>
-                  <div className="py-2 px-3 rounded-xl bg-white border border-[#BDDDFA] flex items-center justify-between">
-                    <span className="text-[#55647C] font-medium flex items-center gap-1">
-                      <Activity className="w-3.5 h-3.5 text-[#059669]" /> Pulse:
-                    </span>
-                    <span className="font-bold text-[#0F172A] font-mono">{vitals.heartRate} bpm</span>
-                  </div>
-                  <div className="py-2 px-3 rounded-xl bg-white border border-[#BDDDFA] flex items-center justify-between">
-                    <span className="text-[#55647C] font-medium">Hydration:</span>
-                    <span className="font-bold text-[#168CF5]">
-                      {vitals.waterDrank >= vitals.waterGoal ? "Target Met ✨" : `${(vitals.waterGoal - vitals.waterDrank).toFixed(2)}L Left`}
-                    </span>
-                  </div>
-                  <div className="py-2 px-3 rounded-xl bg-white border border-[#BDDDFA] flex items-center justify-between">
-                    <span className="text-[#55647C] font-medium">BMI Status:</span>
-                    <span className={`font-bold ${bmiData.color}`}>{bmiData.category}</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -994,7 +921,7 @@ export const PatientDashboard = ({
             {/* 2. Upcoming Consultations & Interactive Calendar Split */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              {/* Upcoming Consultations Card (Span 2) */}
+              {/* My Consultations Card (Span 2) */}
               <Card className="lg:col-span-2 flex flex-col justify-between">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1003,19 +930,34 @@ export const PatientDashboard = ({
                         <Stethoscope className="w-4 h-4" />
                       </div>
                       <div>
-                        <CardTitle>Upcoming Consultations</CardTitle>
-                        <CardDescription></CardDescription>
+                        <CardTitle>My Consultations</CardTitle>
+                        <CardDescription>Join active consultation sessions and manage shared medical records</CardDescription>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setSubView('booking')}>
-                      + Book New
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (onTabChange) {
+                            onTabChange('consultation');
+                          } else {
+                            setSubView('consultations');
+                          }
+                        }}
+                      >
+                        View All
+                      </Button>
+                      <Button variant="primary" size="sm" onClick={() => setSubView('booking')}>
+                        + Book New
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
 
                 <CardContent className="space-y-3">
                   {upcomingAppointments.length > 0 ? (
-                    upcomingAppointments.slice(0, 3).map((appt) => (
+                    upcomingAppointments.slice(0, 5).map((appt) => (
                       <div
                         key={appt.id}
                         className="bg-[#E7F0FC] border border-[#BDDDFA] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#168CF5] transition-colors"
@@ -1060,18 +1002,33 @@ export const PatientDashboard = ({
                           </div>
                         </div>
 
-                        <div className="flex sm:flex-col gap-2 justify-end">
-                          {appt.status === 'approved' && appt.consultation ? (
+                        {/* Action buttons: Open Room & Records */}
+                        <div className="flex flex-wrap items-center gap-2 justify-end">
+                          {appt.status === 'approved' && appt.consultation && (
                             <Button
                               variant="primary"
                               size="sm"
                               onClick={() => onSelectConsultation({ id: appt.consultation.id, mode: appt.consultation.type })}
                               icon={appt.consultation_type === 'audio' ? Mic : Video}
-                              className="w-full sm:w-auto font-bold"
+                              className="font-bold shadow-xs"
                             >
-                              {appt.consultation_type === 'audio' ? 'Join Audio Room' : 'Join Room'}
+                              {appt.consultation_type === 'audio' ? 'Open Audio Room' : 'Open Room'}
                             </Button>
-                          ) : (
+                          )}
+
+                          {appt.status !== 'completed' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={FileText}
+                              onClick={() => setPatientRecordsAppt(appt)}
+                              className="font-bold text-xs"
+                            >
+                              Records
+                            </Button>
+                          )}
+
+                          {appt.status === 'pending' && (
                             <span className="text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-lg border border-[#BDDDFA] text-center font-medium">
                               Awaiting Doctor Confirmation
                             </span>
@@ -1331,10 +1288,10 @@ export const PatientDashboard = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            icon={Download}
-                            onClick={() => downloadPrescriptionPDF(p)}
+                            icon={Lock}
+                            onClick={() => setSubView('prescriptions')}
                           >
-                            PDF
+                            Open Vault
                           </Button>
                         </div>
                       ))}
@@ -1536,282 +1493,160 @@ export const PatientDashboard = ({
         </div>
       )}
 
-      {/* ─── SUB-VIEW: HEALTH RECORDS ─── */}
-      {subView === 'records' && (
+      {/* ─── SUB-VIEW: MY CONSULTATIONS HUB ─── */}
+      {subView === 'consultations' && (
         <div className="space-y-6">
           <PageHeader
-            title="Encrypted Health Records"
-            subtitle="Your medical records are cryptographically protected."
+            title="My Consultations"
+            subtitle="Manage your active consultation visits and share medical records with specialists"
             action={
-              <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
-                Back to Health Home
-              </Button>
-            }
-          />
-
-          {/* Upload New Record Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Medical Record</CardTitle>
-              <CardDescription>Enter clinical diagnostic documents.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Manual Text Record Entry */}
-                <form onSubmit={handleCreateRecord} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">Record Category</label>
-                    <select
-                      value={recordForm.record_type}
-                      onChange={e => setRecordForm({ ...recordForm, record_type: e.target.value })}
-                      className="w-full p-2.5 bg-[#E7F0FC] rounded-[15px] text-xs text-[#111827] outline-none"
-                    >
-                      <option value="Blood report">Blood report / CBC</option>
-                      <option value="Cardiology ECG">Cardiology ECG / Echo</option>
-                      <option value="Radiology Scan">Radiology / X-Ray / CT</option>
-                      <option value="Clinical Summary">General Clinical Note</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">Clinical Details &amp; Values</label>
-                    <textarea
-                      rows={3}
-                      required
-                      value={recordForm.content}
-                      onChange={e => setRecordForm({ ...recordForm, content: e.target.value })}
-                      placeholder="e.g., Hemoglobin 14.2 g/dL, Fasting Sugar 5.4 mmol/L, BP 120/80 mmHg..."
-                      className="w-full p-3 bg-[#E7F0FC] rounded-[15px] text-xs text-[#111827] placeholder-[#4B5563] outline-none"
-                    />
-                  </div>
-
-                  <Button type="submit" variant="primary" size="sm" icon={PlusCircle}>
-                    Save Encrypted Record
-                  </Button>
-                </form>
-
-                {/* Drag & Drop Area */}
-                <div
-                  onDragOver={e => e.preventDefault()}
-                  onDrop={simulateRecordUpload}
-                  onClick={simulateRecordUpload}
-                  className="border-2 border-dashed border-[#BDDDFA] bg-[#E7F0FC] rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center justify-center hover:bg-white"
-                >
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#BDDDFA] text-[#059669] flex items-center justify-center mb-3">
-                    <Upload className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-xs font-bold text-[#0F172A]">Drop lab report file here</h4>
-                  <p className="text-[10px] text-[#55647C] mt-1 max-w-xs">
-                    Drag and drop PDF/JPEG reports or click
-                  </p>
-                </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
+                  Back to Health Home
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => setSubView('booking')}>
+                  + Book New
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            }
+          />
 
-          {/* Records Timeline List */}
-          <SectionHeader title="Medical History" subtitle={`${records.length} documents stored.`} />
-
-          {records.length === 0 ? (
+          {appointments.length === 0 ? (
             <EmptyState
-              icon={FileHeart}
-              title="No health records saved"
-              description="Start by adding your recent blood tests, prescriptions, or clinical notes above."
+              icon={Calendar}
+              title="No consultations scheduled"
+              description="You don't have any appointments yet. Connect with verified physicians anytime."
+              action={
+                <Button size="sm" onClick={() => setSubView('booking')}>
+                  Schedule Consultation
+                </Button>
+              }
             />
           ) : (
             <div className="space-y-3">
-              {records.map(rec => (
-                <Card key={rec.id}>
-                  <CardContent className="flex items-center gap-3.5 p-4 pr-5 sm:pr-6">
-                    <div className="w-9 h-9 rounded-xl bg-[#E7F0FC] text-[#059669] flex items-center justify-center shrink-0 border border-[#BDDDFA]">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs font-bold text-[#0F172A]">{rec.record_type}</h4>
-                        <SecurityBadge text="AES-256 GCM" />
+              {appointments.map((appt) => {
+                const isAudio = appt.consultation_type === 'audio';
+                const isApproved = appt.status === 'approved' && appt.consultation;
+                const isPending = appt.status === 'pending';
+                const isCompleted = appt.status === 'completed';
+
+                return (
+                  <Card key={appt.id} className="p-4 bg-[#E7F0FC] border-[#BDDDFA] hover:border-[#168CF5] transition">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-white border border-[#BDDDFA] text-[#0F172A] font-bold flex items-center justify-center text-base shrink-0 shadow-sm">
+                          {appt.doctor_details?.first_name?.[0] || 'D'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-[#0F172A]">
+                              Dr. {appt.doctor_details?.first_name} {appt.doctor_details?.last_name}
+                            </h4>
+                            <StatusBadge status={appt.status} size="sm" />
+                          </div>
+                          <p className="text-xs text-[#059669] font-semibold mt-0.5">
+                            {appt.doctor_details?.specialty || 'General Practitioner'}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[#55647C] mt-2">
+                            <span className="flex items-center gap-1 font-medium bg-white px-2 py-0.5 rounded-md border border-[#BDDDFA]">
+                              <Calendar className="w-3.5 h-3.5 text-[#168CF5]" />
+                              {appt.date}
+                            </span>
+                            <span className="flex items-center gap-1 font-medium bg-white px-2 py-0.5 rounded-md border border-[#BDDDFA]">
+                              <Clock className="w-3.5 h-3.5 text-[#168CF5]" />
+                              {appt.time}
+                            </span>
+                            <span className="capitalize text-[11px] font-semibold text-[#168CF5]">
+                              {isAudio ? '🎙️ Anonymous Audio' : '📹 Video Call'}
+                            </span>
+                            {appt.is_anonymous && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200">
+                                <Lock className="w-2.5 h-2.5" />
+                                <span>Anonymous {appt.anonymous_session_id ? `#${appt.anonymous_session_id}` : ''}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-xs text-[#334155] mt-1 leading-relaxed break-words">{rec.content}</p>
-                      <p className="text-[10px] text-[#55647C] mt-1">Record ID: #{rec.id} • SHA-256 Hash Protected</p>
+
+                      {/* 2 Primary Consultation Action Options: Open Room & Records */}
+                      <div className="flex flex-wrap items-center gap-2 justify-end">
+                        {isApproved && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => onSelectConsultation({ id: appt.consultation.id, mode: appt.consultation.type })}
+                            icon={isAudio ? Mic : Video}
+                            className="font-bold shadow-xs"
+                          >
+                            {isAudio ? 'Open Audio Room' : 'Open Room'}
+                          </Button>
+                        )}
+
+                        {!isCompleted && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            icon={FileText}
+                            onClick={() => setPatientRecordsAppt(appt)}
+                            className="font-bold text-xs"
+                          >
+                            Records
+                          </Button>
+                        )}
+
+                        {isPending && (
+                          <span className="text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-lg border border-[#BDDDFA] text-center font-medium">
+                            Awaiting Doctor Confirmation
+                          </span>
+                        )}
+
+                        {isCompleted && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+                            <span>Consultation Completed</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* ─── SUB-VIEW: PRESCRIPTIONS ─── */}
+      {/* ─── SUB-VIEW: ENCRYPTED HEALTH RECORDS (AES-256 + CLOUD KMS + BLOCKCHAIN) ─── */}
+      {subView === 'records' && (
+        <PatientEncryptedHealthRecords
+          patient={user}
+          token={token}
+          apiBase={API_BASE}
+          epGatewayBase={import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002'}
+          onRefresh={fetchRecords}
+        />
+      )}
+
+      {/* ─── SUB-VIEW: ENCRYPTED PRESCRIPTION VAULT (AES-256 + BLOCKCHAIN + OTP) ─── */}
       {subView === 'prescriptions' && (
-        <div className="space-y-6">
-          <PageHeader
-            title="Digital Prescriptions"
-            subtitle="View, download, and verify digital prescriptions signed by certified doctors."
-            action={
-              <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
-                Back to Health Home
-              </Button>
-            }
-          />
-
-          {prescriptions.length === 0 ? (
-            <EmptyState
-              icon={Award}
-              title="No prescriptions issued"
-              description="After your doctor conducts a consultation session, digital prescriptions will appear here."
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {prescriptions.map(p => (
-                <Card key={p.id} className="flex flex-col justify-between">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-bold text-[#059669] uppercase">Prescription #{p.id}</span>
-                        <CardTitle>Dr. {p.doctor_details?.first_name || 'Specialist'} {p.doctor_details?.last_name || ''}</CardTitle>
-                        <p className="text-xs text-[#55647C]">{p.doctor_details?.specialty || 'General Practice'} •  {p.doctor_details?.bmdc_reg || 'Verified'}</p>
-                      </div>
-                      <VerifiedBadge text="Digitally Signed" />
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    <div className="text-xs space-y-1 p-3 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA]">
-                      <p><strong className="text-[#0F172A]">Chief Complaints:</strong> {p.symptoms || 'None specified'}</p>
-                      <p><strong className="text-[#0F172A]">Diagnosis:</strong> {p.diagnosis || 'Clinical evaluation'}</p>
-                    </div>
-
-                    <div className="text-xs">
-                      <strong className="text-[#0F172A] block mb-1">Medicines:</strong>
-                      <div className="p-2.5 rounded-lg bg-white border border-[#BDDDFA] text-[#334155] font-mono text-[11px]">
-                        {p.medicines}
-                      </div>
-                    </div>
-                  </CardContent>
-
-                  <CardFooter className="flex items-center justify-between">
-                    <span className="text-[10px] text-[#55647C]">
-                      {new Date(p.created_at || Date.now()).toLocaleDateString()}
-                    </span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon={Download}
-                      onClick={() => downloadPrescriptionPDF(p)}
-                    >
-                      Download PDF
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+        <PatientPrescriptionVault
+          patient={user}
+          token={token}
+          apiBase={API_BASE}
+          epGatewayBase={import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002'}
+          prescriptions={prescriptions}
+          onRefresh={fetchPrescriptionsAndOrders}
+        />
       )}
 
-      {/* ─── SUB-VIEW: PRIVACY & CONSENT ─── */}
+      {/* ─── SUB-VIEW: PRIVACY & DATA CONSENT MANAGER ─── */}
       {subView === 'consent' && (
-        <div className="space-y-6">
-          <PageHeader
-            title="Privacy &amp; Consent Manager"
-            subtitle="Doctors cannot access your records without authorization."
-            action={
-              <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
-                Back to Health Home
-              </Button>
-            }
-          />
-
-          {/* Grant Consent Form Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Grant Access to Doctor</CardTitle>
-              <CardDescription>Select an authenticated doctor and specify authorization window duration.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleGrantConsent} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">Select Doctor</label>
-                  <select
-                    value={consentForm.doctorId}
-                    onChange={e => setConsentForm({ ...consentForm, doctorId: e.target.value })}
-                    required
-                    className="w-full p-2.5 bg-[#E7F0FC] rounded-[15px] text-xs text-[#111827] outline-none"
-                  >
-                    <option value="">Choose a doctor...</option>
-                    {doctors.map(d => (
-                      <option key={d.id} value={d.id}>
-                        Dr. {d.user?.first_name} {d.user?.last_name} ({d.specialty})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">Access Duration</label>
-                  <select
-                    value={consentForm.hours}
-                    onChange={e => setConsentForm({ ...consentForm, hours: parseInt(e.target.value) })}
-                    className="w-full p-2.5 bg-[#E7F0FC] rounded-[15px] text-xs text-[#111827] outline-none"
-                  >
-                    <option value={12}>12 Hours</option>
-                    <option value={24}>24 Hours</option>
-                    <option value={48}>48 Hours</option>
-                    <option value={168}>7 Days</option>
-                  </select>
-                </div>
-
-                <div className="flex items-end">
-                  <Button type="submit" variant="primary" size="md" className="w-full" icon={ShieldCheck}>
-                    Authorize Key
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Active Consents List */}
-          <SectionHeader title="Active Authorizations" subtitle="" />
-
-          {consents.length === 0 ? (
-            <EmptyState
-              icon={ShieldCheck}
-              title="No active authorizations"
-              description="No physicians currently hold keys to access your medical records."
-            />
-          ) : (
-            <div className="space-y-3">
-              {consents.map(c => (
-                <Card key={c.id}>
-                  <CardContent className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[#E7F0FC] text-[#059669] flex items-center justify-center border border-[#BDDDFA]">
-                        <CheckCircle2 className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-[#0F172A]">
-                          Dr. {c.doctor_details?.first_name} {c.doctor_details?.last_name}
-                        </h4>
-                        <p className="text-[10px] text-[#55647C]">
-                          {c.doctor_details?.specialty} • Window: {c.expires_hours || 24} hours
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleRevokeConsent(c.id)}
-                    >
-                      Revoke Access
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+        <PatientConsentManager
+          token={token}
+          user={user}
+          onTabChange={onTabChange}
+        />
       )}
 
       {/* ─── SUB-VIEW: PHARMACY STORE ─── */}
@@ -2668,7 +2503,7 @@ export const PatientDashboard = ({
         isOpen={isVitalsModalOpen}
         onClose={() => setIsVitalsModalOpen(false)}
         title="Update Daily Health Checkup"
-        subtitle="Log today's biometric parameters, clinical vitals, and water hydration target."
+        subtitle="Log today's biometric parameters and clinical vitals."
       >
         <form onSubmit={handleSaveVitals} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -2722,35 +2557,6 @@ export const PatientDashboard = ({
                 required
                 value={vitalsForm.height}
                 onChange={e => setVitalsForm({ ...vitalsForm, height: e.target.value })}
-                className="w-full p-2.5 bg-[#E7F0FC] rounded-[12px] text-xs text-[#111827] outline-none border border-[#BDDDFA]"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[#0F172A] mb-1">Water Drank Today (Liters)</label>
-              <input
-                type="number"
-                step="0.05"
-                min="0"
-                max="10"
-                required
-                value={vitalsForm.waterDrank}
-                onChange={e => setVitalsForm({ ...vitalsForm, waterDrank: e.target.value })}
-                className="w-full p-2.5 bg-[#E7F0FC] rounded-[12px] text-xs text-[#111827] outline-none border border-[#BDDDFA]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#0F172A] mb-1">Daily Water Goal (Liters)</label>
-              <input
-                type="number"
-                step="0.1"
-                min="1"
-                max="10"
-                required
-                value={vitalsForm.waterGoal}
-                onChange={e => setVitalsForm({ ...vitalsForm, waterGoal: e.target.value })}
                 className="w-full p-2.5 bg-[#E7F0FC] rounded-[12px] text-xs text-[#111827] outline-none border border-[#BDDDFA]"
               />
             </div>
@@ -2814,6 +2620,30 @@ export const PatientDashboard = ({
           </div>
         </form>
       </Modal>
+
+      {/* ─── MODAL: PATIENT CONSULTATION RECORDS SHARING & UPLOAD ─── */}
+      <PatientConsultationRecordsModal
+        isOpen={!!patientRecordsAppt}
+        onClose={() => setPatientRecordsAppt(null)}
+        appointment={patientRecordsAppt}
+        token={token}
+        apiBase={API_BASE}
+        onSuccess={() => {
+          fetchRecords();
+          fetchConsents();
+          if (fetchAppointments) fetchAppointments();
+          window.dispatchEvent(new CustomEvent('healnsight_records_updated'));
+          try { localStorage.setItem('healnsight_last_record_sync', Date.now().toString()); } catch {}
+          triggerNotification("Records Synchronized", "Consultation medical records updated and authorized for doctor access.", "security");
+        }}
+      />
+
+      {/* ─── MODAL: DOCUMENT PREVIEW MODAL ─── */}
+      <DocumentViewerModal
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        record={previewDoc}
+      />
 
     </div>
   );

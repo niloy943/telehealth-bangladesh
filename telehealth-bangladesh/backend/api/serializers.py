@@ -2,13 +2,17 @@ import json
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.utils import timezone
 from api.models import (
     DoctorProfile, PatientProfile, Appointment, 
     Consultation, Prescription, HealthRecord, 
     Consent, AuditLog, Medicine, MedicineOrder, 
     PatientImageProfile, OTPCode, LoginAttempt, 
     PaymentTransaction, BlockchainRecord, TelephonyCall,
-    AIConversation, AIMessage
+    AIConversation, AIMessage,
+    ConsentRequest, PatientConsent, ConsentPermission,
+    ConsentHistory, RecordAccessLog, EmergencyAccessSetting,
+    EmergencyAccessLog
 )
 
 User = get_user_model()
@@ -151,7 +155,32 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     "Account suspended: Your account has been suspended by administration. Please contact support."
                 )
 
-        data = super().validate(attrs)
+        # Brute Force Protection & Consecutive Failure Lockout Check
+        from api.models import LoginAttempt
+        from django.utils import timezone
+        from datetime import timedelta
+
+        clean_username = username_val or 'unknown'
+        attempt, _ = LoginAttempt.objects.get_or_create(username=clean_username)
+        if attempt.locked_until and attempt.locked_until > timezone.now():
+            seconds_left = int((attempt.locked_until - timezone.now()).total_seconds())
+            raise exceptions.AuthenticationFailed(
+                f"Account locked due to consecutive failed login attempts. Please retry in {seconds_left} seconds."
+            )
+
+        try:
+            data = super().validate(attrs)
+            # Reset lockout counters upon successful authentication
+            if attempt.failed_count > 0 or attempt.locked_until:
+                attempt.failed_count = 0
+                attempt.locked_until = None
+                attempt.save(update_fields=['failed_count', 'locked_until'])
+        except exceptions.AuthenticationFailed as e:
+            attempt.failed_count += 1
+            if attempt.failed_count >= 5:
+                attempt.locked_until = timezone.now() + timedelta(minutes=15)
+            attempt.save(update_fields=['failed_count', 'locked_until'])
+            raise e
 
         # Server-side Role Resolution: Verify requested role matches actual database role
         requested_role = self.initial_data.get('role')
@@ -323,10 +352,17 @@ class PrescriptionSerializer(serializers.ModelSerializer):
 class HealthRecordSerializer(serializers.ModelSerializer):
     patient_details = UserSerializer(source='patient', read_only=True)
     decrypted_content = serializers.SerializerMethodField()
+    shared_consultations = serializers.SerializerMethodField()
+    sha256_hash = serializers.SerializerMethodField()
 
     class Meta:
         model = HealthRecord
-        fields = ('id', 'patient', 'patient_details', 'record_type', 'decrypted_content', 'created_at', 'updated_at')
+        fields = (
+            'id', 'patient', 'patient_details', 'record_type', 'title',
+            'file_name', 'file_size', 'mime_type', 'file_data',
+            'shared_consultations', 'sha256_hash', 'decrypted_content',
+            'created_at', 'updated_at'
+        )
 
     def get_decrypted_content(self, obj):
         try:
@@ -334,12 +370,133 @@ class HealthRecordSerializer(serializers.ModelSerializer):
         except Exception:
             return "[Decryption Error]"
 
+    def get_shared_consultations(self, obj):
+        return list(obj.shared_consultations.values_list('id', flat=True))
+
+    def get_sha256_hash(self, obj):
+        import hashlib
+        raw = f"{obj.id}:{obj.record_type}:{obj.title}:{obj.created_at}"
+        return f"0x{hashlib.sha256(raw.encode()).hexdigest()}"
+
 class ConsentSerializer(serializers.ModelSerializer):
     patient_details = UserSerializer(source='patient', read_only=True)
     doctor_details = UserSerializer(source='doctor', read_only=True)
     class Meta:
         model = Consent
         fields = '__all__'
+
+class ConsentPermissionSerializer(serializers.ModelSerializer):
+    record_details = HealthRecordSerializer(source='record', read_only=True)
+    class Meta:
+        model = ConsentPermission
+        fields = '__all__'
+
+class PatientConsentSerializer(serializers.ModelSerializer):
+    patient_details = UserSerializer(source='patient', read_only=True)
+    doctor_details = UserSerializer(source='doctor', read_only=True)
+    doctor_specialty = serializers.SerializerMethodField()
+    permissions = ConsentPermissionSerializer(many=True, read_only=True)
+    is_valid = serializers.BooleanField(read_only=True)
+    time_remaining_seconds = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientConsent
+        fields = '__all__'
+
+    def get_doctor_specialty(self, obj):
+        if hasattr(obj.doctor, 'doctor_profile') and obj.doctor.doctor_profile:
+            return obj.doctor.doctor_profile.specialty
+        return 'Specialist'
+
+    def get_time_remaining_seconds(self, obj):
+        if obj.status != 'active':
+            return 0
+        now = timezone.now()
+        if obj.valid_until <= now:
+            return 0
+        return int((obj.valid_until - now).total_seconds())
+
+class ConsentRequestSerializer(serializers.ModelSerializer):
+    patient_details = UserSerializer(source='patient', read_only=True)
+    doctor_details = UserSerializer(source='doctor', read_only=True)
+    doctor_specialty = serializers.SerializerMethodField()
+    requested_records_details = HealthRecordSerializer(source='requested_records', many=True, read_only=True)
+
+    class Meta:
+        model = ConsentRequest
+        fields = '__all__'
+
+    def get_doctor_specialty(self, obj):
+        if hasattr(obj.doctor, 'doctor_profile') and obj.doctor.doctor_profile:
+            return obj.doctor.doctor_profile.specialty
+        return 'Specialist'
+
+class ConsentHistorySerializer(serializers.ModelSerializer):
+    performed_by_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ConsentHistory
+        fields = '__all__'
+
+    def get_performed_by_name(self, obj):
+        if obj.performed_by:
+            return f"{obj.performed_by.first_name or obj.performed_by.username} ({obj.performed_by.role})"
+        return 'System'
+
+    def get_doctor_name(self, obj):
+        if obj.doctor:
+            return f"Dr. {obj.doctor.first_name or obj.doctor.username}"
+        return 'Doctor'
+
+    def get_patient_name(self, obj):
+        return obj.patient.first_name or obj.patient.username
+
+class RecordAccessLogSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.SerializerMethodField()
+    record_title = serializers.SerializerMethodField()
+    record_type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RecordAccessLog
+        fields = '__all__'
+
+    def get_doctor_name(self, obj):
+        if obj.doctor:
+            return f"Dr. {obj.doctor.first_name or obj.doctor.username}"
+        return 'Unknown Doctor'
+
+    def get_record_title(self, obj):
+        if obj.record:
+            return obj.record.title or obj.record.file_name or f"Record #{obj.record.id}"
+        return 'Clinical Document'
+
+    def get_record_type(self, obj):
+        if obj.record:
+            return obj.record.record_type
+        return 'Report'
+
+class EmergencyAccessSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmergencyAccessSetting
+        fields = '__all__'
+
+class EmergencyAccessLogSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmergencyAccessLog
+        fields = '__all__'
+
+    def get_doctor_name(self, obj):
+        if obj.doctor:
+            return f"Dr. {obj.doctor.first_name or obj.doctor.username}"
+        return 'Doctor'
+
+    def get_patient_name(self, obj):
+        return obj.patient.first_name or obj.patient.username
 
 class AuditLogSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)

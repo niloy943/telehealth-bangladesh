@@ -6,10 +6,13 @@ import {
   RefreshCw, Check, X, Shield, Sparkles, MessageSquare, Headphones
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button, StatusBadge, Modal, EmptyState, SecurityBadge, VerifiedBadge } from './ui';
+import { SecurePrescriptionModal } from './SecurePrescriptionModal';
+import { PatientConsultationRecordsModal } from './PatientConsultationRecordsModal';
+import { DocumentViewerModal } from './DocumentViewerModal';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export const ConsultationPortal = ({
   token,
@@ -23,10 +26,40 @@ export const ConsultationPortal = ({
   const { t } = useLanguage();
   const { triggerNotification } = useNotifications();
 
-  // Filter & Search states
-  const [activeFilter, setActiveFilter] = useState('all'); // all, audio, video, approved, pending, completed
+  const fetchApptsRef = useRef(fetchAppointments);
+  useEffect(() => {
+    fetchApptsRef.current = fetchAppointments;
+  }, [fetchAppointments]);
+
+  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAppt, setSelectedAppt] = useState(null);
+
+  // Synchronize appointments in real-time
+  useEffect(() => {
+    if (fetchApptsRef.current) fetchApptsRef.current();
+
+    const handleApptSync = () => {
+      if (fetchApptsRef.current) fetchApptsRef.current();
+    };
+    window.addEventListener('healnsight_appointment_updated', handleApptSync);
+    const handleStorage = (e) => {
+      if (e.key === 'healnsight_last_appointment_sync') {
+        if (fetchApptsRef.current) fetchApptsRef.current();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    const interval = setInterval(() => {
+      if (!document.hidden && fetchApptsRef.current) fetchApptsRef.current();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('healnsight_appointment_updated', handleApptSync);
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Diagnostics Modal State
   const [deviceModalOpen, setDeviceModalOpen] = useState(false);
@@ -49,8 +82,14 @@ export const ConsultationPortal = ({
   // Doctor Clinical Record View State
   const [recordsModalPatient, setRecordsModalPatient] = useState(null);
   const [patientRecords, setPatientRecords] = useState([]);
+  const [recordsLockedData, setRecordsLockedData] = useState(null);
+  const [requestingConsent, setRequestingConsent] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [recordsError, setRecordsError] = useState('');
+  const [previewDoc, setPreviewDoc] = useState(null);
+
+  // Patient Consultation Records Sharing State
+  const [patientRecordsAppt, setPatientRecordsAppt] = useState(null);
 
   // Patient Prescription Viewer State
   const [viewingRx, setViewingRx] = useState(null);
@@ -188,6 +227,12 @@ export const ConsultationPortal = ({
     setRxSuccessMsg('');
     try {
       const consultationId = rxModalAppt.consultation?.id || rxModalAppt.id;
+      const patId = String(rxModalAppt.patient || rxModalAppt.patient_details?.id || 'niloy');
+      const patUser = String(rxModalAppt.patient_details?.username || 'niloy');
+      const patName = rxModalAppt.patient_details
+        ? `${rxModalAppt.patient_details.first_name || ''} ${rxModalAppt.patient_details.last_name || ''}`.trim() || patUser
+        : 'Niloy Hasan';
+
       const resp = await fetch(`${API_BASE}/api/prescriptions/`, {
         method: "POST",
         headers: {
@@ -196,6 +241,9 @@ export const ConsultationPortal = ({
         },
         body: JSON.stringify({
           consultation_id: consultationId,
+          appointment_id: rxModalAppt.id,
+          patient_id: patId,
+          patient_username: patUser,
           symptoms: rxForm.symptoms,
           diagnosis: rxForm.diagnosis,
           medicines: JSON.stringify(medicines),
@@ -203,10 +251,42 @@ export const ConsultationPortal = ({
         })
       });
 
+      // Synchronize with Secure E-Prescription Gateway at port 5002
+      try {
+        const epBase = import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002';
+        await fetch(`${epBase}/api/prescriptions/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Doctor-ID': String(user?.id || user?.username || 'doc-sarah-101'),
+            'X-Patient-ID': patId,
+            'X-Patient-Username': patUser
+          },
+          body: JSON.stringify({
+            consultationId: String(consultationId),
+            doctorId: String(user?.id || user?.username || 'doc-sarah-101'),
+            patientId: patId,
+            patientUsername: patUser,
+            patientName: patName,
+            diagnosis: rxForm.diagnosis,
+            symptoms: rxForm.symptoms,
+            advice: rxForm.instructions,
+            items: medicines
+          })
+        });
+      } catch (epErr) {
+        console.warn("Gateway sync notice:", epErr);
+      }
+
       if (resp.status === 201) {
         const data = await resp.json();
         setRxSuccessMsg("E-Prescription successfully compiled, signed, and saved to national patient ledger!");
         triggerNotification("E-Prescription Issued", "Digital prescription is now visible to patient.", "medical");
+        window.dispatchEvent(new CustomEvent('healnsight_prescription_updated', {
+          detail: { consultationId, patientId: patId, doctorId: user?.id }
+        }));
+        try { localStorage.setItem('healnsight_last_prescription_sync', Date.now().toString()); } catch {}
         if (fetchAppointments) fetchAppointments();
         setTimeout(() => {
           setRxModalAppt(null);
@@ -234,8 +314,9 @@ export const ConsultationPortal = ({
       return;
     }
     const patientName = `${appt.patient_details?.first_name || ''} ${appt.patient_details?.last_name || ''}`.trim() || appt.patient_details?.username || "Patient";
-    setRecordsModalPatient({ id: appt.patient, name: patientName });
+    setRecordsModalPatient({ id: appt.patient, name: patientName, apptId: appt.id });
     setPatientRecords([]);
+    setRecordsLockedData(null);
     setRecordsError('');
     setLoadingRecords(true);
 
@@ -243,12 +324,15 @@ export const ConsultationPortal = ({
       const resp = await fetch(`${API_BASE}/api/records/?patient_id=${appt.patient}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      const data = await resp.json();
       if (resp.status === 200) {
-        const data = await resp.json();
-        setPatientRecords(Array.isArray(data) ? data : []);
+        if (data && data.status === 'LOCKED') {
+          setRecordsLockedData(data);
+        } else {
+          setPatientRecords(Array.isArray(data) ? data : []);
+        }
       } else {
-        const err = await resp.json();
-        setRecordsError(err.detail || "Patient has not authorized active clinical access consent.");
+        setRecordsError(data.detail || "Patient has not authorized active clinical access consent.");
       }
     } catch (err) {
       setRecordsError("Could not retrieve clinical health records.");
@@ -257,18 +341,37 @@ export const ConsultationPortal = ({
     }
   };
 
-  // Filter & Search appointments
+  // Doctor Request Patient Record Authorization
+  const handleRequestConsent = async (patientId) => {
+    setRequestingConsent(true);
+    try {
+      const resp = await fetch(`${API_BASE}/api/consent/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'request',
+          patient_id: patientId
+        })
+      });
+      if (resp.ok) {
+        triggerNotification("Authorization Requested", "Access request sent to patient. Once approved in their Privacy & Consent settings, records will unlock.", "security");
+        setRecordsLockedData(prev => prev ? ({ ...prev, has_pending_request: true }) : null);
+      } else {
+        const err = await resp.json();
+        triggerNotification("Request Failed", err.error || "Could not send authorization request.", "warning");
+      }
+    } catch (e) {
+      triggerNotification("Connection Error", "Failed to reach server.", "warning");
+    } finally {
+      setRequestingConsent(false);
+    }
+  };
+
+  // Search appointments
   const filteredAppointments = appointments.filter(appt => {
-    const isAudio = appt.consultation_type === 'audio';
-    const isVideo = appt.consultation_type === 'video' || (!appt.consultation_type && !isAudio);
-
-    // Filter matching
-    if (activeFilter === 'audio' && !isAudio) return false;
-    if (activeFilter === 'video' && !isVideo) return false;
-    if (activeFilter === 'approved' && appt.status !== 'approved') return false;
-    if (activeFilter === 'pending' && appt.status !== 'pending') return false;
-    if (activeFilter === 'completed' && appt.status !== 'completed') return false;
-
     // Search query matching
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -374,29 +477,17 @@ export const ConsultationPortal = ({
         </div>
       </div>
 
-      {/* FILTER & SEARCH CONTROLS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white border border-[#BDDDFA] rounded-xl shadow-xs">
-          {[
-            { id: 'all', label: `All (${totalCount})` },
-            { id: 'audio', label: `🎙️ Audio (${audioCount})` },
-            { id: 'video', label: `📹 Video (${videoCount})` },
-            { id: 'approved', label: `Approved (${approvedCount})` },
-            { id: 'pending', label: `Pending (${pendingCount})` },
-            { id: 'completed', label: `Completed (${completedCount})` },
-          ].map(f => (
-            <button
-              key={f.id}
-              onClick={() => setActiveFilter(f.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeFilter === f.id
-                ? 'bg-[#059669] text-white shadow-xs'
-                : 'text-[#55647C] hover:text-[#0F172A] hover:bg-[#E7F0FC]'
-                }`}
-            >
-              {f.label}
-            </button>
-          ))}
+      {/* SEARCH & SECTION HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div>
+          <h2 className="text-base font-bold text-[#0F172A]">
+            {isDoctor ? "Active Sessions & Patient Queue" : "Consultation Sessions"}
+          </h2>
+          <p className="text-xs text-[#55647C]">
+            {isDoctor
+              ? "Review patient symptoms, launch encrypted video/audio rooms, and inspect records"
+              : "Review past and upcoming visits, join video rooms, and inspect medical prescriptions"}
+          </p>
         </div>
 
         {/* Search Input */}
@@ -434,11 +525,9 @@ export const ConsultationPortal = ({
             description={
               searchQuery
                 ? "No appointments match your search keywords. Try adjusting your query."
-                : activeFilter !== 'all'
-                  ? `There are currently no consultations under the '${activeFilter}' filter.`
-                  : isDoctor
-                    ? "Your consultation schedule is clear. Newly booked patient sessions will appear here automatically."
-                    : "You have no upcoming consultations scheduled. Book a certified specialist to get medical care."
+                : isDoctor
+                  ? "Your consultation schedule is clear. Newly booked patient sessions will appear here automatically."
+                  : "You have no upcoming consultations scheduled. Book a certified specialist to get medical care."
             }
             action={
               !isDoctor && onTabChange ? (
@@ -601,6 +690,7 @@ export const ConsultationPortal = ({
                           )}
 
                           {/* Inspect Records (Only for non-anonymous) */}
+                          {/* Medical Records Inspection */}
                           {!isAnonymous ? (
                             <Button
                               variant="outline"
@@ -609,7 +699,7 @@ export const ConsultationPortal = ({
                               onClick={() => handleInspectRecords(appt)}
                               className="text-xs font-semibold"
                             >
-                              Inspect Records
+                              Record
                             </Button>
                           ) : (
                             <span
@@ -621,25 +711,19 @@ export const ConsultationPortal = ({
                             </span>
                           )}
 
-                          {/* Issue E-Prescription */}
-                          {(isApproved || isCompleted) && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={FileText}
-                              onClick={() => setRxModalAppt(appt)}
-                              className="text-xs font-bold text-[#059669]"
-                            >
-                              Write Rx
-                            </Button>
+                          {isCompleted && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+                              <span>Consultation Completed</span>
+                            </span>
                           )}
                         </>
                       )}
 
                       {/* --- PATIENT JOBS --- */}
                       {!isDoctor && (
-                        <>
-                          {/* If Approved: Join Room */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* 1. Open Room Option */}
                           {isApproved && (
                             <Button
                               variant="primary"
@@ -651,7 +735,20 @@ export const ConsultationPortal = ({
                               })}
                               className={`font-black shadow-md ${isAudio ? 'bg-purple-700 hover:bg-purple-800 border-purple-700' : ''}`}
                             >
-                              {isAudio ? "Join Audio Room (Anonymous)" : "Join Video Room"}
+                              {isAudio ? "Open Audio Room" : "Open Room"}
+                            </Button>
+                          )}
+
+                          {/* 2. Records Option */}
+                          {!isCompleted && (
+                            <Button
+                              variant="outline"
+                              size="md"
+                              icon={FileText}
+                              onClick={() => setPatientRecordsAppt(appt)}
+                              className="font-bold text-xs"
+                            >
+                              Records
                             </Button>
                           )}
 
@@ -663,19 +760,14 @@ export const ConsultationPortal = ({
                             </div>
                           )}
 
-                          {/* If Completed: View Prescription */}
+                          {/* If Completed: Completed Badge (Prescriptions accessible exclusively through E-Prescription Vault) */}
                           {isCompleted && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              icon={FileText}
-                              onClick={() => setViewingRx(appt)}
-                              className="text-xs font-bold text-[#059669]"
-                            >
-                              View Prescription (Rx)
-                            </Button>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+                              <span>Consultation Completed</span>
+                            </span>
                           )}
-                        </>
+                        </div>
                       )}
 
                     </div>
@@ -779,141 +871,31 @@ export const ConsultationPortal = ({
         </div>
       </Modal>
 
-      {/* MODAL 2: DOCTOR WRITE E-PRESCRIPTION */}
-      <Modal
+      {/* ─── MODAL 2: DOCTOR WRITE SECURE E-PRESCRIPTION (AES-256 + BLOCKCHAIN + MFA) ─── */}
+      <SecurePrescriptionModal
         isOpen={!!rxModalAppt}
         onClose={() => setRxModalAppt(null)}
-        title="Issue Digital E-Prescription (Rx)"
-        subtitle={`Session #${rxModalAppt?.id || ''} • Patient: ${rxModalAppt?.is_anonymous ? 'Anonymous Patient' : rxModalAppt?.patient_details?.username
-          }`}
-        maxWidth="max-w-2xl"
-      >
-        <form onSubmit={handleIssueRxSubmit} className="space-y-4">
-          {rxSuccessMsg && (
-            <div className="p-3 rounded-xl bg-[#E7F0FC] border border-[#059669] text-xs font-bold text-[#059669]">
-              {rxSuccessMsg}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-[#0F172A] mb-1">Chief Complaints</label>
-              <input
-                type="text"
-                required
-                value={rxForm.symptoms}
-                onChange={e => setRxForm({ ...rxForm, symptoms: e.target.value })}
-                placeholder="e.g. Fever for 3 days, mild dry cough..."
-                className="w-full p-2.5 bg-[#E7F0FC] rounded-[12px] text-xs font-medium text-[#0F172A] outline-none border border-[#BDDDFA]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-[#0F172A] mb-1">Clinical Diagnosis</label>
-              <input
-                type="text"
-                required
-                value={rxForm.diagnosis}
-                onChange={e => setRxForm({ ...rxForm, diagnosis: e.target.value })}
-                placeholder="e.g. Acute Viral Bronchitis..."
-                className="w-full p-2.5 bg-[#E7F0FC] rounded-[12px] text-xs font-medium text-[#0F172A] outline-none border border-[#BDDDFA]"
-              />
-            </div>
-          </div>
-
-          {/* Medicines */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-[#0F172A]">Prescribed Medications</label>
-              <button
-                type="button"
-                onClick={handleAddMedicine}
-                className="text-xs font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Medicine
-              </button>
-            </div>
-
-            <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-              {medicines.map((m, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA]">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Medicine (e.g. Paracetamol 500mg)"
-                    value={m.name}
-                    onChange={e => handleUpdateMedicine(idx, 'name', e.target.value)}
-                    className="flex-1 p-2 bg-white rounded-lg text-xs font-medium text-[#0F172A] outline-none border border-[#BDDDFA]"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Dosage (1 tab)"
-                    value={m.dosage}
-                    onChange={e => handleUpdateMedicine(idx, 'dosage', e.target.value)}
-                    className="w-24 p-2 bg-white rounded-lg text-xs font-medium text-[#0F172A] outline-none border border-[#BDDDFA]"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Timing (1+0+1)"
-                    value={m.timing}
-                    onChange={e => handleUpdateMedicine(idx, 'timing', e.target.value)}
-                    className="w-32 p-2 bg-white rounded-lg text-xs font-medium text-[#0F172A] outline-none border border-[#BDDDFA]"
-                  />
-                  {medicines.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMedicine(idx)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#0F172A] mb-1">Doctor Advice &amp; Instructions</label>
-            <textarea
-              rows={2}
-              value={rxForm.instructions}
-              onChange={e => setRxForm({ ...rxForm, instructions: e.target.value })}
-              placeholder="Drink plenty of fluids, rest, follow up in 5 days if fever persists..."
-              className="w-full p-2.5 bg-[#E7F0FC] rounded-[12px] text-xs font-medium text-[#0F172A] outline-none border border-[#BDDDFA]"
-            />
-          </div>
-
-          {/* Digital Signature Confirmation */}
-          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA]">
-            <input
-              type="checkbox"
-              id="rxSignCheck"
-              checked={rxSigned}
-              onChange={e => setRxSigned(e.target.checked)}
-              className="rounded text-[#059669] focus:ring-[#059669] w-4 h-4 cursor-pointer"
-            />
-            <label htmlFor="rxSignCheck" className="text-xs text-[#0F172A] font-semibold cursor-pointer">
-              I certify under my BMDC registration that this digital prescription is medically indicated.
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setRxModalAppt(null)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" type="submit" loading={rxSubmitting}>
-              Issue &amp; Sign Prescription
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        appointment={rxModalAppt}
+        token={token}
+        apiBase={API_BASE}
+        onSuccess={(result) => {
+          triggerNotification(
+            "E-Prescription Signed & Sealed",
+            `Prescription issued with hash ${result?.integrity?.sha256Hash?.substring(0, 16)}... and committed to ledger. Consultation grant revoked.`,
+            "security"
+          );
+          setRxModalAppt(null);
+          if (fetchAppointments) fetchAppointments();
+        }}
+      />
 
       {/* MODAL 3: DOCTOR INSPECT PATIENT RECORDS (AES-256) */}
       <Modal
         isOpen={!!recordsModalPatient}
-        onClose={() => setRecordsModalPatient(null)}
+        onClose={() => {
+          setRecordsModalPatient(null);
+          setRecordsLockedData(null);
+        }}
         title={`Clinical Records: ${recordsModalPatient?.name || ''}`}
         subtitle="End-to-End Encrypted Patient Medical History"
         maxWidth="max-w-2xl"
@@ -922,6 +904,48 @@ export const ConsultationPortal = ({
           <div className="p-8 text-center text-xs font-bold text-[#55647C]">
             <RefreshCw className="w-6 h-6 animate-spin text-[#168CF5] mx-auto mb-2" />
             Decrypting patient medical history (AES-256)...
+          </div>
+        ) : recordsLockedData ? (
+          <div className="p-6 text-center space-y-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-[#0F172A]">Records Encrypted at Rest</h4>
+              <p className="text-xs text-[#55647C] max-w-sm mx-auto">
+                {recordsLockedData.total_records_on_file} medical record(s) on file. In accordance with zero-trust patient privacy, records are sealed until the patient explicitly delegates consent.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs flex items-center justify-between max-w-md mx-auto">
+              <div className="flex items-center gap-2 text-slate-700">
+                <Shield className="w-4 h-4 text-emerald-600" />
+                <span>Separation of Availability vs Accessibility</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                Strict Isolation
+              </span>
+            </div>
+
+            <div className="pt-2">
+              {recordsLockedData.has_pending_request ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-700" />
+                  <span>Access Request Pending Patient Approval</span>
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="md"
+                  icon={ShieldCheck}
+                  disabled={requestingConsent}
+                  onClick={() => handleRequestConsent(recordsModalPatient.id)}
+                  className="bg-[#059669] hover:bg-[#047857] text-white font-bold"
+                >
+                  {requestingConsent ? "Sending Request..." : "Request Patient Authorization (24h)"}
+                </Button>
+              )}
+            </div>
           </div>
         ) : recordsError ? (
           <div className="p-6 text-center space-y-3 bg-red-50 rounded-2xl border border-red-200">
@@ -936,13 +960,26 @@ export const ConsultationPortal = ({
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {patientRecords.map(rec => (
-              <div key={rec.id} className="p-3.5 rounded-xl border border-[#BDDDFA] bg-[#E7F0FC] space-y-1">
+              <div key={rec.id} className="p-3.5 rounded-xl border border-[#BDDDFA] bg-[#E7F0FC] space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#0F172A] uppercase">{rec.record_type}</span>
-                  <SecurityBadge text="Decrypted (AES-256)" />
+                  <div className="flex items-center gap-2">
+                    <SecurityBadge text="Decrypted (AES-256)" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={Eye}
+                      onClick={() => setPreviewDoc(rec)}
+                      className="text-xs py-1 px-2.5"
+                    >
+                      Preview
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-[#334155] leading-relaxed">{rec.content}</p>
-                <span className="text-[10px] text-[#55647C] block pt-1">Record ID #{rec.id}</span>
+                <p className="text-xs text-[#334155] leading-relaxed">{rec.decrypted_content || rec.content}</p>
+                <span className="text-[10px] text-[#55647C] block pt-1">
+                  Record ID #{rec.id} &bull; {rec.file_name || 'Document'}
+                </span>
               </div>
             ))}
           </div>
@@ -991,6 +1028,28 @@ export const ConsultationPortal = ({
           </div>
         </div>
       </Modal>
+
+      {/* MODAL 5: PATIENT CONSULTATION RECORDS SHARING */}
+      <PatientConsultationRecordsModal
+        isOpen={!!patientRecordsAppt}
+        onClose={() => setPatientRecordsAppt(null)}
+        appointment={patientRecordsAppt}
+        token={token}
+        apiBase={API_BASE}
+        onSuccess={() => {
+          if (fetchAppointments) fetchAppointments();
+          window.dispatchEvent(new CustomEvent('healnsight_records_updated'));
+          try { localStorage.setItem('healnsight_last_record_sync', Date.now().toString()); } catch {}
+          triggerNotification("Records Synchronized", "Consultation medical reports updated successfully.", "security");
+        }}
+      />
+
+      {/* MODAL 6: DOCUMENT PREVIEW MODAL */}
+      <DocumentViewerModal
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        record={previewDoc}
+      />
 
     </div>
   );

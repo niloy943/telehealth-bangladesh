@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+from datetime import timedelta
 from api.encryption import encrypt_value, decrypt_value
 
 class User(AbstractUser):
@@ -109,6 +111,36 @@ class Consultation(models.Model):
     end_time = models.DateTimeField(blank=True, null=True)
 
     @property
+    def effective_start_time(self):
+        return self.started_at or self.start_time
+
+    @property
+    def expires_at(self):
+        st = self.effective_start_time
+        if st:
+            return st + timedelta(minutes=45)
+        return None
+
+    @property
+    def is_expired(self):
+        if self.status in ['ended', 'completed']:
+            return True
+        exp = self.expires_at
+        if exp and timezone.now() >= exp:
+            return True
+        return False
+
+    @property
+    def remaining_seconds(self):
+        if self.status in ['ended', 'completed']:
+            return 0
+        exp = self.expires_at
+        if exp:
+            diff = int((exp - timezone.now()).total_seconds())
+            return max(0, diff)
+        return 45 * 60
+
+    @property
     def anonymous_identifier(self):
         if self.anonymous_session_id:
             return f"Anonymous Patient #{self.anonymous_session_id}"
@@ -133,9 +165,32 @@ class Prescription(models.Model):
     def __str__(self):
         return f"Prescription {self.id} for {self.patient.username}"
 
+class ConsultationChatMessage(models.Model):
+    consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE, related_name='chat_messages')
+    sender_username = models.CharField(max_length=150)
+    ciphertext = models.TextField()
+    iv = models.CharField(max_length=255)
+    aad = models.JSONField(default=dict, blank=True)
+    message_id = models.CharField(max_length=100, unique=True, db_index=True)
+    status = models.CharField(max_length=20, default='sent') # 'sent', 'delivered', 'read'
+    timestamp = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Msg {self.message_id} in Consultation {self.consultation_id} by {self.sender_username}"
+
 class HealthRecord(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='health_records')
     record_type = models.CharField(max_length=50, help_text="e.g., Blood report, Clinical notes")
+    title = models.CharField(max_length=200, blank=True, default='')
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    file_size = models.BigIntegerField(default=0, help_text="File size in bytes")
+    mime_type = models.CharField(max_length=100, blank=True, null=True)
+    file_data = models.TextField(blank=True, null=True, help_text="Base64 or encrypted data of PDF / JPG / JPEG")
+    shared_consultations = models.ManyToManyField('Consultation', blank=True, related_name='shared_records')
     encrypted_data = models.TextField(help_text="Encrypted JSON data representing health statistics/metrics")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -148,19 +203,167 @@ class HealthRecord(models.Model):
         return decrypt_value(self.encrypted_data)
 
     def __str__(self):
-        return f"{self.record_type} for patient {self.patient.username}"
+        return f"{self.title or self.record_type} for patient {self.patient.username}"
 
 class Consent(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_consents')
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_consents')
     record_type = models.CharField(max_length=50, default='all', help_text="Specific record type or 'all'")
     granted = models.BooleanField(default=True)
+    status = models.CharField(max_length=20, default='granted')  # 'pending', 'granted', 'revoked'
     expires_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         status = "Granted" if self.granted else "Revoked"
         return f"Consent {status} by {self.patient.username} to {self.doctor.username}"
+
+class ConsentRequest(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending Patient Review'),
+        ('approved', 'Approved by Patient'),
+        ('rejected', 'Rejected by Patient'),
+        ('expired', 'Request Expired'),
+        ('revoked', 'Access Revoked')
+    )
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_consent_requests')
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_consent_requests')
+    consultation = models.ForeignKey('Consultation', on_delete=models.SET_NULL, null=True, blank=True, related_name='consent_requests')
+    requested_records = models.ManyToManyField('HealthRecord', blank=True, related_name='requested_in_consents')
+    requested_categories = models.JSONField(default=list, blank=True, help_text="e.g. ['Prescriptions', 'Lab Reports', 'Clinical Notes']")
+    access_purpose = models.TextField(help_text="Clinical justification / medical purpose for requesting record access")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True, null=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Consent Request #{self.id}: Dr. {self.doctor.username} -> Patient {self.patient.username} ({self.status})"
+
+class PatientConsent(models.Model):
+    STATUS_CHOICES = (
+        ('active', 'Active Authorized'),
+        ('expired', 'Expired'),
+        ('revoked', 'Revoked by Patient')
+    )
+    DURATION_CHOICES = (
+        ('consultation_only', 'Consultation Session Only'),
+        ('24_hours', '24 Hours Window'),
+        ('7_days', '7 Days Window'),
+        ('custom', 'Custom Expiration')
+    )
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patient_consents')
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_consents')
+    consultation = models.ForeignKey('Consultation', on_delete=models.SET_NULL, null=True, blank=True, related_name='active_consents')
+    request = models.ForeignKey('ConsentRequest', on_delete=models.SET_NULL, null=True, blank=True, related_name='resulting_consents')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    duration_type = models.CharField(max_length=30, choices=DURATION_CHOICES, default='24_hours')
+    valid_until = models.DateTimeField(help_text="Exact timestamp when this consent expires")
+    can_view_prescriptions = models.BooleanField(default=True)
+    can_view_lab_reports = models.BooleanField(default=True)
+    can_view_clinical_notes = models.BooleanField(default=True)
+    approved_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revocation_reason = models.TextField(blank=True, null=True)
+
+    @property
+    def is_valid(self):
+        return self.status == 'active' and self.valid_until > timezone.now()
+
+    def __str__(self):
+        return f"PatientConsent #{self.id}: Patient {self.patient.username} -> Dr. {self.doctor.username} ({self.status})"
+
+class ConsentPermission(models.Model):
+    consent = models.ForeignKey('PatientConsent', on_delete=models.CASCADE, related_name='permissions')
+    record = models.ForeignKey('HealthRecord', on_delete=models.CASCADE, null=True, blank=True, related_name='consent_permissions')
+    record_category = models.CharField(max_length=50, default='all', help_text="e.g. Lab Report, Clinical notes, Prescriptions")
+    is_allowed = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Perm #{self.id} for Consent #{self.consent_id}: Category={self.record_category}, Allowed={self.is_allowed}"
+
+class ConsentHistory(models.Model):
+    ACTION_CHOICES = (
+        ('REQUESTED', 'Access Requested by Doctor'),
+        ('APPROVED', 'Access Approved by Patient'),
+        ('REJECTED', 'Access Rejected by Patient'),
+        ('REVOKED', 'Access Revoked by Patient'),
+        ('MODIFIED', 'Consent Window Modified by Patient'),
+        ('EXPIRED', 'Consent Window Expired'),
+        ('EMERGENCY_ACCESS', 'Emergency Break-Glass Access Invoked')
+    )
+    consent = models.ForeignKey('PatientConsent', on_delete=models.SET_NULL, null=True, blank=True, related_name='history')
+    request = models.ForeignKey('ConsentRequest', on_delete=models.SET_NULL, null=True, blank=True, related_name='history')
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='consent_history_events')
+    doctor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='doctor_consent_history_events')
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='performed_consent_actions')
+    details = models.TextField(blank=True, default='')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.action} by {self.performed_by.username if self.performed_by else 'System'} at {self.timestamp}"
+
+class RecordAccessLog(models.Model):
+    ACCESS_TYPES = (
+        ('VIEW', 'Viewed Record Metadata'),
+        ('PREVIEW', 'Previewed Decrypted Record'),
+        ('DOWNLOAD', 'Downloaded Decrypted Document'),
+        ('DECRYPT', 'Decrypted AES-256 Payload')
+    )
+    STATUS_CHOICES = (
+        ('AUTHORIZED', 'Authorized under Active Patient Consent'),
+        ('DENIED', 'Access Denied - No Valid Consent'),
+        ('EMERGENCY_OVERRIDE', 'Authorized under Emergency Break-Glass')
+    )
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='record_access_logs')
+    doctor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='doctor_record_access_logs')
+    record = models.ForeignKey('HealthRecord', on_delete=models.SET_NULL, null=True, blank=True, related_name='access_logs')
+    consultation = models.ForeignKey('Consultation', on_delete=models.SET_NULL, null=True, blank=True)
+    access_type = models.CharField(max_length=50, choices=ACCESS_TYPES, default='VIEW')
+    permission_status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='AUTHORIZED')
+    reason = models.TextField(blank=True, null=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.access_type} on Record #{self.record_id} by Dr. {self.doctor.username if self.doctor else 'Unknown'} - {self.permission_status}"
+
+class EmergencyAccessSetting(models.Model):
+    patient = models.OneToOneField(User, on_delete=models.CASCADE, related_name='emergency_access_setting')
+    allow_emergency_break_glass = models.BooleanField(default=True, help_text="Allow doctors to break-glass access records in life-threatening emergencies")
+    require_immediate_sms = models.BooleanField(default=True)
+    require_immediate_email = models.BooleanField(default=True)
+    auto_revoke_hours = models.IntegerField(default=2, help_text="Emergency access auto-expires after N hours")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Emergency Setting for {self.patient.username}: Allowed={self.allow_emergency_break_glass}"
+
+class EmergencyAccessLog(models.Model):
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emergency_access_logs')
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emergency_doctor_access_logs')
+    consultation = models.ForeignKey('Consultation', on_delete=models.SET_NULL, null=True, blank=True)
+    justification = models.TextField(help_text="Detailed medical emergency clinical justification")
+    duration_minutes = models.IntegerField(default=120)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    notified_patient = models.BooleanField(default=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"Emergency Break-Glass by Dr. {self.doctor.username} on Patient {self.patient.username} at {self.timestamp}"
 
 class AuditLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')

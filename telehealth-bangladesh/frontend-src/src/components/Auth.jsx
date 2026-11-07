@@ -8,8 +8,8 @@ import {
 import telemedicineHero from '../assets/telemedicine_hero.png';
 import { Button } from './ui';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
-const AUTH_API_BASE = import.meta.env.VITE_AUTH_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+const AUTH_API_BASE = import.meta.env.VITE_AUTH_API_BASE || 'http://localhost:5001';
 
 export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
   const { lang, toggleLanguage, t } = useLanguage();

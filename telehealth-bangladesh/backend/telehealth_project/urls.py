@@ -4,10 +4,21 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from api.consent_views import (
+    PatientConsentDashboardView, PatientConsentRequestsView,
+    PatientApproveRequestView, PatientRejectRequestView,
+    PatientRevokeConsentView, PatientModifyDurationView,
+    PatientGrantConsentDirectView, PatientConsentHistoryView,
+    PatientAuditLogsView, PatientEmergencySettingsView,
+    DoctorConsentStatusView, DoctorConsentRequestView,
+    DoctorApprovedRecordsView, DoctorConsentExpiryView,
+    DoctorConsentRestrictionsView, DoctorEmergencyBreakGlassView
+)
 from api.views import (
     CustomTokenObtainPairView,
     UserRegistrationView, UserProfileView, DoctorListView,
     AppointmentViewSet, HealthRecordViewSet, ConsentViewSet,
+    PatientStorageView, ConsultationSharedRecordsView,
     PrescriptionViewSet, PrescriptionShareView, SharedPrescriptionView,
     MedicineListView, MedicineOrderViewSet, AuditLogListView,
     ForgotPasswordView, ResetPasswordView, ChangePasswordView, PatientImageProfileViewSet,
@@ -16,7 +27,7 @@ from api.views import (
     PaymentInitiateView, PaymentCallbackView, PaymentIPNView, PaymentStatusView, PaymentHistoryView,
     TelephonyCallView,
     TelephonyCallTerminateView, TelephonyCallStatusView, TelephonyCallListView,
-    TelephonyTwiMLView, ConsultationDetailView,
+    TelephonyTwiMLView, ConsultationDetailView, ConsultationChatView,
     GovNIDVerifyView, GovBMDCVerifyView, FileUploadView, FileDownloadView,
     BlockchainLedgerView, BlockchainVerifyView, BlockchainTransactionDetailView,
     AIHealthAssistantView, AIConversationListView, AIConversationDetailView
@@ -51,11 +62,49 @@ urlpatterns = [
     path('api/appointments/', AppointmentViewSet.as_view(), name='appointments_list_create'),
     path('api/appointments/<int:pk>/', AppointmentViewSet.as_view(), name='appointment_action'),
     path('api/consultations/<int:pk>/', ConsultationDetailView.as_view(), name='consultation_detail'),
+    path('api/consultations/<int:pk>/chat-history/', ConsultationChatView.as_view(), name='consultation_chat_history'),
+    path('api/consultations/<int:pk>/chat-message/', ConsultationChatView.as_view(), name='consultation_chat_message'),
+    path('api/consultations/<int:pk>/chat-status/', ConsultationChatView.as_view(), name='consultation_chat_status'),
     
     # E2EE Patient Records & Consent
+    path('api/records/storage/', PatientStorageView.as_view(), name='patient_storage_summary'),
+    path('api/records/storage', PatientStorageView.as_view(), name='patient_storage_summary_noslash'),
     path('api/records/', HealthRecordViewSet.as_view(), name='health_records_list_create'),
+    path('api/records', HealthRecordViewSet.as_view(), name='health_records_list_create_noslash'),
+    path('api/records/<int:pk>/', HealthRecordViewSet.as_view(), name='health_record_detail'),
+    path('api/records/<int:pk>', HealthRecordViewSet.as_view(), name='health_record_detail_noslash'),
+    path('api/consultations/<int:pk>/shared-records/', ConsultationSharedRecordsView.as_view(), name='consultation_shared_records'),
+    path('api/consultations/<int:pk>/shared-records', ConsultationSharedRecordsView.as_view(), name='consultation_shared_records_noslash'),
+    path('api/consultations/<int:pk>/share-records/', ConsultationSharedRecordsView.as_view(), name='consultation_share_records'),
+    path('api/consultations/<int:pk>/share-records', ConsultationSharedRecordsView.as_view(), name='consultation_share_records_noslash'),
     path('api/consent/', ConsentViewSet.as_view(), name='consent_list_create'),
+    path('api/consent/request/', ConsentViewSet.as_view(), name='consent_request'),
     path('api/consent/<int:pk>/', ConsentViewSet.as_view(), name='consent_revoke'),
+    path('api/consent/<int:pk>/approve/', ConsentViewSet.as_view(), name='consent_approve'),
+    path('api/consents/', ConsentViewSet.as_view(), name='consent_list_create_plural'),
+    path('api/consents/request/', ConsentViewSet.as_view(), name='consent_request_plural'),
+    path('api/consents/<int:pk>/', ConsentViewSet.as_view(), name='consent_revoke_plural'),
+    path('api/consents/<int:pk>/approve/', ConsentViewSet.as_view(), name='consent_approve_plural'),
+
+    # Patient-Controlled Privacy & Data Consent Manager Endpoints
+    path('api/consent/dashboard/', PatientConsentDashboardView.as_view(), name='consent_dashboard'),
+    path('api/consent/requests/', PatientConsentRequestsView.as_view(), name='consent_requests'),
+    path('api/consent/requests/<int:pk>/approve/', PatientApproveRequestView.as_view(), name='consent_request_approve'),
+    path('api/consent/requests/<int:pk>/reject/', PatientRejectRequestView.as_view(), name='consent_request_reject'),
+    path('api/consent/<int:pk>/revoke/', PatientRevokeConsentView.as_view(), name='consent_revoke_explicit'),
+    path('api/consent/<int:pk>/duration/', PatientModifyDurationView.as_view(), name='consent_modify_duration'),
+    path('api/consent/grant/', PatientGrantConsentDirectView.as_view(), name='consent_grant_direct'),
+    path('api/consent/history/', PatientConsentHistoryView.as_view(), name='consent_history'),
+    path('api/consent/audit-logs/', PatientAuditLogsView.as_view(), name='consent_audit_logs'),
+    path('api/consent/emergency-settings/', PatientEmergencySettingsView.as_view(), name='consent_emergency_settings'),
+
+    # Doctor Portal Patient Consent & Access Endpoints
+    path('api/doctor/consent/status/', DoctorConsentStatusView.as_view(), name='doctor_consent_status'),
+    path('api/doctor/consent/request/', DoctorConsentRequestView.as_view(), name='doctor_consent_request'),
+    path('api/doctor/consent/records/', DoctorApprovedRecordsView.as_view(), name='doctor_consent_records'),
+    path('api/doctor/consent/expiry/', DoctorConsentExpiryView.as_view(), name='doctor_consent_expiry'),
+    path('api/doctor/consent/restrictions/', DoctorConsentRestrictionsView.as_view(), name='doctor_consent_restrictions'),
+    path('api/doctor/consent/emergency-access/', DoctorEmergencyBreakGlassView.as_view(), name='doctor_emergency_access'),
     
     # E-Prescriptions & Secure Token Sharing
     path('api/prescriptions/', PrescriptionViewSet.as_view(), name='prescription_list_create'),

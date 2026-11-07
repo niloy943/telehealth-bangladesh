@@ -212,7 +212,8 @@ export async function decryptMessage(sessionKey, ciphertextB64, ivB64, aadString
   
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
-  const aadBytes = encoder.encode(aadString);
+  const normalizedAad = typeof aadString === 'string' ? aadString : (aadString ? JSON.stringify(aadString) : "");
+  const aadBytes = encoder.encode(normalizedAad);
 
   const decrypted = await window.crypto.subtle.decrypt(
     {

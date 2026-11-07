@@ -1,4 +1,5 @@
 import json
+import hashlib
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
@@ -373,11 +374,53 @@ class Command(BaseCommand):
             reason="Palpitations and fluctuating blood pressure readings in the morning.",
             status="approved"
         )
-        Consultation.objects.create(
+        consult_b = Consultation.objects.create(
             appointment=appt_b,
             type='video',
             status='active',
-            start_time=timezone.now() - timedelta(minutes=10)
+            started_at=timezone.now() - timedelta(minutes=5),
+            start_time=timezone.now() - timedelta(minutes=5)
+        )
+
+        # Scenario B2: Previously Completed Consultation with Finalized E-Prescription for Niloy
+        appt_niloy_prev = Appointment.objects.create(
+            patient=patients_map['niloy'],
+            doctor=doctors_map['zara'],
+            date=timezone.now().date() - timedelta(days=3),
+            time="11:30 AM",
+            reason="Cardiovascular risk screening & hypertension management consultation.",
+            status="completed"
+        )
+        consult_niloy_prev = Consultation.objects.create(
+            appointment=appt_niloy_prev,
+            type='video',
+            status='ended',
+            started_at=timezone.now() - timedelta(days=3, minutes=40),
+            ended_at=timezone.now() - timedelta(days=3, minutes=10),
+            duration=1800,
+            start_time=timezone.now() - timedelta(days=3, minutes=40),
+            end_time=timezone.now() - timedelta(days=3, minutes=10)
+        )
+        presc_niloy = Prescription.objects.create(
+            consultation=consult_niloy_prev,
+            doctor=doctors_map['zara'],
+            patient=patients_map['niloy'],
+            symptoms="Morning occipital headaches, palpitations, resting BP 142/92 mmHg.",
+            diagnosis="Essential Hypertension (Stage 1) & Cardiovascular Health Review",
+            medicines=json.dumps([
+                {"name": "Bisoprolol 2.5mg", "dosage": "2.5mg", "route": "Oral", "timing": "1+0+0 (Before breakfast)", "duration": "30 Days", "instructions": "Take once daily in the morning"},
+                {"name": "Amlodipine 5mg", "dosage": "5mg", "route": "Oral", "timing": "0+0+1 (At bedtime)", "duration": "30 Days", "instructions": "Take at night"},
+                {"name": "Rosuvastatin 10mg", "dosage": "10mg", "route": "Oral", "timing": "0+0+1 (At bedtime)", "duration": "30 Days", "instructions": "Lipid regulation, take after dinner"}
+            ]),
+            instructions="Maintain a strict low-sodium DASH diet. 30 minutes daily aerobic exercise. Keep a twice-daily blood pressure log. Follow up in 30 days.",
+            date=timezone.now().date() - timedelta(days=3)
+        )
+        BlockchainRecord.objects.create(
+            record_type="prescription",
+            record_id=presc_niloy.id,
+            data_hash=hashlib.sha256(f"BLOCK-{presc_niloy.id}-NILOY-VAULT".encode()).hexdigest(),
+            prev_hash=hashlib.sha256("GENESIS-HEALNSIGHT".encode()).hexdigest(),
+            block_number=102
         )
 
         # Scenario C: Pending Appointment (Sadia and Dr. Sarah - Diabetes)

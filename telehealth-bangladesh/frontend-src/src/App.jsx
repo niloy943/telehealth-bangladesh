@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './components/LanguageContext';
 import { NotificationProvider, NotificationDropdown, useNotifications } from './components/NotificationCenter';
@@ -6,6 +6,10 @@ import { Auth } from './components/Auth';
 import { LandingPage } from './components/LandingPage';
 import { CommandPalette } from './components/CommandPalette';
 import { SupportWidget } from './components/SupportWidget';
+import { setupAuthInterceptor } from './utils/authClient';
+
+// Initialize global proactive token refresh interceptor
+setupAuthInterceptor();
 import {
   Activity, LayoutDashboard, CalendarPlus, FileHeart, ShieldCheck,
   ShoppingBag, ShieldAlert, LogOut, Home, Bell, BellOff, Globe,
@@ -23,7 +27,7 @@ const ProfileManagement = lazy(() => import('./components/ProfileManagement').th
 const ConsultationPortal = lazy(() => import('./components/ConsultationPortal').then(m => ({ default: m.ConsultationPortal })));
 
 const DashboardSkeleton = () => (
-  <div className="space-y-6 w-full p-6">
+  <div className="space-y-6 w-full p-6 animate-pulse">
     <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
       {[1, 2, 3, 4].map(i => (
         <div key={i} className="bg-white border border-[#BDDDFA] rounded-2xl p-6 space-y-3">
@@ -51,7 +55,7 @@ const DashboardSkeleton = () => (
   </div>
 );
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 const MainApp = () => {
   const { lang, toggleLanguage, t } = useLanguage();
@@ -154,25 +158,99 @@ const MainApp = () => {
     setActiveTab(newTab);
   };
 
-  const fetchAppointments = async () => {
-    if (!token) return;
+  const fetchAppointments = useCallback(async () => {
+    const activeToken = token || (typeof window !== 'undefined' ? localStorage.getItem("tv_token") : '');
+    if (!activeToken) return;
     try {
       const resp = await fetch(`${API_BASE}/api/appointments/`, {
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": `Bearer ${activeToken}`
+        }
       });
-      const data = await resp.json();
-      setAppointments(data);
-      if (data.some(a => a.status === 'pending') && user?.role === 'doctor') {
-        triggerNotification("New Appointment Request", "A patient is awaiting your confirmation.", "appointment");
+      if (resp.ok) {
+        const data = await resp.json();
+        setAppointments(prev => {
+          if (Array.isArray(data)) {
+            if (prev.length !== data.length || JSON.stringify(prev) !== JSON.stringify(data)) {
+              return data;
+            }
+          }
+          return prev;
+        });
+        if (data.some(a => a.status === 'pending') && user?.role === 'doctor') {
+          triggerNotification("New Appointment Request", "A patient is awaiting your confirmation.", "appointment");
+        }
+      } else if (resp.status === 401) {
+        console.warn("Session expired or token invalid (401), stopping appointment poll.");
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("fetchAppointments error:", err); }
+  }, [token, user?.role, triggerNotification]);
+
+  useEffect(() => {
+    if (!token || !user) return;
+    fetchAppointments();
+    
+    // Safety net interval every 25s (paused when tab is hidden to save memory & battery)
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchAppointments();
+      }
+    }, 25000);
+
+    const handleApptSync = () => {
+      fetchAppointments();
+    };
+    window.addEventListener('healnsight_appointment_updated', handleApptSync);
+    const handleStorage = (e) => {
+      if (e.key === 'healnsight_last_appointment_sync') {
+        fetchAppointments();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('healnsight_appointment_updated', handleApptSync);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [token, user?.id]);
+
+  const handleUpdateUser = (updatedUser) => {
+    setUser(updatedUser);
+    try {
+      localStorage.setItem("tv_user", JSON.stringify(updatedUser));
+      localStorage.setItem("healnsight_last_user_sync", Date.now().toString());
+    } catch {}
+    window.dispatchEvent(new CustomEvent('healnsight_user_updated', { detail: updatedUser }));
   };
 
   useEffect(() => {
-    fetchAppointments();
-    const interval = setInterval(fetchAppointments, 15000);
-    return () => clearInterval(interval);
-  }, [token, activeTab, user]);
+    const handleUserSync = (e) => {
+      if (e?.detail) {
+        setUser(e.detail);
+      } else {
+        const stored = localStorage.getItem("tv_user");
+        if (stored) {
+          try { setUser(JSON.parse(stored)); } catch {}
+        }
+      }
+    };
+    window.addEventListener('healnsight_user_updated', handleUserSync);
+    const handleStorageUser = (e) => {
+      if (e.key === 'healnsight_last_user_sync') {
+        const stored = localStorage.getItem("tv_user");
+        if (stored) {
+          try { setUser(JSON.parse(stored)); } catch {}
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageUser);
+    return () => {
+      window.removeEventListener('healnsight_user_updated', handleUserSync);
+      window.removeEventListener('storage', handleStorageUser);
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeys = (e) => {
@@ -184,6 +262,26 @@ const MainApp = () => {
     window.addEventListener('keydown', handleKeys);
     return () => window.removeEventListener('keydown', handleKeys);
   }, []);
+
+  useEffect(() => {
+    const handleTokenRefreshed = (e) => {
+      if (e?.detail) {
+        setToken(e.detail);
+      }
+    };
+    const handleSessionExpired = () => {
+      handleLogout();
+      triggerNotification("Security Session Expired", "Your authentication session has expired. Please sign in again.", "security");
+    };
+
+    window.addEventListener('healnsight_token_refreshed', handleTokenRefreshed);
+    window.addEventListener('healnsight_session_expired', handleSessionExpired);
+
+    return () => {
+      window.removeEventListener('healnsight_token_refreshed', handleTokenRefreshed);
+      window.removeEventListener('healnsight_session_expired', handleSessionExpired);
+    };
+  }, [triggerNotification]);
 
   const handleLoginSuccess = (accessToken, refreshToken) => {
     localStorage.setItem("tv_token", accessToken);
@@ -207,6 +305,19 @@ const MainApp = () => {
     setActiveTab("dashboard"); setNotifOpen(false); setCmdOpen(false);
     setQuickActionsOpen(false); setMobileMenuOpen(false); setLogoutModalOpen(false);
     setShowLanding(true);
+  };
+
+  const handleSelectConsultation = (consult) => {
+    if (!consult) {
+      setSelectedConsultation(null);
+      return;
+    }
+    const status = String(consult.status || '').toLowerCase();
+    if (status === 'completed' || status === 'ended') {
+      triggerNotification("Session Concluded", "This consultation is permanently closed. Completed sessions cannot be reopened.", "security");
+      return;
+    }
+    setSelectedConsultation(consult);
   };
 
   const handleLogout = ({ clearDeviceSecurity = false } = {}) => {
@@ -259,8 +370,9 @@ const MainApp = () => {
   const getPageTitle = () => {
     if (selectedConsultation) return 'Consultation Room';
     const titles = {
-      dashboard: user.role === 'doctor' ? 'Clinical Workspace & Queue' : user.role === 'admin' ? 'Security & Executive Console' : 'My Health Home',
+      dashboard: user.role === 'doctor' ? ' & Queue' : user.role === 'admin' ? 'Security & Executive Console' : 'My Health Home',
       consultation: user.role === 'doctor' ? 'Consultations & Queue' : 'My Consultations',
+      vault: 'Secure E-Prescription Vault',
       ai: 'AI Health Assistant',
       booking: 'Find a Doctor & Specialty Directory',
       records: 'Health Records',
@@ -339,7 +451,7 @@ const MainApp = () => {
             <button onClick={() => { setActiveTab("consultation"); setSelectedConsultation(null); }}
               className={navBtn('consultation', activeTab === 'consultation' && !selectedConsultation)}>
               <Video className="w-4.5 h-4.5 shrink-0" />
-              {!sidebarCollapsed && <span>Consultation</span>}
+              {!sidebarCollapsed && <span>My Consultations</span>}
             </button>
             <button onClick={() => { setActiveTab("ai"); setSelectedConsultation(null); }}
               className={navBtn('ai', activeTab === 'ai')}>
@@ -388,10 +500,15 @@ const MainApp = () => {
               <Home className="w-4.5 h-4.5 shrink-0" />
               {!sidebarCollapsed && <span>Clinical Queue</span>}
             </button>
+            <button onClick={() => { setActiveTab("vault"); setSelectedConsultation(null); }}
+              className={navBtn('vault', activeTab === 'vault')}>
+              <ShieldCheck className="w-4.5 h-4.5 shrink-0" />
+              {!sidebarCollapsed && <span>E-Prescription Vault</span>}
+            </button>
             <button onClick={() => { setActiveTab("consultation"); setSelectedConsultation(null); }}
               className={navBtn('consultation', activeTab === 'consultation' && !selectedConsultation)}>
               <Video className="w-4.5 h-4.5 shrink-0" />
-              {!sidebarCollapsed && <span>Consultation</span>}
+              {!sidebarCollapsed && <span>My Consultations</span>}
             </button>
             <button onClick={() => { setActiveTab("schedule"); setSelectedConsultation(null); }}
               className={navBtn('schedule', activeTab === 'schedule')}>
@@ -595,13 +712,26 @@ const MainApp = () => {
         <div className="flex-1 overflow-y-auto bg-[#F4F6F9] text-[#0F172A] pb-28">
           <Suspense fallback={<DashboardSkeleton />}>
             {selectedConsultation ? (
-              <ClinicalRoom token={token} user={user} consultationId={selectedConsultation.id}
-                appointmentMode={selectedConsultation.mode} onClose={() => setSelectedConsultation(null)} />
+              <ClinicalRoom
+                token={token}
+                user={user}
+                consultationId={selectedConsultation.id}
+                appointmentMode={selectedConsultation.mode}
+                initialLayoutMode={selectedConsultation.initialLayoutMode || undefined}
+                onClose={() => {
+                  setSelectedConsultation(null);
+                  fetchAppointments();
+                  window.dispatchEvent(new CustomEvent('healnsight_appointment_updated'));
+                  try {
+                    localStorage.setItem('healnsight_last_appointment_sync', Date.now().toString());
+                  } catch {}
+                }}
+              />
             ) : (<>
               {activeTab.startsWith('profile') && (
                 <ProfileManagement
                   user={user}
-                  onUpdateUser={setUser}
+                  onUpdateUser={handleUpdateUser}
                   token={token}
                   activeSection={
                     activeTab === 'profile'
@@ -617,19 +747,21 @@ const MainApp = () => {
                   user={user}
                   appointments={appointments}
                   onApptAction={handleApptAction}
-                  onSelectConsultation={setSelectedConsultation}
+                  onSelectConsultation={handleSelectConsultation}
                   onTabChange={handleTabChange}
                   fetchAppointments={fetchAppointments}
                 />
               )}
               {user.role === 'patient' && !activeTab.startsWith('profile') && activeTab !== 'consultation' && (
                 <PatientDashboard token={token} user={user} appointments={appointments}
-                  onSelectConsultation={setSelectedConsultation} onTabChange={handleTabChange} activeTab={activeTab} />
+                  onSelectConsultation={handleSelectConsultation} onTabChange={handleTabChange} activeTab={activeTab}
+                  fetchAppointments={fetchAppointments} />
               )}
               {user.role === 'doctor' && !activeTab.startsWith('profile') && activeTab !== 'consultation' && (
                 <DoctorDashboard token={token} user={user} appointments={appointments}
-                  onApptAction={handleApptAction} onSelectConsultation={setSelectedConsultation}
-                  activeTab={activeTab} onTabChange={handleTabChange} />
+                  onApptAction={handleApptAction} onSelectConsultation={handleSelectConsultation}
+                  activeTab={activeTab} onTabChange={handleTabChange}
+                  fetchAppointments={fetchAppointments} />
               )}
               {user.role === 'admin' && !activeTab.startsWith('profile') && activeTab !== 'consultation' && (
                 <AdminDashboard token={token} activeTab={activeTab} onTabChange={handleTabChange} />

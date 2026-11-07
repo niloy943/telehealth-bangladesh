@@ -6,8 +6,9 @@ import {
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 import { Button } from './ui';
+import { GoogleAuthenticatorSetupModal } from './GoogleAuthenticatorSetupModal';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export const SecurityCenter = ({ user, onUpdateUser, token }) => {
   const { t } = useLanguage();
@@ -68,6 +69,7 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
   const [emailCode, setEmailCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpTimer, setOtpTimer] = useState(60);
+  const [showGoogleAuthModal, setShowGoogleAuthModal] = useState(false);
 
   // Email/Phone verification simulation states
   const [verifyingEmail, setVerifyingEmail] = useState(false);
@@ -456,12 +458,16 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
               {/* Option C: Google Authenticator */}
               <button
                 type="button"
-                onClick={() => { setMfaSelectType('totp'); setSetupStep('totp'); }}
+                onClick={() => {
+                  setMfaSelectType('totp');
+                  setSetupStep(null);
+                  setShowGoogleAuthModal(true);
+                }}
                 className="p-4 rounded-xl border border-[#BDDDFA] bg-[#E7F0FC] text-center hover:bg-white"
               >
                 <QrCode className="w-6 h-6 mx-auto text-[#0F172A] mb-1" />
                 <span className="font-bold block text-[#0F172A]">Authenticator App</span>
-                <span className="text-[9px] text-[#55647C] mt-0.5">Google Authenticator or compatible app</span>
+                <span className="text-[9px] text-[#55647C] mt-0.5">Google Authenticator (RFC 6238 TOTP)</span>
               </button>
 
             </div>
@@ -721,6 +727,34 @@ export const SecurityCenter = ({ user, onUpdateUser, token }) => {
         </div>
 
       </div>
+
+      {/* ─── GOOGLE AUTHENTICATOR (RFC 6238 TOTP) MODAL ─── */}
+      <GoogleAuthenticatorSetupModal
+        isOpen={showGoogleAuthModal}
+        onClose={() => setShowGoogleAuthModal(false)}
+        token={token}
+        user={user}
+        apiBase={API_BASE}
+        onSuccess={(result) => {
+          saveSecState({
+            ...secState,
+            mfaEnabled: true,
+            mfaType: 'totp',
+            recoveryCodes: result.backupCodes,
+            alerts: [
+              {
+                id: Date.now(),
+                title: 'Google Authenticator Active',
+                message: 'RFC 6238 TOTP Authenticator paired successfully.',
+                ip: '127.0.0.1',
+                timestamp: new Date().toLocaleString()
+              },
+              ...secState.alerts
+            ]
+          });
+          triggerNotification("MFA Configured", "Google Authenticator is now active for account login & signatures.", "security");
+        }}
+      />
 
     </div>
   );

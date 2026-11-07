@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
  * @title HealNSightLedger
  * @notice Immutable Audit Ledger for HealNSight Medical & Prescription Records.
  * @dev Anchors SHA-256 cryptographic hashes of patient health records and prescriptions onto Ethereum Sepolia.
+ *      Enforces strict Role-Based Access Control (RBAC) to prevent unauthorized transaction front-running.
  */
 contract HealNSightLedger {
     struct Record {
@@ -16,6 +17,9 @@ contract HealNSightLedger {
         string referenceId;
         address submittedBy;
     }
+
+    address public owner;
+    mapping(address => bool) public authorizedRelayers;
 
     // Mapping from record sequential ID to Record data
     mapping(uint256 => Record) public records;
@@ -35,8 +39,41 @@ contract HealNSightLedger {
         address indexed submittedBy
     );
 
+    event RelayerStatusUpdated(address indexed relayer, bool indexed isAuthorized);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Caller is not contract owner");
+        _;
+    }
+
+    modifier onlyAuthorized() {
+        require(msg.sender == owner || authorizedRelayers[msg.sender], "Caller is not authorized relayer");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        authorizedRelayers[msg.sender] = true;
+        emit OwnershipTransferred(address(0), msg.sender);
+        emit RelayerStatusUpdated(msg.sender, true);
+    }
+
+    function setAuthorizedRelayer(address _relayer, bool _status) external onlyOwner {
+        require(_relayer != address(0), "Invalid relayer address");
+        authorizedRelayers[_relayer] = _status;
+        emit RelayerStatusUpdated(_relayer, _status);
+    }
+
+    function transferOwnership(address _newOwner) external onlyOwner {
+        require(_newOwner != address(0), "Invalid new owner");
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+
     /**
      * @notice Commits a cryptographic hash of a medical record or prescription on-chain.
+     *         Protected by onlyAuthorized modifier to prevent front-running & unauthorized anchoring.
      * @param _recordHash SHA-256 hash of the record contents
      * @param _previousHash Hash of the preceding block in the ledger chain
      * @param _recordType Type descriptor ("prescription", "health_record", "consent")
@@ -47,7 +84,7 @@ contract HealNSightLedger {
         bytes32 _previousHash,
         string memory _recordType,
         string memory _referenceId
-    ) public returns (uint256) {
+    ) public onlyAuthorized returns (uint256) {
         bytes32 mapKey = keccak256(abi.encodePacked(_recordType, _referenceId));
         require(recordIdMap[mapKey] == 0, "Record already anchored on-chain");
 

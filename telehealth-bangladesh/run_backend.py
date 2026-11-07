@@ -9,7 +9,7 @@ def main():
     print("--- HealNSight: Starting Django ASGI/REST Server at http://127.0.0.1:8000 ---")
     try:
         subprocess.run(
-            [sys.executable, "-u", "manage.py", "runserver", "127.0.0.1:8000", "--noreload"],
+            [sys.executable, "-u", "manage.py", "runserver", "127.0.0.1:8000"],
             cwd=backend_dir
         )
     except KeyboardInterrupt:

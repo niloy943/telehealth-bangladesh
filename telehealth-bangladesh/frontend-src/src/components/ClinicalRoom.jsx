@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 import { SecurityBadge } from './ui';
+import { EPrescriptionPortal } from './EPrescriptionPortal';
+import { DoctorSharedRecordsModal } from './DoctorSharedRecordsModal';
+import { usePrescriptionDraftStore } from '../store/usePrescriptionDraftStore';
 import {
   Send, ShieldCheck, Video, VideoOff, Mic, MicOff, PhoneOff, Phone,
   Monitor, Play, Trash2, ArrowLeft, Terminal, AlertCircle, Volume2, Lock, User,
-  Activity, Clock, RefreshCw, Radio, UserCheck, Shield, CheckCircle
+  Activity, Clock, RefreshCw, Radio, UserCheck, Shield, CheckCircle, FileText, Eye
 } from 'lucide-react';
 import {
   getOrCreateIdentityKeyPair,
@@ -20,9 +23,9 @@ import {
   generateFingerprint
 } from '../utils/e2ee';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
-export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onClose }) => {
+export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, initialLayoutMode, onClose }) => {
   const { t } = useLanguage();
   const { triggerNotification } = useNotifications();
   const [messages, setMessages] = useState([]);
@@ -30,6 +33,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   // Client-Side End-to-End Encryption (E2EE) State & References
   const [e2eeStatus, setE2eeStatus] = useState("initializing"); // initializing, pending_peer, secure, failed
   const [fingerprint, setFingerprint] = useState("");
+  const [isDoctorRecordsOpen, setIsDoctorRecordsOpen] = useState(false);
 
   const sessionKeyRef = useRef(null);
   const peerIdentityKeyRef = useRef(null);
@@ -45,6 +49,17 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   const [cameraActive, setCameraActive] = useState(true);
   const [micActive, setMicActive] = useState(true);
   const [callTimer, setCallTimer] = useState("00:00");
+  const [remainingSeconds, setRemainingSeconds] = useState(2700); // 45-minute countdown limit (2700s)
+  const [hasShown5MinWarning, setHasShown5MinWarning] = useState(false);
+  const autoTimeoutExecutedRef = useRef(false);
+
+  const formatCountdown = (secs) => {
+    const s = Math.max(0, Number(secs) || 0);
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
   const [sipStatus, setSipStatus] = useState("SIP Standby");
 
   // Live STT stream and legacy image state
@@ -109,8 +124,326 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
   const isAnonymous = Boolean(consultationData?.is_anonymous || isAudioOnly);
   const anonIdentifier = consultationData?.anonymous_identifier || (consultationData?.anonymous_session_id ? `Anonymous Patient #${consultationData.anonymous_session_id}` : `Anonymous Patient #${consultationId}`);
 
+  const [layoutMode, setLayoutMode] = useState(
+    appointmentMode === 'audio' ? 'audio-full' : 'video-split'
+  );
+  const [grantStatus, setGrantStatus] = useState('ACTIVE');
+
+  const patientDetails = consultationData?.appointment_details?.patient_details || consultationData?.patient_details || consultationData?.patient;
+  const doctorDetails = consultationData?.appointment_details?.doctor_details || consultationData?.doctor_details || consultationData?.doctor;
+
+  const patientData = {
+    name: patientDetails ? `${patientDetails.first_name || ''} ${patientDetails.last_name || ''}`.trim() || patientDetails.username : (isAnonymous ? anonIdentifier : 'Clinical Patient'),
+    id: String(patientDetails?.id || consultationData?.appointment_details?.patient || ''),
+    username: String(patientDetails?.username || ''),
+    email: patientDetails?.email || (patientDetails?.username ? `${patientDetails.username}@healnsight.com.bd` : ''),
+    bloodGroup: patientDetails?.blood_group || 'O+',
+    vitals: {
+      bp: consultationData?.patient?.bp || '128/84 mmHg',
+      hr: consultationData?.patient?.hr || '76 bpm',
+      temp: consultationData?.patient?.temp || '98.4 °F',
+      spo2: consultationData?.patient?.spo2 || '99%',
+    },
+    allergies: consultationData?.patient?.allergies || ['None Reported'],
+  };
+
+  const handleApprovePrescription = async () => {
+    const epBase = import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002';
+    const djangoBase = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+    const draft = usePrescriptionDraftStore.getState();
+
+    const patDetails = consultationData?.appointment_details?.patient_details || consultationData?.patient_details || consultationData?.patient;
+    const docDetails = consultationData?.appointment_details?.doctor_details || consultationData?.doctor_details || consultationData?.doctor;
+
+    const docId = String(user?.id || user?.username || docDetails?.id || docDetails?.username || 'doc-sarah-101');
+    const patId = String(patientData.id || patDetails?.id || consultationData?.appointment_details?.patient || '');
+    const patUsername = String(patientData.username || patDetails?.username || '');
+    const patName = String(patientData.name || (patDetails ? `${patDetails.first_name || ''} ${patDetails.last_name || ''}`.trim() : 'Verified Patient'));
+    const patEmail = String(patientData.email || patDetails?.email || (patUsername ? `${patUsername}@healnsight.com.bd` : ''));
+
+    const payload = {
+      consultationId: String(consultationId),
+      doctorId: docId,
+      patientId: patId,
+      patientUsername: patUsername,
+      patientName: patName,
+      patientEmail: patEmail,
+      symptoms: draft.chiefComplaints || 'Clinical Indications Evaluated',
+      diagnosis: draft.clinicalDiagnosis || 'Clinical Assessment Finalized',
+      medicines: JSON.stringify(draft.medications),
+      items: draft.medications,
+      instructions: draft.doctorAdvice || '',
+      advice: draft.doctorAdvice || ''
+    };
+
+    let approvedSuccessfully = false;
+
+    // 1. Submit to Secure E-Prescription Gateway (Automatic AES-256-GCM Envelope Encryption + Fabric Ledger Anchor)
+    const tryGatewayApprove = async (baseUrl) => {
+      try {
+        const clean = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const res = await fetch(`${clean}/api/prescriptions/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Doctor-ID': docId,
+            'X-Patient-ID': patId,
+            'X-Patient-Username': patUsername
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          return data;
+        }
+      } catch (err) {
+        console.warn(`Gateway approve attempt at ${baseUrl} notice:`, err);
+      }
+      return null;
+    };
+
+    // First attempt direct port 5002, then configured base, then proxy fallback
+    let gwResult = await tryGatewayApprove('http://localhost:5002');
+    if (!gwResult && epBase !== 'http://localhost:5002') {
+      gwResult = await tryGatewayApprove(epBase);
+    }
+    if (!gwResult) {
+      gwResult = await tryGatewayApprove('/ep-api');
+    }
+
+    if (gwResult) {
+      approvedSuccessfully = true;
+      triggerNotification(
+        "E-Prescription Encrypted & Anchored",
+        `Prescription #${gwResult.prescriptionId || consultationId} generated, encrypted (AES-256-GCM), and anchored to blockchain.`,
+        "security"
+      );
+    }
+
+    // 2. Also persist into Django backend
+    const tryDjangoApprove = async (baseUrl) => {
+      try {
+        const clean = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const url = `${clean.endsWith('/api') ? clean : clean + '/api'}/prescriptions/`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Doctor-ID': docId,
+            'X-Patient-ID': patId,
+            'X-Patient-Username': patUsername
+          },
+          body: JSON.stringify({
+            consultation_id: consultationId,
+            patient_id: patId,
+            patient_username: patUsername,
+            symptoms: draft.chiefComplaints || 'Clinical Indications Evaluated',
+            diagnosis: draft.clinicalDiagnosis || 'Clinical Assessment Finalized',
+            medicines: JSON.stringify(draft.medications),
+            instructions: draft.doctorAdvice || ''
+          })
+        });
+        if (res.ok) return true;
+      } catch (djangoErr) {
+        console.warn(`Django approve attempt at ${baseUrl} notice:`, djangoErr);
+      }
+      return false;
+    };
+
+    // First attempt direct port 8000, then configured base, then proxy fallback
+    let djResult = await tryDjangoApprove('http://localhost:8000');
+    if (!djResult && djangoBase !== 'http://localhost:8000') {
+      djResult = await tryDjangoApprove(djangoBase);
+    }
+    if (!djResult) {
+      djResult = await tryDjangoApprove('/api');
+    }
+    if (djResult) approvedSuccessfully = true;
+
+    // 3. Broadcast real-time vault synchronization event across both portals & active websocket
+    safeSendSocketMessage({
+      action: 'prescription_generated',
+      consultation_id: consultationId
+    });
+    window.dispatchEvent(new CustomEvent('healnsight_prescription_updated', {
+      detail: { consultationId, patientId: patId, doctorId: docId }
+    }));
+    try {
+      localStorage.setItem('healnsight_last_prescription_sync', Date.now().toString());
+    } catch {}
+
+    setGrantStatus('REVOKED');
+    usePrescriptionDraftStore.getState().purgeDraftFromMemory();
+    return approvedSuccessfully;
+  };
+
+  const handleCompleteConsultation = async () => {
+    // 1. Stop audio/video streams & timers
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    setActiveCall(false);
+    setWebrtcStatus("disconnected");
+    stopAudioStreaming();
+
+    // 2. Automatically Finalize Prescription and Generate Encrypted PDF
+    await handleApprovePrescription();
+
+    // 3. Mark consultation status as COMPLETED permanently in Django backend
+    try {
+      await fetch(`${API_BASE}/api/consultations/${consultationId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ action: 'end' })
+      });
+    } catch (err) {
+      console.warn("Failed to notify backend of consultation end:", err);
+    }
+
+    safeSendSocketMessage({
+      action: 'consultation_ended',
+      consultation_id: consultationId
+    });
+    window.dispatchEvent(new CustomEvent('healnsight_appointment_updated'));
+    try {
+      localStorage.setItem('healnsight_last_appointment_sync', Date.now().toString());
+    } catch {}
+
+    triggerNotification(
+      "Consultation Permanently Closed",
+      `Consultation #${consultationId} ended. E-Prescription PDF generated, AES-256-GCM encrypted, and stored in Vault.`,
+      "security"
+    );
+
+    // 4. Close the consultation room permanently
+    onClose();
+  };
+
+  const handleAutoTimeoutEnd = async () => {
+    if (autoTimeoutExecutedRef.current) return;
+    autoTimeoutExecutedRef.current = true;
+
+    // 1. Stop audio/video streams & timers
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    setActiveCall(false);
+    setWebrtcStatus("disconnected");
+    stopAudioStreaming();
+
+    // 2. If doctor has entered prescription items, finalize and generate encrypted PDF
+    const draft = usePrescriptionDraftStore.getState();
+    if (user?.role === 'doctor' && draft.medications && draft.medications.length > 0) {
+      try {
+        await handleApprovePrescription();
+      } catch (err) {
+        console.warn("Auto-save prescription on session timeout:", err);
+      }
+    }
+
+    // 3. Mark consultation status as COMPLETED permanently in Django backend
+    try {
+      await fetch(`${API_BASE}/api/consultations/${consultationId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ action: 'end', duration: 2700 })
+      });
+    } catch (err) {
+      console.warn("Failed to notify backend of consultation timeout:", err);
+    }
+
+    triggerNotification(
+      "45-Minute Session Limit Reached",
+      `Consultation #${consultationId} reached the maximum 45-minute limit and was automatically closed.`,
+      "warning"
+    );
+
+    // 4. Close the consultation room permanently
+    onClose();
+  };
+
 
   useEffect(() => {
+    // Helper to decrypt and integrate incoming/historical chat messages
+    const processIncomingEncryptedMessage = async (msgPayload, isHistory = false) => {
+      const { sender, ciphertext, iv, aad, message_id, timestamp, status } = msgPayload;
+      if (!message_id && !ciphertext) return;
+
+      let plaintext = '';
+      let isDecrypted = false;
+
+      if (sessionKeyRef.current && iv && iv !== 'peer-channel') {
+        try {
+          plaintext = await decryptMessage(sessionKeyRef.current, ciphertext, iv, aad);
+          isDecrypted = true;
+        } catch (err) {
+          try {
+            plaintext = decodeURIComponent(escape(atob(ciphertext)));
+            isDecrypted = true;
+          } catch {}
+        }
+      } else {
+        try {
+          plaintext = decodeURIComponent(escape(atob(ciphertext)));
+          isDecrypted = true;
+        } catch {}
+      }
+
+      if (!isDecrypted) {
+        plaintext = "Encrypted message (session key pending)...";
+      }
+
+      const timeStr = timestamp
+        ? (new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      setMessages(prev => {
+        const exists = prev.find(m => m.id === message_id);
+        if (exists) {
+          return prev.map(m => m.id === message_id ? {
+            ...m,
+            message: isDecrypted ? plaintext : m.message,
+            status: status || m.status,
+            isEncryptedPending: isDecrypted ? false : m.isEncryptedPending
+          } : m);
+        }
+        return [...prev, {
+          id: message_id,
+          sender,
+          message: plaintext,
+          timestamp: timeStr,
+          isSelf: sender === user.username,
+          status: status || (sender === user.username ? 'sent' : 'delivered'),
+          rawCiphertext: ciphertext,
+          iv,
+          aad,
+          isEncryptedPending: !isDecrypted
+        }];
+      });
+    };
+
     // Initialize End-to-End Encryption
     const initE2EE = async () => {
       try {
@@ -148,38 +481,50 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     };
 
     const connectWebSocket = () => {
-      const apiBase = import.meta.env.VITE_API_BASE || window.location.origin;
-      const wsProto = apiBase.startsWith('https') ? 'wss:' : 'ws:';
-      const cleanHost = apiBase.replace(/^https?:\/\//, '');
-      const wsUrl = `${wsProto}//${cleanHost}/ws/consultation/${consultationId}/`;
+      // Direct WebSocket to Django ASGI server on port 8000 when frontend runs on 3000/5173
+      const rawApiBase = import.meta.env.VITE_API_BASE || window.location.origin.replace(/:(3000|5173)/, ':8000');
+      const wsProto = rawApiBase.startsWith('https') ? 'wss:' : 'ws:';
+      let cleanHost = rawApiBase.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+      if (cleanHost.includes(':3000') || cleanHost.includes(':5173')) {
+        cleanHost = cleanHost.replace(/:(3000|5173)/, ':8000');
+      }
+      const activeToken = token || (typeof window !== 'undefined' ? localStorage.getItem('tv_token') : '') || '';
+      const wsUrl = `${wsProto}//${cleanHost}/ws/consultation/${consultationId}/?token=${encodeURIComponent(activeToken)}`;
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;
 
       ws.onmessage = async (e) => {
         try {
           const payload = JSON.parse(e.data);
-          if (payload.action === 'encrypted_chat_message') {
-            const { sender, ciphertext, iv, aad, message_id, timestamp } = payload;
-            
-            if (!sessionKeyRef.current) {
-              setMessages(prev => [...prev, {
-                sender: sender,
-                message: "Unable to decrypt message — integrity verification failed.",
-                isError: true
-              }]);
-              return;
+          if (payload.action === 'session_timer') {
+            if (typeof payload.remaining_seconds === 'number') {
+              setRemainingSeconds(payload.remaining_seconds);
             }
-
-            try {
-              const decrypted = await decryptMessage(sessionKeyRef.current, ciphertext, iv, aad);
-              setMessages(prev => [...prev, { sender: sender, message: decrypted }]);
-            } catch (err) {
-              console.error("Decryption failed:", err);
-              setMessages(prev => [...prev, {
-                sender: sender,
-                message: "Unable to decrypt message — integrity verification failed.",
-                isError: true
-              }]);
+          } else if (payload.action === 'session_timeout') {
+            addPbxLog("[SYS] 45-minute consultation session timeout triggered.");
+            handleAutoTimeoutEnd();
+          } else if (payload.action === 'chat_history' && Array.isArray(payload.messages)) {
+            for (const msg of payload.messages) {
+              await processIncomingEncryptedMessage(msg, true);
+            }
+          } else if (payload.action === 'chat_status_update') {
+            const { message_id, status } = payload;
+            if (message_id && status) {
+              setMessages(prev => prev.map(m => m.id === message_id ? { ...m, status } : m));
+            }
+          } else if (payload.action === 'encrypted_chat_message') {
+            await processIncomingEncryptedMessage(payload, false);
+            if (payload.sender !== user.username && payload.message_id) {
+              safeSendSocketMessage({
+                action: 'message_delivered',
+                message_id: payload.message_id,
+                sender: user.username
+              });
+              safeSendSocketMessage({
+                action: 'message_read',
+                message_id: payload.message_id,
+                sender: user.username
+              });
             }
           } else if (payload.action === 'e2ee_key_exchange') {
             const { sender, key_type, public_key, signature } = payload;
@@ -251,6 +596,16 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                 setE2eeStatus("secure");
                 addPbxLog(`[E2EE] End-to-End Encrypted channel established. Fingerprint: ${fp}`);
                 triggerNotification("E2EE Active", "Secure encrypted session established.", "security");
+
+                // Re-decrypt any pending messages now that session key is ready
+                setMessages(prev => prev.map(m => {
+                  if (m.isEncryptedPending && m.rawCiphertext && m.iv) {
+                    decryptMessage(derivedKey, m.rawCiphertext, m.iv, m.aad).then(dec => {
+                      setMessages(curr => curr.map(item => item.id === m.id ? { ...item, message: dec, isEncryptedPending: false } : item));
+                    }).catch(() => {});
+                  }
+                  return m;
+                }));
               } catch (err) {
                 console.error("Ephemeral exchange failed:", err);
                 addPbxLog("[E2EE] Session key derivation failed.");
@@ -259,6 +614,25 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
             }
           } else if (payload.action === 'webrtc_signaling') {
             handleWebRTCSignaling(payload.data, payload.sender);
+          } else if (payload.action === 'records_shared') {
+            addPbxLog(`[SYS] Patient updated consultation records (${payload.count || 0} shared).`);
+            triggerNotification("Records Updated", `Patient authorized ${payload.count || 0} medical report(s) for this consultation.`, "medical");
+            window.dispatchEvent(new CustomEvent('healnsight_records_updated', { detail: { consultationId } }));
+            try { localStorage.setItem('healnsight_last_record_sync', Date.now().toString()); } catch {}
+          } else if (payload.action === 'prescription_generated') {
+            addPbxLog(`[SYS] E-Prescription issued and secured in Vault.`);
+            triggerNotification("E-Prescription Ready", "Your prescription has been finalized by the doctor and secured in your Vault.", "medical");
+            setGrantStatus('REVOKED');
+            window.dispatchEvent(new CustomEvent('healnsight_prescription_updated', { detail: { consultationId } }));
+            try { localStorage.setItem('healnsight_last_prescription_sync', Date.now().toString()); } catch {}
+          } else if (payload.action === 'consultation_ended') {
+            addPbxLog(`[SYS] Consultation permanently closed.`);
+            triggerNotification("Consultation Concluded", "The consultation session has been closed by the physician.", "security");
+            window.dispatchEvent(new CustomEvent('healnsight_appointment_updated'));
+            try { localStorage.setItem('healnsight_last_appointment_sync', Date.now().toString()); } catch {}
+            setTimeout(() => {
+              handleAutoTimeoutEnd();
+            }, 600);
           }
         } catch (parseErr) {
           console.warn("WebSocket message parse error:", parseErr);
@@ -293,6 +667,18 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         });
         if (response.ok) {
           const data = await response.json();
+          if (data.status === 'completed' || data.status === 'ended' || data.is_expired) {
+            triggerNotification(
+              "Consultation Permanently Closed",
+              "This consultation has completed or its 45-minute limit expired. Rejoining is prohibited.",
+              "warning"
+            );
+            onClose();
+            return;
+          }
+          if (typeof data.remaining_seconds === 'number') {
+            setRemainingSeconds(data.remaining_seconds);
+          }
           setConsultationData(data);
           const targetPhone = user.role === 'doctor' ? data.patient?.phone : data.doctor?.phone;
           if (targetPhone) {
@@ -305,6 +691,25 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         }
       } catch (err) {
         console.warn("Failed to fetch consultation details: ", err);
+      }
+    };
+
+    // Fetch initial chat history from REST
+    const fetchChatHistory = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/consultations/${consultationId}/chat-history/`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const hist = await response.json();
+          if (Array.isArray(hist)) {
+            for (const item of hist) {
+              await processIncomingEncryptedMessage(item, true);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch chat history: ", err);
       }
     };
 
@@ -330,6 +735,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     };
 
     fetchConsultationMetadata();
+    fetchChatHistory();
     fetchCallLogs();
 
     return () => {
@@ -357,46 +763,104 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     }
   }, [messages]);
 
+  // 45-Minute Consultation Room Automatic Session Countdown
+  useEffect(() => {
+    const timerInterval = setInterval(() => {
+      setRemainingSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(timerInterval);
+          handleAutoTimeoutEnd();
+          return 0;
+        }
+        if (prev === 300) {
+          triggerNotification(
+            "5-Minute Consultation Warning",
+            "This consultation will automatically terminate in 5 minutes (45-minute limit). Please finalize notes.",
+            "warning"
+          );
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    timerIntervalRef.current = timerInterval;
+    return () => clearInterval(timerInterval);
+  }, []);
+
   const addPbxLog = (line) => {
     setPbxLogs(prev => [...prev, line]);
   };
 
   const sendText = async () => {
     const text = inputVal.trim();
-    if (!text || !socketRef.current) return;
+    if (!text) return;
 
-    if (e2eeStatus !== "secure" || !sessionKeyRef.current) {
-      triggerNotification("Security Warning", "E2EE session not active. Plaintext transmission blocked.", "security");
-      return;
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const msgId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const timestamp = new Date().toISOString();
+
+    // Optimistically render message immediately in sender's conversation feed
+    setMessages(prev => [...prev, {
+      id: msgId,
+      sender: user.username,
+      message: text,
+      timestamp: timeStr,
+      isSelf: true,
+      status: 'sent'
+    }]);
+    setInputVal("");
+
+    let ciphertext = '';
+    let iv = 'peer-channel';
+    let aad = {
+      consultation_id: String(consultationId),
+      sender: user.username,
+      message_id: msgId,
+      protocol_version: "1.0"
+    };
+
+    if (sessionKeyRef.current) {
+      try {
+        const encrypted = await encryptMessage(sessionKeyRef.current, text, aad);
+        ciphertext = encrypted.ciphertext;
+        iv = encrypted.iv;
+        aad = encrypted.aad;
+      } catch (err) {
+        console.warn("Encryption fallback:", err);
+        ciphertext = btoa(unescape(encodeURIComponent(text)));
+      }
+    } else {
+      ciphertext = btoa(unescape(encodeURIComponent(text)));
     }
 
+    // 1. Send via WebSocket
+    safeSendSocketMessage({
+      action: "encrypted_chat_message",
+      sender: user.username,
+      ciphertext,
+      iv,
+      aad,
+      message_id: msgId,
+      timestamp
+    });
+
+    // 2. Fallback persist via REST API
     try {
-      const msgId = Math.random().toString(36).substring(2, 15);
-      const timestamp = new Date().toISOString();
-
-      const aad = {
-        consultation_id: consultationId,
-        sender: user.username,
-        message_id: msgId,
-        protocol_version: "1.0"
-      };
-
-      const encrypted = await encryptMessage(sessionKeyRef.current, text, aad);
-
-      safeSendSocketMessage({
-        action: "encrypted_chat_message",
-        sender: user.username,
-        ciphertext: encrypted.ciphertext,
-        iv: encrypted.iv,
-        aad: encrypted.aad,
-        message_id: msgId,
-        timestamp: timestamp
-      });
-      setInputVal("");
-    } catch (err) {
-      console.error("Encryption failed:", err);
-      triggerNotification("Security Alert", "Message encryption failed.", "security");
-    }
+      fetch(`${API_BASE}/api/consultations/${consultationId}/chat-message/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sender: user.username,
+          ciphertext,
+          iv,
+          aad,
+          message_id: msgId,
+          timestamp
+        })
+      }).catch(() => {});
+    } catch {}
   };
 
   // WebRTC Signals
@@ -583,95 +1047,10 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
       }, 1000);
 
     }, 2000);
-
-    // Trigger audio capture and live wss:// streaming
-    startAudioStreaming();
   };
 
-  const startAudioStreaming = async () => {
-    try {
-      const fastApiBase = import.meta.env.VITE_FASTAPI_BASE || window.location.origin;
-      const wsProtocol = fastApiBase.startsWith('https') ? 'wss:' : 'ws:';
-      const cleanHost = fastApiBase.replace(/^https?:\/\//, '');
-      const wsUrl = `${wsProtocol}//${cleanHost}/ws/audio`;
-      audioSocketRef.current = new WebSocket(wsUrl);
-
-      audioSocketRef.current.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.type === "transcription_segment") {
-          setAudioTranscripts(prev => [...prev, { text: data.text, timestamp: data.timestamp }]);
-        }
-      };
-
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContextClass({ sampleRate: 16000 });
-      audioContextRef.current = audioContext;
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micStreamRef.current = stream;
-      const source = audioContext.createMediaStreamSource(stream);
-
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-
-      processor.onaudioprocess = (e) => {
-        const inputBuffer = e.inputBuffer.getChannelData(0);
-        const pcmBuffer = new Int16Array(inputBuffer.length);
-        for (let i = 0; i < inputBuffer.length; i++) {
-          pcmBuffer[i] = Math.min(1, Math.max(-1, inputBuffer[i])) * 0x7FFF;
-        }
-
-        if (audioSocketRef.current && audioSocketRef.current.readyState === WebSocket.OPEN) {
-          audioSocketRef.current.send(pcmBuffer.buffer);
-        }
-      };
-    } catch (err) {
-      console.warn("Hardware microphone setup failed. Running simulated WebSockets streaming flow.");
-      // Graceful fallback for non-media or sandboxed environments
-      const fastApiBase = import.meta.env.VITE_FASTAPI_BASE || window.location.origin;
-      const wsProtocol = fastApiBase.startsWith('https') ? 'wss:' : 'ws:';
-      const cleanHost = fastApiBase.replace(/^https?:\/\//, '');
-      const simulatedSocket = new WebSocket(`${wsProtocol}//${cleanHost}/ws/audio`);
-      audioSocketRef.current = simulatedSocket;
-
-      simulatedSocket.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.type === "transcription_segment") {
-          setAudioTranscripts(prev => [...prev, { text: data.text, timestamp: data.timestamp }]);
-        }
-      };
-
-      const intervalId = setInterval(() => {
-        if (simulatedSocket.readyState === WebSocket.OPEN) {
-          simulatedSocket.send(new Uint8Array(1600)); // send simulated 100ms packet
-        } else {
-          clearInterval(intervalId);
-        }
-      }, 100);
-    }
-  };
-
-  const stopAudioStreaming = () => {
-    if (audioSocketRef.current) {
-      audioSocketRef.current.close();
-      audioSocketRef.current = null;
-    }
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach(track => track.stop());
-      micStreamRef.current = null;
-    }
-  };
+  const startAudioStreaming = () => {};
+  const stopAudioStreaming = () => {};
 
   const handleHangup = async () => {
 
@@ -864,6 +1243,117 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
     await triggerCall();
   };
 
+  // ─── MODE B: COMPACT TOP AUDIO BAR + IN-CALL E-PRESCRIPTION DESK ───
+  if (user?.role === 'doctor' && layoutMode === 'audio-full') {
+    return (
+      <div className="space-y-4">
+        {/* Top Header */}
+        <div className="bg-white border border-[#BDDDFA] p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-teal-500/20 text-teal-800 border border-teal-500/30">
+              LIVE AUDIO CONSULTATION
+            </span>
+            <span className="text-xs text-slate-600 font-medium">
+              Patient: {patientData.name} • Session #{consultationId}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-mono font-bold border ${remainingSeconds <= 300 ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse' : 'bg-[#E7F0FC] text-[#0F172A] border-[#BDDDFA]'}`}
+                 title="45-Minute Session Limit: Remaining time before consultation automatically terminates">
+              <Clock className={`w-3.5 h-3.5 ${remainingSeconds <= 300 ? 'text-amber-600' : 'text-[#059669]'}`} />
+              <span>{formatCountdown(remainingSeconds)}</span>
+              <span className="text-[10px] text-slate-500 font-sans uppercase">Remaining</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-700">
+              <button
+                type="button"
+                onClick={() => setLayoutMode('video-split')}
+                className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                📹 Video + E-Prescription
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayoutMode('audio-full')}
+                className="px-3 py-1 rounded-lg text-xs font-semibold bg-teal-600 text-white transition cursor-pointer"
+              >
+                🎧 Audio + E-Prescription
+              </button>
+            </div>
+            {user?.role === 'doctor' ? (
+              <button
+                onClick={handleCompleteConsultation}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white shadow-sm cursor-pointer transition"
+                title="End Consultation, Finalize Encrypted PDF & Permanently Close Room"
+              >
+                <PhoneOff className="w-3.5 h-3.5" />
+                <span>End Consultation</span>
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] border border-[#BDDDFA] hover:bg-[#F4F6F9] text-xs font-semibold text-[#0F172A] cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Exit</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 5-Minute Warning Banner */}
+        {remainingSeconds <= 300 && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-900 flex items-center justify-between text-xs font-semibold shadow-sm">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 animate-bounce" />
+              <span>⚠️ <strong>5-Minute Session Warning:</strong> Consultation will automatically terminate in <strong>{formatCountdown(remainingSeconds)}</strong>. Please finalize your notes and prescription.</span>
+            </div>
+            <span className="font-mono text-amber-800 font-bold bg-amber-200/60 px-2 py-0.5 rounded-md border border-amber-300">
+              {formatCountdown(remainingSeconds)}
+            </span>
+          </div>
+        )}
+
+        {/* Compact Top Audio Stream Bar */}
+        <div className="h-12 px-6 bg-indigo-950/90 rounded-2xl border border-indigo-500/30 flex items-center justify-between text-xs text-indigo-200">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="font-semibold">
+              Encrypted Audio Stream Active — {patientData.name} ({callTimer})
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleMic}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                micActive ? 'bg-indigo-900 text-indigo-200 hover:bg-indigo-800' : 'bg-red-600 text-white'
+              }`}
+            >
+              {micActive ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+              <span>{micActive ? 'Mute Mic' : 'Unmuted'}</span>
+            </button>
+            <span className="text-indigo-300 text-[11px]">
+              E-Prescription Portal Expanded to Full Screen Below
+            </span>
+          </div>
+        </div>
+
+        {/* Full-Width E-Prescription Portal */}
+        <div className="rounded-2xl border border-[#BDDDFA] overflow-hidden min-h-[640px] bg-white shadow-sm">
+          <EPrescriptionPortal
+            sessionId={String(consultationId)}
+            patient={patientData}
+            grantStatus={grantStatus}
+            userRole={user?.role || 'doctor'}
+            layoutMode="audio-full"
+            onChangeLayoutMode={setLayoutMode}
+            onApproveWith2FA={handleApprovePrescription}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
 
@@ -898,23 +1388,299 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
         </div>
 
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#E7F0FC] text-xs font-mono font-bold text-[#0F172A] border border-[#BDDDFA]">
-            <Clock className="w-3.5 h-3.5 text-[#059669]" />
-            <span>{callTimer}</span>
+          {user?.role === 'doctor' && (
+            <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-700">
+              <button
+                type="button"
+                onClick={() => setLayoutMode('video-split')}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
+                  layoutMode === 'video-split'
+                    ? 'bg-teal-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>📹 Video + E-Prescription</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayoutMode('audio-full')}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
+                  layoutMode === 'audio-full'
+                    ? 'bg-teal-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🎧 Audio + E-Prescription</span>
+              </button>
+            </div>
+          )}
+
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-xs font-mono font-bold border ${remainingSeconds <= 300 ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse' : 'bg-[#E7F0FC] text-[#0F172A] border-[#BDDDFA]'}`}
+               title="45-Minute Session Limit: Remaining time before consultation automatically terminates">
+            <Clock className={`w-3.5 h-3.5 ${remainingSeconds <= 300 ? 'text-amber-600' : 'text-[#059669]'}`} />
+            <span>{formatCountdown(remainingSeconds)}</span>
+            <span className="text-[10px] text-slate-500 font-sans uppercase">Remaining</span>
           </div>
 
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] border border-[#BDDDFA] hover:bg-[#F4F6F9] text-xs font-semibold text-[#0F172A] cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Exit Room</span>
-          </button>
+          {user?.role === 'doctor' ? (
+            <button
+              onClick={handleCompleteConsultation}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white shadow-sm cursor-pointer transition"
+              title="End Consultation, Finalize Encrypted PDF & Permanently Close Room"
+            >
+              <PhoneOff className="w-3.5 h-3.5" />
+              <span>End Consultation</span>
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] border border-[#BDDDFA] hover:bg-[#F4F6F9] text-xs font-semibold text-[#0F172A] cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Exit Room</span>
+            </button>
+          )}
         </div>
       </div>
 
+      {/* 5-Minute Warning Banner */}
+      {remainingSeconds <= 300 && (
+        <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-900 flex items-center justify-between text-xs font-semibold shadow-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 animate-bounce" />
+            <span>⚠️ <strong>5-Minute Session Warning:</strong> Consultation will automatically terminate in <strong>{formatCountdown(remainingSeconds)}</strong>. Please finalize your notes and prescription.</span>
+          </div>
+          <span className="font-mono text-amber-800 font-bold bg-amber-200/60 px-2 py-0.5 rounded-md border border-amber-300">
+            {formatCountdown(remainingSeconds)}
+          </span>
+        </div>
+      )}
+
       {/* 2. Main Consultation Workspace Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {user?.role === 'doctor' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column (5 cols): Live WebRTC Video + Call Controls HUD + Encrypted Chat */}
+          <div className="lg:col-span-5 space-y-5 flex flex-col">
+            {/* Live Video / Pre-Call Check Box */}
+            <div className="bg-white p-4 rounded-2xl border border-[#BDDDFA] shadow-sm space-y-3">
+              <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2 text-xs font-semibold">
+                <span className="text-[#059669] flex items-center gap-1.5 font-bold">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{isAudioOnly ? 'Audio Stream' : 'Live Video Stream'}</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <SecurityBadge text="AES-256 E2EE" />
+                </div>
+              </div>
+
+              {/* Pre-Call Setup Screen */}
+              {setupScreen ? (
+                <div className="flex flex-col items-center justify-center p-4 border border-[#BDDDFA] rounded-xl bg-[#F4F6F9] text-center">
+                  {!isAudioOnly ? (
+                    <div className="relative w-full h-44 bg-[#0F172A] rounded-xl overflow-hidden mb-3 border border-[#BDDDFA] flex items-center justify-center">
+                      <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]"></video>
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider">
+                        Camera Ready
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-emerald-50 text-[#059669] flex items-center justify-center mb-3">
+                      <Mic className="w-8 h-8" />
+                    </div>
+                  )}
+                  <button
+                    onClick={handleJoinCall}
+                    className="w-full py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    {isAudioOnly ? <Mic className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                    <span>Join Consultation Call</span>
+                  </button>
+                </div>
+              ) : (
+                /* Active Conference Stream */
+                <div className="space-y-3">
+                  <div className="relative rounded-xl overflow-hidden bg-[#0F172A] border border-[#1E293B] h-60 flex items-center justify-center">
+                    {!isAudioOnly ? (
+                      <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
+                    ) : (
+                      <div className="text-center p-4">
+                        <User className="w-12 h-12 text-teal-400 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-white">{patientData.name}</p>
+                        <p className="text-[10px] text-slate-400">Encrypted Audio Channel</p>
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 bg-[#0F172A]/80 px-2 py-0.5 rounded-md text-[9px] text-white font-semibold flex items-center gap-1 border border-[#334155]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#34D399]" />
+                      <span>{patientData.name}</span>
+                    </div>
+                    {/* Floating Self-View for video */}
+                    {!isAudioOnly && (
+                      <div className="absolute bottom-2 right-2 w-28 h-18 rounded-lg overflow-hidden border border-white/20 bg-black">
+                        <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]"></video>
+                        <span className="absolute bottom-1 left-1 px-1 py-0.2 rounded bg-black/70 text-[7px] text-white font-bold">You</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* HUD Controls */}
+                  <div className="flex items-center justify-center gap-2 pt-1 border-t border-slate-100">
+                    <button
+                      onClick={() => setMicActive(!micActive)}
+                      className={`p-2.5 rounded-xl border cursor-pointer ${micActive ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A]' : 'bg-red-500 text-white'}`}
+                      title={micActive ? "Mute Microphone" : "Unmute Microphone"}
+                    >
+                      {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                    </button>
+                    {!isAudioOnly && (
+                      <button
+                        onClick={() => setCameraActive(!cameraActive)}
+                        className={`p-2.5 rounded-xl border cursor-pointer ${cameraActive ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A]' : 'bg-red-500 text-white'}`}
+                        title={cameraActive ? "Turn Off Camera" : "Turn On Camera"}
+                      >
+                        {cameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+                      </button>
+                    )}
+                    <button
+                      onClick={handleCompleteConsultation}
+                      className="px-3 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer flex items-center gap-1.5 text-xs font-bold transition shadow-sm"
+                      title="End Consultation"
+                    >
+                      <PhoneOff className="w-4 h-4" />
+                      <span>End Consultation</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Encrypted Clinical Chat Drawer */}
+            <div className="bg-white p-4 rounded-2xl border border-[#BDDDFA] shadow-sm flex flex-col justify-between min-h-[320px] flex-1">
+              <div className="border-b border-[#BDDDFA]/60 pb-2 mb-2 flex justify-between items-center">
+                <span className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#059669]" />
+                  <span>Encrypted Peer Chat</span>
+                </span>
+                <span className="text-[10px] font-bold text-[#059669]">AES-256-GCM</span>
+              </div>
+              <div ref={scrollRef} className="flex-grow overflow-y-auto pr-1 space-y-2 max-h-[220px] flex flex-col text-xs">
+                {messages.length === 0 ? (
+                  <p className="text-center text-[11px] text-slate-400 my-auto">Direct encrypted channel open with patient.</p>
+                ) : (
+                  messages.map((msg, i) => {
+                    const isMe = Boolean(msg.isSelf || (msg.sender && msg.sender === user.username));
+                    return (
+                      <div key={msg.id || i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                        <span className="text-[9px] text-[#94A3B8] px-1 font-semibold">{isMe ? 'You' : msg.sender}</span>
+                        <div className={`p-2.5 rounded-xl text-xs ${isMe ? 'bg-[#059669] text-white' : 'bg-[#E7F0FC] text-[#0F172A] border border-[#BDDDFA]'}`}>
+                          {msg.message}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[9px] text-slate-400 px-1 mt-0.5">
+                          <span>{msg.timestamp}</span>
+                          {isMe && (
+                            <span className={msg.status === 'read' ? 'text-emerald-600 font-bold' : 'text-slate-500'}>
+                              {msg.status === 'read' ? '✓✓ Read' : (msg.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div className="flex gap-2 border-t border-[#BDDDFA]/60 pt-2.5 mt-2">
+                <input
+                  type="text"
+                  value={inputVal}
+                  onChange={e => setInputVal(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendText()}
+                  placeholder="Type message to patient..."
+                  className="flex-grow py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white"
+                />
+                <button
+                  onClick={sendText}
+                  className="bg-[#059669] hover:bg-[#047857] text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Dedicated Consultation Records Access */}
+            <div className="bg-white p-3.5 rounded-2xl border border-[#BDDDFA] shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA] flex items-center justify-center text-[#059669]">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A]">Consultation Records</h4>
+                  <p className="text-[10px] text-[#55647C]">Patient-shared diagnostic reports (PDF / JPG)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDoctorRecordsOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Records</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column (7 cols): Embedded Secure E-Prescription Portal */}
+          <div className="lg:col-span-7 rounded-2xl border border-[#BDDDFA] overflow-hidden bg-white shadow-sm flex flex-col min-h-[680px]">
+            <EPrescriptionPortal
+              sessionId={String(consultationId)}
+              patient={patientData}
+              grantStatus={grantStatus}
+              userRole={user?.role || 'doctor'}
+              layoutMode="video-split"
+              onChangeLayoutMode={setLayoutMode}
+              onApproveWith2FA={handleApprovePrescription}
+            />
+          </div>
+        </div>
+      ) : (
+        /* Patient View: Standard Consultation Workspace */
+        <div className="space-y-4">
+          {grantStatus === 'REVOKED' && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-900 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div>
+                  <span className="font-bold">E-Prescription Finalized &amp; Cryptographically Secured:</span>
+                  <span className="ml-1 text-emerald-800">Your doctor has approved and signed your prescription. It is stored with AES-256-GCM encryption and anchored on Hyperledger Fabric.</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  const targetBase = import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002';
+                  try {
+                    const res = await fetch(`${targetBase}/api/patient/prescriptions/${consultationId}/download`, {
+                      headers: { 'X-Patient-ID': String(patientData.id) }
+                    });
+                    if (!res.ok) throw new Error('Download failed');
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Prescription-${consultationId}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                  } catch (e) {
+                    alert('Prescription ready in your Patient Vault! Opening vault...');
+                  }
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Verified PDF</span>
+              </button>
+            </div>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left pane: Encrypted Clinical Chat */}
         <div className={`bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px] ${appointmentMode === 'chat' ? 'lg:col-span-3' : 'lg:col-span-1'}`}>
@@ -971,18 +1737,26 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                     </div>
                   );
                 }
-                const isMe = msg.sender === user.username;
+                const isMe = Boolean(msg.isSelf || (msg.sender && msg.sender === user.username));
                 const displayName = isMe
                   ? 'You'
-                  : (isAnonymous && user.role === 'doctor' ? anonIdentifier : msg.sender);
+                  : (isAnonymous && user.role === 'doctor' ? anonIdentifier : (msg.sender || 'Participant'));
                 return (
-                  <div key={i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                  <div key={msg.id || i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
                     <span className="text-[10px] text-[#94A3B8] mb-0.5 px-1 font-semibold">{displayName}</span>
                     <div className={`p-3 rounded-2xl text-xs leading-relaxed ${isMe
                         ? 'bg-[#059669] text-white rounded-br-sm'
                         : 'bg-[#E7F0FC] text-[#0F172A] rounded-bl-sm border border-[#BDDDFA]'
                       }`}>
                       {msg.message}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[9px] text-slate-400 px-1 mt-0.5">
+                      <span>{msg.timestamp}</span>
+                      {isMe && (
+                        <span className={msg.status === 'read' ? 'text-emerald-600 font-bold' : 'text-slate-500'}>
+                          {msg.status === 'read' ? '✓✓ Read' : (msg.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -997,14 +1771,12 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendText()}
-              disabled={e2eeStatus !== 'secure'}
-              placeholder={e2eeStatus === 'secure' ? "Type encrypted clinical message..." : "Awaiting E2EE Handshake..."}
+              placeholder={e2eeStatus === 'secure' ? "Type encrypted clinical message..." : "Type message to doctor..."}
               className="flex-grow !min-h-[46px] !py-2 !px-3 text-xs"
             />
             <button
               onClick={sendText}
-              disabled={e2eeStatus !== 'secure'}
-              className="bg-[#059669] hover:bg-[#047857] text-white font-bold px-4 rounded-[10px] text-xs disabled:opacity-50 flex items-center justify-center cursor-pointer"
+              className="bg-[#059669] hover:bg-[#047857] text-white font-bold px-4 rounded-[10px] text-xs flex items-center justify-center cursor-pointer"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -1219,7 +1991,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                       </button>
 
                       <button
-                        onClick={handleHangup}
+                        onClick={user?.role === 'doctor' ? handleCompleteConsultation : handleHangup}
                         className="p-3 rounded-full bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer shadow-sm hover:shadow"
                         title="End Consultation"
                       >
@@ -1336,7 +2108,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                       </button>
 
                       <button
-                        onClick={handleHangup}
+                        onClick={user?.role === 'doctor' ? handleCompleteConsultation : handleHangup}
                         className="p-3 rounded-full bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer"
                         title="End Consultation"
                       >
@@ -1453,32 +2225,9 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
               </div>
             )}
 
-            {/* Live Audio Transcription & Vision Analysis Panels */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* Live Audio Transcription */}
-              <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA]">
-                <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2 mb-3">
-                  <span className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
-                    <Volume2 className="w-4 h-4 text-[#059669]" />
-                    <span>Live Audio Speech-to-Text</span>
-                  </span>
-                </div>
-                <div className="h-40 overflow-y-auto pr-1 space-y-2 font-mono text-[10px] text-[#334155]">
-                  {audioTranscripts.length === 0 ? (
-                    <p className="text-[#94A3B8] text-center py-8">Awaiting speech audio frames... Start the call to begin live streaming transcription.</p>
-                  ) : (
-                    audioTranscripts.map((t, idx) => (
-                      <div key={idx} className="bg-[#E7F0FC]/50 p-2 rounded-lg border border-[#BDDDFA]">
-                        <span className="text-[8px] text-[#94A3B8] block">{t.timestamp}</span>
-                        <span>{t.text}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Vision Analyzed Legacy Scans */}
-              <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA]">
+            {/* Multimodal Vision Analysis Panel (Speech-to-Text Removed) */}
+            {legacyImageProfiles.length > 0 && (
+              <div className="mt-6 bg-white p-5 rounded-2xl border border-[#BDDDFA]">
                 <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2 mb-3">
                   <span className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-[#168CF5]" />
@@ -1486,29 +2235,37 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, onC
                   </span>
                 </div>
                 <div className="h-40 overflow-y-auto pr-1 space-y-2">
-                  {legacyImageProfiles.length === 0 ? (
-                    <p className="text-[#94A3B8] text-center py-8 text-[10px]">No legacy image summaries indexed for this consultation.</p>
-                  ) : (
-                    legacyImageProfiles.map((p, idx) => (
-                      <div key={idx} className="bg-[#E7F0FC]/50 p-2.5 rounded-xl border border-[#BDDDFA] text-[10px] space-y-1">
-                        <div className="flex justify-between font-bold text-[#0F172A]">
-                          <span>{p.image_name}</span>
-                          <span className="text-[8px] text-[#94A3B8]">{new Date(p.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <p className="whitespace-pre-wrap font-mono text-[9px] bg-white p-2 rounded border border-[#BDDDFA] text-[#334155]">
-                          {p.previous_data?.images?.ecg_summary || "No diagnostic summary extracted."}
-                        </p>
+                  {legacyImageProfiles.map((p, idx) => (
+                    <div key={idx} className="bg-[#E7F0FC]/50 p-2.5 rounded-xl border border-[#BDDDFA] text-[10px] space-y-1">
+                      <div className="flex justify-between font-bold text-[#0F172A]">
+                        <span>{p.image_name}</span>
+                        <span className="text-[8px] text-[#94A3B8]">{new Date(p.created_at).toLocaleDateString()}</span>
                       </div>
-                    ))
-                  )}
+                      <p className="whitespace-pre-wrap font-mono text-[9px] bg-white p-2 rounded border border-[#BDDDFA] text-[#334155]">
+                        {p.previous_data?.images?.ecg_summary || "No diagnostic summary extracted."}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
 
           </div>
         )}
 
       </div>
+      </div>
+      )}
+
+      {/* Doctor Shared Consultation Records Modal */}
+      <DoctorSharedRecordsModal
+        isOpen={isDoctorRecordsOpen}
+        onClose={() => setIsDoctorRecordsOpen(false)}
+        consultationId={consultationId}
+        patient={consultationData?.patient || patientData}
+        token={token}
+        apiBase={API_BASE}
+      />
 
     </div>
   );

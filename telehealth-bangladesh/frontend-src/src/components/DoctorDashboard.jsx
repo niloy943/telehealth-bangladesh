@@ -13,8 +13,12 @@ import {
   StatusBadge, VerifiedBadge, SecurityBadge, PageHeader, SectionHeader,
   EmptyState, LoadingState, ErrorState, Modal
 } from './ui';
+import { SecurePrescriptionModal } from './SecurePrescriptionModal';
+import { DoctorPrescriptionVault } from './DoctorPrescriptionVault';
+import { DoctorSharedRecordsModal } from './DoctorSharedRecordsModal';
+import { downloadPrescriptionPdfFile } from '../utils/pdfGenerator';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 const DEFAULT_WEEKLY_SCHEDULE = [
   { day: "Saturday", start_time: "09:00 AM", end_time: "01:00 PM", active: true },
@@ -34,118 +38,7 @@ const TIME_OPTIONS = [
 
 /* ─── Digital Prescription PDF Download Utility ─── */
 const downloadPrescriptionPDF = (p) => {
-  const docName = p.doctor_details ? `Dr. ${p.doctor_details.first_name} ${p.doctor_details.last_name}` : "Certified Doctor";
-  const docSpecialty = p.doctor_details ? p.doctor_details.specialty : "General Doctor";
-  const docReg = p.doctor_details ? p.doctor_details.bmdc_reg : "BMDC Verified";
-
-  const patName = p.patient_details ? `${p.patient_details.first_name || ''} ${p.patient_details.last_name || ''}`.trim() || p.patient_details.username : "Patient";
-  const patPhone = p.patient_details ? p.patient_details.phone || "" : "";
-
-  let medsHtml = "";
-  try {
-    const medsList = JSON.parse(p.medicines);
-    if (Array.isArray(medsList)) {
-      medsHtml = medsList.map((m, idx) => `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #0f172a;">${idx + 1}. ${m.name}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #334155;">${m.dosage}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #334155;">${m.timing}</td>
-        </tr>
-      `).join("");
-    } else {
-      medsHtml = `<tr><td colspan="3" style="padding: 10px; color: #334155;">${p.medicines}</td></tr>`;
-    }
-  } catch (e) {
-    medsHtml = `<tr><td colspan="3" style="padding: 10px; color: #334155;">${p.medicines}</td></tr>`;
-  }
-
-  const element = document.createElement('div');
-  element.style.padding = '36px';
-  element.style.fontFamily = "'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif";
-  element.style.color = '#0f172a';
-  element.style.background = '#ffffff';
-
-  element.innerHTML = `
-    <div style="border: 2px solid #168CF5; padding: 28px; border-radius: 12px; position: relative;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #168CF5; padding-bottom: 16px; margin-bottom: 20px;">
-        <div>
-          <h1 style="margin: 0; color: #0F172A; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">HealNSight</h1>
-          <p style="margin: 3px 0 0 0; color: #55647C; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Verified National Telemedicine Network</p>
-        </div>
-        <div style="text-align: right;">
-          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">${docName}</h3>
-          <p style="margin: 2px 0; font-size: 13px; color: #168CF5; font-weight: 600;">${docSpecialty}</p>
-          <p style="margin: 0; font-size: 11px; color: #64748b;">BMDC Reg: ${docReg}</p>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; padding: 14px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid #BDDDFA;">
-        <div>
-          <p style="margin: 3px 0;"><strong style="color: #475569;">Patient Name:</strong> ${patName}</p>
-          <p style="margin: 3px 0;"><strong style="color: #475569;">Contact:</strong> ${patPhone || 'N/A'}</p>
-        </div>
-        <div style="text-align: right;">
-          <p style="margin: 3px 0;"><strong style="color: #475569;">Date:</strong> ${new Date(p.created_at || Date.now()).toLocaleDateString()}</p>
-          <p style="margin: 3px 0;"><strong style="color: #475569;">Prescription ID:</strong> #${p.id || 'NEW'}</p>
-        </div>
-      </div>
-
-      <div style="margin-bottom: 20px; font-size: 13.5px;">
-        <p style="margin: 6px 0;"><strong style="color: #0f172a;">Chief Complaints:</strong> ${p.symptoms || 'General Consultation'}</p>
-        <p style="margin: 6px 0;"><strong style="color: #0f172a;">Diagnosis:</strong> ${p.diagnosis || 'Clinical evaluation completed'}</p>
-      </div>
-
-      <div style="font-size: 22px; font-weight: 800; color: #059669; margin-bottom: 8px; font-style: italic;">Rx</div>
-
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-        <thead>
-          <tr style="background: #0F172A; color: #ffffff;">
-            <th style="padding: 10px; text-align: left; font-weight: 600; border-top-left-radius: 6px;">Medicine</th>
-            <th style="padding: 10px; text-align: center; font-weight: 600;">Dosage</th>
-            <th style="padding: 10px; text-align: right; font-weight: 600; border-top-right-radius: 6px;">Timing / Instructions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${medsHtml}
-        </tbody>
-      </table>
-
-      <div style="background: #E7F0FC; border-left: 4px solid #168CF5; padding: 12px 14px; border-radius: 6px; margin-bottom: 24px; font-size: 13px; color: #0F172A;">
-        <strong style="display: block; margin-bottom: 3px; font-size: 13px; color: #0F172A;">Doctor Instructions:</strong>
-        ${p.instructions || "Follow prescribed dosage. Stay hydrated and schedule a follow-up if symptoms persist."}
-      </div>
-
-      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #BDDDFA; padding-top: 14px; font-size: 11px; color: #55647C;">
-        <div>
-          <p style="margin: 2px 0;">Issued securely via <strong>HealNSight</strong>.</p>
-          <p style="margin: 2px 0; color: #059669; font-weight: 600;">End-to-End Encrypted Digital Medical Ledger</p>
-        </div>
-        <div style="text-align: right; border: 1px solid #BDDDFA; padding: 6px 12px; border-radius: 6px; background: #E7F0FC;">
-          <strong style="color: #0F172A; font-size: 10px; text-transform: uppercase;">BMDC Digitally Signed</strong>
-          <p style="margin: 2px 0 0 0; color: #55647C; font-size: 9px;">Handshake Token: TB-DOC-${p.id || 'NEW'}</p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const opt = {
-    margin: 10,
-    filename: `Prescription_${p.id || 'TelehealthBD'}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  if (window.html2pdf) {
-    window.html2pdf().set(opt).from(element).save();
-  } else {
-    const printWin = window.open("", "_blank");
-    if (printWin) {
-      printWin.document.write(element.innerHTML);
-      printWin.document.close();
-      printWin.print();
-    }
-  }
+  downloadPrescriptionPdfFile(p);
 };
 
 /* ─── Main DoctorDashboard Component ─── */
@@ -156,16 +49,52 @@ export const DoctorDashboard = ({
   onApptAction,
   onSelectConsultation,
   activeTab = 'dashboard',
-  onTabChange
+  onTabChange,
+  fetchAppointments
 }) => {
   const { t } = useLanguage();
   const { triggerNotification } = useNotifications();
 
-  const [activeSection, setActiveSection] = useState(activeTab === 'schedule' ? 'schedule' : 'queue');
+  const fetchApptsRef = React.useRef(fetchAppointments);
+  React.useEffect(() => {
+    fetchApptsRef.current = fetchAppointments;
+  }, [fetchAppointments]);
+
+  const [activeSection, setActiveSection] = useState(
+    activeTab === 'schedule' ? 'schedule' : (activeTab === 'vault' || activeTab === 'prescriptions' ? 'vault' : 'queue')
+  );
 
   React.useEffect(() => {
-    setActiveSection(activeTab === 'schedule' ? 'schedule' : 'queue');
+    setActiveSection(
+      activeTab === 'schedule' ? 'schedule' : (activeTab === 'vault' || activeTab === 'prescriptions' ? 'vault' : 'queue')
+    );
+    if (fetchApptsRef.current) fetchApptsRef.current();
   }, [activeTab]);
+
+  // Real-time synchronization listeners for Doctor Consultation Queue and Vault
+  React.useEffect(() => {
+    const handleApptSync = () => {
+      if (fetchApptsRef.current) fetchApptsRef.current();
+    };
+    window.addEventListener('healnsight_appointment_updated', handleApptSync);
+    const handleStorage = (e) => {
+      if (e.key === 'healnsight_last_appointment_sync') {
+        if (fetchApptsRef.current) fetchApptsRef.current();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // Keep queue fresh safety net every 30 seconds when tab is active
+    const interval = setInterval(() => {
+      if (!document.hidden && fetchApptsRef.current) fetchApptsRef.current();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('healnsight_appointment_updated', handleApptSync);
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
 
   const [onlineStatus, setOnlineStatus] = useState(user.doctor_profile?.online ?? true);
   const [keyStatus, setKeyStatus] = useState("ACTIVE");
@@ -183,13 +112,8 @@ export const DoctorDashboard = ({
   const [scheduleSuccessMsg, setScheduleSuccessMsg] = useState('');
   const [scheduleErrMsg, setScheduleErrMsg] = useState('');
 
-  // Patient record inspector modal state
-  const [inspectPatientId, setInspectPatientId] = useState(null);
-  const [inspectPatientName, setInspectPatientName] = useState("");
-  const [patientRecords, setPatientRecords] = useState([]);
-  const [patientLegacyImages, setPatientLegacyImages] = useState([]);
-  const [inspectError, setInspectError] = useState("");
-  const [inspectLoading, setInspectLoading] = useState(false);
+  // In-workflow consultation records modal state
+  const [selectedConsultationRecordsAppt, setSelectedConsultationRecordsAppt] = useState(null);
 
   // E-Prescription writer modal state
   const [writingPrescAppt, setWritingPrescAppt] = useState(null);
@@ -290,46 +214,6 @@ export const DoctorDashboard = ({
     }
   };
 
-  const startInspectPatient = async (appt) => {
-    if (appt.is_anonymous) {
-      triggerNotification("Anonymous Patient", "Historical health records are protected and sealed for anonymous consultations.", "warning");
-      return;
-    }
-    setInspectPatientId(appt.patient);
-    setInspectPatientName(`${appt.patient_details?.first_name || ''} ${appt.patient_details?.last_name || ''}`.trim() || appt.patient_details?.username || 'Patient');
-    setInspectError("");
-    setPatientRecords([]);
-    setPatientLegacyImages([]);
-    setInspectLoading(true);
-
-    try {
-      const resp = await fetch(`${API_BASE}/api/records/?patient_id=${appt.patient}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const data = await resp.json();
-      if (resp.status === 200) {
-        setPatientRecords(Array.isArray(data) ? data : []);
-        triggerNotification("Decryption Successful", "AES-256 Symmetric key applied. Vitals decrypted.", "security");
-      } else {
-        setInspectError(data.detail || "Patient has not delegated active clinical access consent.");
-        triggerNotification("Security Warning: Access Blocked", "Attempt to inspect records without active consent token.", "security");
-      }
-
-      // Fetch legacy image profiles
-      const respImg = await fetch(`${API_BASE}/api/image-profiles/?patient_id=${appt.patient}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (respImg.status === 200) {
-        const imgData = await respImg.json();
-        setPatientLegacyImages(Array.isArray(imgData) ? imgData : []);
-      }
-    } catch (err) {
-      setInspectError("Connection to clinical record database broker failed.");
-    } finally {
-      setInspectLoading(false);
-    }
-  };
-
   const handleWritePrescription = async (e) => {
     e.preventDefault();
     if (!writingPrescAppt?.consultation?.id) {
@@ -344,6 +228,13 @@ export const DoctorDashboard = ({
 
     setPrescSubmitting(true);
     try {
+      const consultationId = writingPrescAppt.consultation?.id || writingPrescAppt.id;
+      const patId = String(writingPrescAppt.patient || writingPrescAppt.patient_details?.id || 'niloy');
+      const patUser = String(writingPrescAppt.patient_details?.username || 'niloy');
+      const patName = writingPrescAppt.patient_details
+        ? `${writingPrescAppt.patient_details.first_name || ''} ${writingPrescAppt.patient_details.last_name || ''}`.trim() || patUser
+        : 'Niloy Hasan';
+
       const resp = await fetch(`${API_BASE}/api/prescriptions/`, {
         method: "POST",
         headers: {
@@ -351,7 +242,10 @@ export const DoctorDashboard = ({
           "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          consultation_id: writingPrescAppt.consultation.id,
+          consultation_id: consultationId,
+          appointment_id: writingPrescAppt.id,
+          patient_id: patId,
+          patient_username: patUser,
           symptoms: prescForm.symptoms,
           diagnosis: prescForm.diagnosis,
           medicines: JSON.stringify(medications),
@@ -359,9 +253,41 @@ export const DoctorDashboard = ({
         })
       });
 
+      // Synchronize with Secure E-Prescription Gateway at port 5002
+      try {
+        const epBase = import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002';
+        await fetch(`${epBase}/api/prescriptions/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Doctor-ID': String(user?.id || user?.username || 'doc-sarah-101'),
+            'X-Patient-ID': patId,
+            'X-Patient-Username': patUser
+          },
+          body: JSON.stringify({
+            consultationId: String(consultationId),
+            doctorId: String(user?.id || user?.username || 'doc-sarah-101'),
+            patientId: patId,
+            patientUsername: patUser,
+            patientName: patName,
+            diagnosis: prescForm.diagnosis,
+            symptoms: prescForm.symptoms,
+            advice: prescForm.instructions,
+            items: medications
+          })
+        });
+      } catch (epErr) {
+        console.warn("Gateway sync notice:", epErr);
+      }
+
       if (resp.status === 201) {
         const createdPresc = await resp.json();
-        triggerNotification("E-Prescription Signed", `Prescription issued successfully for ${writingPrescAppt.patient_details?.username}.`, "medical");
+        window.dispatchEvent(new CustomEvent('healnsight_prescription_updated', {
+          detail: { consultationId, patientId: patId, doctorId: user?.id }
+        }));
+        try { localStorage.setItem('healnsight_last_prescription_sync', Date.now().toString()); } catch {}
+        triggerNotification("E-Prescription Signed", `Prescription issued successfully for ${patName}.`, "medical");
         setPrescNotif("E-Prescription successfully compiled, signed digitally, and transmitted to patient ledger!");
         setPrescForm({ symptoms: "", diagnosis: "", instructions: "" });
         setMedications([{ name: "", dosage: "", timing: "" }]);
@@ -397,13 +323,13 @@ export const DoctorDashboard = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 space-y-8">
 
-      {/* 1. Clinical Workspace Header & Status Bar */}
+      {/* 1.  Header & Status Bar */}
       <div className="bg-white border border-[#BDDDFA] rounded-2xl p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-bold text-[#059669] uppercase tracking-wider">
-                Clinical Workspace
+
               </span>
               <VerifiedBadge text={`BMDC Reg: ${user.doctor_profile?.bmdc_reg || 'Certified'}`} />
             </div>
@@ -458,6 +384,45 @@ export const DoctorDashboard = ({
             <p className="text-xl font-bold text-[#168CF5] mt-1">{completedCount}</p>
           </div>
         </div>
+      </div>
+
+      {/* ─── WORKSTATION NAVIGATION TABS ─── */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white border border-[#BDDDFA] rounded-2xl shadow-sm">
+        <button
+          onClick={() => { setActiveSection('queue'); if (onTabChange) onTabChange('dashboard'); }}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            activeSection === 'queue'
+              ? 'bg-[#059669] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Patient Consultation Queue ({appointments.length})</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveSection('vault'); if (onTabChange) onTabChange('vault'); }}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            activeSection === 'vault'
+              ? 'bg-[#059669] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>Secure E-Prescription Vault</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveSection('schedule'); if (onTabChange) onTabChange('schedule'); }}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            activeSection === 'schedule'
+              ? 'bg-[#059669] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <CalendarDays className="w-4 h-4" />
+          <span>Fee &amp; Schedule</span>
+        </button>
       </div>
 
       {/* ─── SECTION 1: CONSULTATION QUEUE ─── */}
@@ -558,15 +523,15 @@ export const DoctorDashboard = ({
 
                     {/* Actions Bar */}
                     <div className="flex flex-wrap items-center gap-2 lg:shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#BDDDFA]">
-                      {/* Inspect Records Action - Hidden for anonymous to protect patient history */}
+                      {/* In-Workflow Consultation Records Action */}
                       {!appt.is_anonymous && (
                         <Button
                           variant="outline"
                           size="sm"
-                          icon={Eye}
-                          onClick={() => startInspectPatient(appt)}
+                          icon={FileText}
+                          onClick={() => setSelectedConsultationRecordsAppt(appt)}
                         >
-                          Records
+                          Consultation Records
                         </Button>
                       )}
 
@@ -590,38 +555,34 @@ export const DoctorDashboard = ({
                         </>
                       )}
 
-                      {/* Approved actions */}
+                      {/* Approved actions - Only Record & Open Room */}
                       {appt.status === 'approved' && appt.consultation && (
-                        <>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            icon={appt.consultation_type === 'audio' ? Mic : Video}
-                            onClick={() => onSelectConsultation({ id: appt.consultation.id, mode: appt.consultation.type })}
-                          >
-                            {appt.consultation_type === 'audio' ? 'Open Audio Room' : 'Open Room'}
-                          </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={appt.consultation_type === 'audio' ? Mic : Video}
+                          onClick={() => onSelectConsultation({ id: appt.consultation.id, mode: appt.consultation.type })}
+                        >
+                          {appt.consultation_type === 'audio' ? 'Open Audio Room' : 'Open Room'}
+                        </Button>
+                      )}
+
+                      {/* Completed actions: consultation is permanently closed */}
+                      {appt.status === 'completed' && (
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1.5 rounded-[10px] text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+                            <span>Consultation Completed</span>
+                          </span>
                           <Button
                             variant="secondary"
                             size="sm"
-                            icon={FileText}
-                            onClick={() => setWritingPrescAppt(appt)}
+                            icon={ShieldCheck}
+                            onClick={() => setActiveSection('vault')}
                           >
-                            E-Prescription
+                            View in Vault
                           </Button>
-                        </>
-                      )}
-
-                      {/* Completed actions */}
-                      {appt.status === 'completed' && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          icon={FileText}
-                          onClick={() => setWritingPrescAppt(appt)}
-                        >
-                          Add Rx Note
-                        </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -630,6 +591,16 @@ export const DoctorDashboard = ({
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* ─── SECTION 1B: SECURE E-PRESCRIPTION VAULT ─── */}
+      {activeSection === 'vault' && (
+        <DoctorPrescriptionVault
+          user={user}
+          token={token}
+          apiBase={API_BASE}
+          epGatewayBase={import.meta.env.VITE_EP_API_BASE || 'http://localhost:5002'}
+        />
       )}
 
       {/* ─── SECTION 2: CONSULTATION FEE & AVAILABILITY SCHEDULE ─── */}
@@ -820,181 +791,38 @@ export const DoctorDashboard = ({
         </div>
       )}
 
-      {/* ─── E-PRESCRIPTION WRITER MODAL ─── */}
-      <Modal
+      {/* ─── SECURE E-PRESCRIPTION WRITER MODAL (AES-256 + BLOCKCHAIN + MFA) ─── */}
+      <SecurePrescriptionModal
         isOpen={!!writingPrescAppt}
         onClose={() => setWritingPrescAppt(null)}
-        title="Issue E-Prescription"
-        subtitle={`Patient: ${writingPrescAppt?.patient_details?.username} • Consultation #${writingPrescAppt?.consultation?.id || 'Active'}`}
-        maxWidth="max-w-2xl"
-      >
-        <form onSubmit={handleWritePrescription} className="space-y-4">
-          {prescNotif && (
-            <div className={`p-3 rounded-xl text-xs font-semibold ${prescNotif.includes("successfully")
-              ? "bg-[#E7F0FC] text-[#059669] border border-[#059669]"
-              : "bg-red-50 text-[#FF7A7A] border border-[#FF7A7A]"
-              }`}>
-              {prescNotif}
-            </div>
-          )}
+        appointment={writingPrescAppt}
+        token={token}
+        apiBase={API_BASE}
+        onSuccess={(result) => {
+          triggerNotification(
+            "E-Prescription Signed & Sealed",
+            `Prescription issued with hash ${result?.integrity?.sha256Hash?.substring(0, 16)}... and committed to ledger. Consultation grant revoked.`,
+            "security"
+          );
+          setWritingPrescAppt(null);
+          fetchAppointments();
+        }}
+      />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[#0F172A] mb-1">Chief Complaints</label>
-              <input
-                type="text"
-                required
-                value={prescForm.symptoms}
-                onChange={e => setPrescForm({ ...prescForm, symptoms: e.target.value })}
-                placeholder="e.g. Fever for 3 days, mild dry cough..."
-                className="w-full p-2.5 bg-[#E7F0FC] rounded-[15px] text-sm text-[#111827] placeholder-[#4B5563] outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#0F172A] mb-1">Clinical Diagnosis</label>
-              <input
-                type="text"
-                required
-                value={prescForm.diagnosis}
-                onChange={e => setPrescForm({ ...prescForm, diagnosis: e.target.value })}
-                placeholder="e.g. Acute Viral Bronchitis..."
-                className="w-full p-2.5 bg-[#E7F0FC] rounded-[15px] text-sm text-[#111827] placeholder-[#4B5563] outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Dynamic Medicines Row Editor */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-[#0F172A]">Prescribed Medications</label>
-              <button
-                type="button"
-                onClick={handleAddMedication}
-                className="text-xs font-bold text-[#059669] hover:underline flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Medicine
-              </button>
-            </div>
-
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-              {medications.map((med, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA]">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Medicine name (e.g. Paracetamol 500mg)"
-                    value={med.name}
-                    onChange={e => handleMedicationChange(idx, 'name', e.target.value)}
-                    className="flex-1 p-2 bg-white rounded-lg text-xs text-[#111827] placeholder-[#4B5563] outline-none border border-[#BDDDFA]"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Dosage (1 tab)"
-                    value={med.dosage}
-                    onChange={e => handleMedicationChange(idx, 'dosage', e.target.value)}
-                    className="w-24 p-2 bg-white rounded-lg text-xs text-[#111827] placeholder-[#4B5563] outline-none border border-[#BDDDFA]"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Timing (1+0+1 after meal)"
-                    value={med.timing}
-                    onChange={e => handleMedicationChange(idx, 'timing', e.target.value)}
-                    className="w-36 p-2 bg-white rounded-lg text-xs text-[#111827] placeholder-[#4B5563] outline-none border border-[#BDDDFA]"
-                  />
-                  {medications.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMedication(idx)}
-                      className="p-1.5 text-[#FF7A7A] hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#0F172A] mb-1">Doctor Advice &amp; Instructions</label>
-            <textarea
-              rows={2}
-              value={prescForm.instructions}
-              onChange={e => setPrescForm({ ...prescForm, instructions: e.target.value })}
-              placeholder="Drink plenty of fluids, rest, follow up in 5 days if fever persists..."
-              className="w-full p-2.5 bg-[#E7F0FC] rounded-[15px] text-sm text-[#111827] placeholder-[#4B5563] outline-none"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA]">
-            <input
-              type="checkbox"
-              id="signCheck"
-              checked={signChecked}
-              onChange={e => setSignChecked(e.target.checked)}
-              className="rounded text-[#059669] focus:ring-[#059669]"
-            />
-            <label htmlFor="signCheck" className="text-xs text-[#0F172A]">
-              I certify under my BMDC registration that this digital prescription is medically indicated.
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setWritingPrescAppt(null)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" type="submit" loading={prescSubmitting}>
-              Issue &amp; Sign Prescription
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ─── PATIENT RECORD INSPECTOR MODAL ─── */}
-      <Modal
-        isOpen={!!inspectPatientId}
-        onClose={() => setInspectPatientId(null)}
-        title={`Clinical Records: ${inspectPatientName}`}
-        subtitle="End-to-End Encrypted Patient Medical History"
-        maxWidth="max-w-2xl"
-      >
-        {inspectLoading ? (
-          <LoadingState message="Decrypting patient health records..." />
-        ) : inspectError ? (
-          <div className="p-6 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-red-50 text-[#FF7A7A] flex items-center justify-center mx-auto border border-[#FF7A7A]/30">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h4 className="text-sm font-bold text-[#0F172A]">Access Restricted</h4>
-            <p className="text-xs text-[#55647C] max-w-sm mx-auto leading-relaxed">{inspectError}</p>
-            <p className="text-[11px] text-[#059669] font-semibold">
-              The patient can authorize access from their "Privacy &amp; Consent" portal.
-            </p>
-          </div>
-        ) : patientRecords.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="No records found"
-            description="This patient has not uploaded any lab reports or diagnostic records yet."
-          />
-        ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-            {patientRecords.map(rec => (
-              <div key={rec.id} className="p-3.5 rounded-xl border border-[#BDDDFA] bg-[#E7F0FC] space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0F172A] uppercase">{rec.record_type}</span>
-                  <SecurityBadge text="Decrypted (AES-256)" />
-                </div>
-                <p className="text-xs text-[#334155] leading-relaxed">{rec.content}</p>
-                <span className="text-[10px] text-[#55647C] block pt-1">Record ID #{rec.id}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </Modal>
+      {/* ─── IN-WORKFLOW CONSULTATION MEDICAL RECORDS MODAL ─── */}
+      <DoctorSharedRecordsModal
+        isOpen={Boolean(selectedConsultationRecordsAppt)}
+        onClose={() => setSelectedConsultationRecordsAppt(null)}
+        consultationId={selectedConsultationRecordsAppt?.consultation?.id || selectedConsultationRecordsAppt?.consultation_id || selectedConsultationRecordsAppt?.id}
+        patient={{
+          id: selectedConsultationRecordsAppt?.patient,
+          name: `${selectedConsultationRecordsAppt?.patient_details?.first_name || ''} ${selectedConsultationRecordsAppt?.patient_details?.last_name || ''}`.trim() || selectedConsultationRecordsAppt?.patient_details?.username || 'Patient',
+          username: selectedConsultationRecordsAppt?.patient_details?.username,
+          is_anonymous: selectedConsultationRecordsAppt?.is_anonymous
+        }}
+        token={token}
+        apiBase={API_BASE}
+      />
 
     </div>
   );

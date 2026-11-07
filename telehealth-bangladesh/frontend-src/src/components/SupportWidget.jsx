@@ -6,7 +6,7 @@ import {
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 const SUGGESTED_CHIPS = [
   "Causes of headache?",

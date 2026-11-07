@@ -8,8 +8,9 @@ import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
 import { SecurityCenter } from './SecurityCenter';
 import { Button } from './ui';
+import { PatientConsentManager } from './PatientConsentManager';
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = 'personal', onTabChange }) => {
   const { t } = useLanguage();
@@ -820,56 +821,72 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
           {/* 6. PRIVACY & SECURITY SETTINGS */}
           {activeTab === 'privacy' && (
             <div className="space-y-6">
-              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Security Policy &amp; Privacy Configuration</h3>
-
-              <div className="space-y-4">
-
-                {/* Switch 1 */}
-                <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
-                  <div>
-                    <h4 className="font-bold text-[#0F172A]">Clinical Records Visibility</h4>
-                    <p className="text-[10px] text-[#55647C] mt-0.5"></p>
-                  </div>
+              <div className="flex items-center justify-between border-b border-[#BDDDFA] pb-2 mb-4">
+                <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider">Privacy &amp; Data Consent Management</h3>
+                {onTabChange && (
                   <button
-                    type="button"
-                    onClick={() => handleTogglePrivacy('visibleToDocs')}
-                    className={`w-11 h-6 rounded-full relative border ${privacySettings.visibleToDocs ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
+                    onClick={() => onTabChange('consent')}
+                    className="text-xs font-bold text-[#059669] hover:underline flex items-center gap-1"
                   >
-                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white ${privacySettings.visibleToDocs ? 'right-0.5' : 'left-0.5'}`} />
+                    <span>Full Screen Console</span>
                   </button>
-                </div>
-
-                {/* Switch 2 */}
-                <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
-                  <div>
-                    <h4 className="font-bold text-[#0F172A]">SMS &amp; Real-Time Alerts</h4>
-                    <p className="text-[10px] text-[#55647C] mt-0.5"></p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePrivacy('alertsEnabled')}
-                    className={`w-11 h-6 rounded-full relative border ${privacySettings.alertsEnabled ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
-                  >
-                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white ${privacySettings.alertsEnabled ? 'right-0.5' : 'left-0.5'}`} />
-                  </button>
-                </div>
-
-                {/* Switch 3 */}
-                <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
-                  <div>
-                    <h4 className="font-bold text-[#0F172A]">Two-Factor Authentication</h4>
-                    <p className="text-[10px] text-[#55647C] mt-0.5"></p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePrivacy('twoFactorEnabled')}
-                    className={`w-11 h-6 rounded-full relative border ${privacySettings.twoFactorEnabled ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
-                  >
-                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white ${privacySettings.twoFactorEnabled ? 'right-0.5' : 'left-0.5'}`} />
-                  </button>
-                </div>
-
+                )}
               </div>
+
+              {user?.role === 'patient' ? (
+                <PatientConsentManager
+                  token={token}
+                  user={user}
+                  onTabChange={onTabChange}
+                />
+              ) : (
+                <div className="space-y-4">
+                  {/* Switch 1 */}
+                  <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
+                    <div>
+                      <h4 className="font-bold text-[#0F172A]">Clinical Records Visibility</h4>
+                      <p className="text-[10px] text-[#55647C] mt-0.5">Enforce strict zero-trust privacy</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePrivacy('visibleToDocs')}
+                      className={`w-11 h-6 rounded-full relative border ${privacySettings.visibleToDocs ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white ${privacySettings.visibleToDocs ? 'right-0.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {/* Switch 2 */}
+                  <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
+                    <div>
+                      <h4 className="font-bold text-[#0F172A]">SMS &amp; Real-Time Alerts</h4>
+                      <p className="text-[10px] text-[#55647C] mt-0.5">Instant alerts for security events</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePrivacy('alertsEnabled')}
+                      className={`w-11 h-6 rounded-full relative border ${privacySettings.alertsEnabled ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white ${privacySettings.alertsEnabled ? 'right-0.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {/* Switch 3 */}
+                  <div className="flex items-center justify-between bg-[#E7F0FC] p-3.5 rounded-xl border border-[#BDDDFA]">
+                    <div>
+                      <h4 className="font-bold text-[#0F172A]">Two-Factor Authentication</h4>
+                      <p className="text-[10px] text-[#55647C] mt-0.5">Multi-Factor Authentication Shield</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePrivacy('twoFactorEnabled')}
+                      className={`w-11 h-6 rounded-full relative border ${privacySettings.twoFactorEnabled ? 'bg-[#059669] border-[#059669]' : 'bg-slate-300 border-slate-300'}`}
+                    >
+                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white ${privacySettings.twoFactorEnabled ? 'right-0.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -12,8 +12,16 @@ const PORT = process.env.PORT || 5000;
 
 // Security Middlewares
 app.use(helmet()); // Protect HTTP headers
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173').split(',').map(s => s.trim());
 app.use(cors({
-  origin: '*', // Allow all cross-origins for local telehealth integration
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin === 'null') {
+      callback(null, true);
+    } else {
+      callback(new Error('Cross-Origin Request Blocked by CORS Security Policy.'));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

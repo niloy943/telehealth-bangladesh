@@ -15,7 +15,7 @@ export const Button = ({
   type = 'button',
   ...props
 }) => {
-  const base = "inline-flex items-center justify-center font-semibold rounded-[10px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer";
+  const base = "inline-flex items-center justify-center font-semibold rounded-[10px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer transition-all duration-150 active:scale-[0.98]";
 
   const variants = {
     primary: "bg-[#059669] hover:bg-[#047857] active:bg-[#065F46] text-white border border-[#059669]",
@@ -187,7 +187,7 @@ export const EmptyState = ({
 export const LoadingState = ({ count = 3, className = '' }) => (
   <div className={`space-y-3 ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="h-16 bg-[#E7F0FC] border border-[#BDDDFA] rounded-xl w-full" />
+      <div key={i} className="h-16 bg-[#E7F0FC]/80 border border-[#BDDDFA] rounded-xl w-full animate-pulse" />
     ))}
   </div>
 );
@@ -237,9 +237,9 @@ export const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/70 backdrop-blur-sm transition-opacity duration-200">
       <div
-        className={`w-full ${maxWidth} bg-white border border-[#BDDDFA] rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] ${className}`}
+        className={`w-full ${maxWidth} bg-white border border-[#BDDDFA] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-all duration-200 transform scale-100 ${className}`}
         role="dialog"
         aria-modal="true"
       >
