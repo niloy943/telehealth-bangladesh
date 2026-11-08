@@ -5,6 +5,10 @@ import { SecurityBadge } from './ui';
 import { EPrescriptionPortal } from './EPrescriptionPortal';
 import { DoctorSharedRecordsModal } from './DoctorSharedRecordsModal';
 import { usePrescriptionDraftStore } from '../store/usePrescriptionDraftStore';
+import { useWebRTCConnection } from '../hooks/useWebRTCConnection';
+import { VideoStage } from './clinical/VideoStage';
+import { ClinicalChatPanel } from './clinical/ClinicalChatPanel';
+import { CallControls } from './clinical/CallControls';
 import {
   Send, ShieldCheck, Video, VideoOff, Mic, MicOff, PhoneOff, Phone,
   Monitor, Play, Trash2, ArrowLeft, Terminal, AlertCircle, Volume2, Lock, User,
@@ -44,11 +48,6 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
   const myEpPubB64Ref = useRef("");
   const mySignatureRef = useRef("");
   const [inputVal, setInputVal] = useState("");
-  const [activeCall, setActiveCall] = useState(false);
-  const [setupScreen, setSetupScreen] = useState(true);
-  const [cameraActive, setCameraActive] = useState(true);
-  const [micActive, setMicActive] = useState(true);
-  const [callTimer, setCallTimer] = useState("00:00");
   const [remainingSeconds, setRemainingSeconds] = useState(2700); // 45-minute countdown limit (2700s)
   const [hasShown5MinWarning, setHasShown5MinWarning] = useState(false);
   const autoTimeoutExecutedRef = useRef(false);
@@ -81,18 +80,16 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
   const [callLogs, setCallLogs] = useState([]);
   const [onCellCall, setOnCellCall] = useState(false);
 
+  const addPbxLog = (line) => {
+    setPbxLogs(prev => [...prev, line]);
+  };
+
   const activeCallSidRef = useRef(null);
   const statusPollIntervalRef = useRef(null);
   const voipTimerIntervalRef = useRef(null);
 
   const socketRef = useRef(null);
   const scrollRef = useRef(null);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null);
-  const pcRef = useRef(null);
-  const streamRef = useRef(null);
-  const timerIntervalRef = useRef(null);
 
   const safeSendSocketMessage = (msgObj) => {
     try {
@@ -118,11 +115,48 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
     }
   };
 
-  const [webrtcStatus, setWebrtcStatus] = useState("disconnected"); // disconnected, connecting, connected, reconnecting
-
   const isAudioOnly = appointmentMode === 'audio' || consultationData?.audio_only || (consultationData?.type === 'audio');
   const isAnonymous = Boolean(consultationData?.is_anonymous || isAudioOnly);
   const anonIdentifier = consultationData?.anonymous_identifier || (consultationData?.anonymous_session_id ? `Anonymous Patient #${consultationData.anonymous_session_id}` : `Anonymous Patient #${consultationId}`);
+
+  // Modular WebRTC Connection Hook
+  const {
+    webrtcStatus,
+    setWebrtcStatus,
+    setupScreen,
+    setSetupScreen,
+    activeCall,
+    setActiveCall,
+    cameraActive,
+    setCameraActive,
+    micActive,
+    setMicActive,
+    callTimer,
+    setCallTimer,
+    localVideoRef,
+    remoteVideoRef,
+    remoteAudioRef,
+    pcRef,
+    streamRef,
+    timerIntervalRef,
+    sendSignaling,
+    handleWebRTCSignaling,
+    toggleMic,
+    toggleCamera,
+    handleJoinCall,
+    handleReconnect,
+    handleHangup,
+    stopAllMedia
+  } = useWebRTCConnection({
+    consultationId,
+    appointmentMode,
+    isAudioOnly,
+    user,
+    token,
+    apiBase: API_BASE,
+    safeSendSocketMessage,
+    addPbxLog
+  });
 
   const [layoutMode, setLayoutMode] = useState(
     appointmentMode === 'audio' ? 'audio-full' : 'video-split'
@@ -786,10 +820,6 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
     return () => clearInterval(timerInterval);
   }, []);
 
-  const addPbxLog = (line) => {
-    setPbxLogs(prev => [...prev, line]);
-  };
-
   const sendText = async () => {
     const text = inputVal.trim();
     if (!text) return;
@@ -863,228 +893,7 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
     } catch {}
   };
 
-  // WebRTC Signals
-  const handleWebRTCSignaling = async (data, peerSender) => {
-    if (peerSender === user.username) return; // avoid looping self actions
-
-    const pc = pcRef.current;
-    if (!pc) return;
-
-    try {
-      if (data.sdp) {
-        addPbxLog(`[WebRTC] Remote SDP Offer/Answer signature processed.`);
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        if (data.sdp.type === 'offer') {
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          sendSignaling({ sdp: answer });
-        }
-      } else if (data.candidate) {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      }
-    } catch (err) {
-      console.warn("Signaling failed: ", err);
-    }
-  };
-
-  const sendSignaling = (signal) => {
-    safeSendSocketMessage({
-      action: "webrtc_signaling",
-      sender: user.username,
-      data: signal
-    });
-  };
-
-  // Media driver setup
-  const startCameraPreview = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
-      addPbxLog(`[MEDIA] Camera & Microphone driver loaded successfully.`);
-    } catch (err) {
-      addPbxLog(`[WARN] Camera access blocked or hardware unavailable. Simulating stream.`);
-    }
-  };
-
-  const startAudioPreview = async () => {
-    try {
-      // Audio-only: request microphone only, CAMERA IS NEVER ACCESSED
-      const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-      streamRef.current = stream;
-      addPbxLog(`[MEDIA] Microphone driver initialized for Audio Consultation (Camera disabled).`);
-    } catch (err) {
-      addPbxLog(`[WARN] Microphone access blocked or hardware unavailable. Simulating audio stream.`);
-    }
-  };
-
-  useEffect(() => {
-    if (isAudioOnly && setupScreen) {
-      startAudioPreview();
-    } else if (appointmentMode === 'video' && setupScreen) {
-      startCameraPreview();
-    }
-  }, [appointmentMode, isAudioOnly, setupScreen]);
-
-  const toggleMic = () => {
-    const nextState = !micActive;
-    setMicActive(nextState);
-    if (streamRef.current) {
-      streamRef.current.getAudioTracks().forEach(t => {
-        t.enabled = nextState;
-      });
-    }
-    addPbxLog(`[AUDIO] Microphone ${nextState ? 'unmuted' : 'muted'}.`);
-  };
-
-  const handleReconnect = async () => {
-    addPbxLog(`[RTC] User requested session reconnection...`);
-    setWebrtcStatus("reconnecting");
-    if (pcRef.current) {
-      try {
-        pcRef.current.close();
-      } catch (e) {}
-      pcRef.current = null;
-    }
-    await handleJoinCall();
-  };
-
-  const handleJoinCall = async () => {
-    setSetupScreen(false);
-    setActiveCall(true);
-    setWebrtcStatus("connecting");
-
-    // Inform backend consultation is starting
-    try {
-      fetch(`${API_BASE}/api/consultations/${consultationId}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ action: 'start' })
-      }).catch(() => {});
-    } catch (e) {}
-
-
-    addPbxLog(isAudioOnly ? `[RTC] Initiating Anonymous Audio WebRTC session...` : `[RTC] Initiating E2EE video room exchange...`);
-
-    // Setup RTCPeerConnection with existing STUN infrastructure
-    const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-    const pc = new RTCPeerConnection(config);
-    pcRef.current = pc;
-
-    pc.onconnectionstatechange = () => {
-      const state = pc.connectionState;
-      if (state === 'connected') {
-        setWebrtcStatus('connected');
-        addPbxLog('[RTC] WebRTC connection established.');
-      } else if (state === 'connecting') {
-        setWebrtcStatus('connecting');
-      } else if (state === 'disconnected' || state === 'failed') {
-        setWebrtcStatus('reconnecting');
-        addPbxLog('[RTC] WebRTC connection dropped, ready to reconnect.');
-      }
-    };
-
-    // Ensure audio or video media tracks are acquired
-    if (!streamRef.current) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia(
-          isAudioOnly ? { audio: true, video: false } : { audio: true, video: true }
-        );
-        streamRef.current = stream;
-        if (!isAudioOnly && localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        addPbxLog(`[WARN] Hardware media fallback.`);
-      }
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => pc.addTrack(track, streamRef.current));
-    }
-
-    pc.ontrack = (event) => {
-      if (!isAudioOnly && remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-      }
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = event.streams[0];
-      }
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        sendSignaling({ candidate: event.candidate });
-      }
-    };
-
-    // Start consultation timing and exchange SDP offer
-    setTimeout(async () => {
-
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        sendSignaling({ sdp: offer });
-      } catch (err) {
-        addPbxLog(`[RTC] Simulating signaling loop...`);
-      }
-
-      setWebrtcStatus('connected');
-      addPbxLog(`[RTC] Encrypted secure ${isAudioOnly ? 'audio' : 'video'} tunnel established.`);
-
-      let duration = 0;
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = setInterval(() => {
-        duration++;
-        const mins = Math.floor(duration / 60).toString().padStart(2, '0');
-        const secs = (duration % 60).toString().padStart(2, '0');
-        setCallTimer(`${mins}:${secs}`);
-      }, 1000);
-
-    }, 2000);
-  };
-
-  const startAudioStreaming = () => {};
   const stopAudioStreaming = () => {};
-
-  const handleHangup = async () => {
-
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    setActiveCall(false);
-    setSetupScreen(true);
-    setWebrtcStatus("disconnected");
-    setCallTimer("00:00");
-    addPbxLog(`[RTC] Secure clinical session disconnected.`);
-    stopAudioStreaming();
-
-    // Call backend to record ended_at and duration
-    try {
-      await fetch(`${API_BASE}/api/consultations/${consultationId}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ action: 'end' })
-      });
-    } catch (err) {
-      console.warn("Failed to notify backend of consultation end:", err);
-    }
-  };
 
   // VoIP Dialer actions with real Twilio Telephony REST API
   const pressDialKey = (key) => {
@@ -1462,148 +1271,43 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
           {/* Left Column (5 cols): Live WebRTC Video + Call Controls HUD + Encrypted Chat */}
           <div className="lg:col-span-5 space-y-5 flex flex-col">
             {/* Live Video / Pre-Call Check Box */}
-            <div className="bg-white p-4 rounded-2xl border border-[#BDDDFA] shadow-sm space-y-3">
-              <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2 text-xs font-semibold">
-                <span className="text-[#059669] flex items-center gap-1.5 font-bold">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>{isAudioOnly ? 'Audio Stream' : 'Live Video Stream'}</span>
-                </span>
-                <div className="flex items-center gap-2">
-                  <SecurityBadge text="AES-256 E2EE" />
-                </div>
-              </div>
-
-              {/* Pre-Call Setup Screen */}
-              {setupScreen ? (
-                <div className="flex flex-col items-center justify-center p-4 border border-[#BDDDFA] rounded-xl bg-[#F4F6F9] text-center">
-                  {!isAudioOnly ? (
-                    <div className="relative w-full h-44 bg-[#0F172A] rounded-xl overflow-hidden mb-3 border border-[#BDDDFA] flex items-center justify-center">
-                      <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]"></video>
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider">
-                        Camera Ready
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-emerald-50 text-[#059669] flex items-center justify-center mb-3">
-                      <Mic className="w-8 h-8" />
-                    </div>
-                  )}
-                  <button
-                    onClick={handleJoinCall}
-                    className="w-full py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                  >
-                    {isAudioOnly ? <Mic className="w-4 h-4" /> : <Video className="w-4 h-4" />}
-                    <span>Join Consultation Call</span>
-                  </button>
-                </div>
-              ) : (
-                /* Active Conference Stream */
-                <div className="space-y-3">
-                  <div className="relative rounded-xl overflow-hidden bg-[#0F172A] border border-[#1E293B] h-60 flex items-center justify-center">
-                    {!isAudioOnly ? (
-                      <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
-                    ) : (
-                      <div className="text-center p-4">
-                        <User className="w-12 h-12 text-teal-400 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-white">{patientData.name}</p>
-                        <p className="text-[10px] text-slate-400">Encrypted Audio Channel</p>
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2 bg-[#0F172A]/80 px-2 py-0.5 rounded-md text-[9px] text-white font-semibold flex items-center gap-1 border border-[#334155]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#34D399]" />
-                      <span>{patientData.name}</span>
-                    </div>
-                    {/* Floating Self-View for video */}
-                    {!isAudioOnly && (
-                      <div className="absolute bottom-2 right-2 w-28 h-18 rounded-lg overflow-hidden border border-white/20 bg-black">
-                        <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]"></video>
-                        <span className="absolute bottom-1 left-1 px-1 py-0.2 rounded bg-black/70 text-[7px] text-white font-bold">You</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* HUD Controls */}
-                  <div className="flex items-center justify-center gap-2 pt-1 border-t border-slate-100">
-                    <button
-                      onClick={() => setMicActive(!micActive)}
-                      className={`p-2.5 rounded-xl border cursor-pointer ${micActive ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A]' : 'bg-red-500 text-white'}`}
-                      title={micActive ? "Mute Microphone" : "Unmute Microphone"}
-                    >
-                      {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                    </button>
-                    {!isAudioOnly && (
-                      <button
-                        onClick={() => setCameraActive(!cameraActive)}
-                        className={`p-2.5 rounded-xl border cursor-pointer ${cameraActive ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A]' : 'bg-red-500 text-white'}`}
-                        title={cameraActive ? "Turn Off Camera" : "Turn On Camera"}
-                      >
-                        {cameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-                      </button>
-                    )}
-                    <button
-                      onClick={handleCompleteConsultation}
-                      className="px-3 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer flex items-center gap-1.5 text-xs font-bold transition shadow-sm"
-                      title="End Consultation"
-                    >
-                      <PhoneOff className="w-4 h-4" />
-                      <span>End Consultation</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <VideoStage
+              isDoctorView={true}
+              isAudioOnly={isAudioOnly}
+              setupScreen={setupScreen}
+              webrtcStatus={webrtcStatus}
+              localVideoRef={localVideoRef}
+              remoteVideoRef={remoteVideoRef}
+              remoteAudioRef={remoteAudioRef}
+              handleJoinCall={handleJoinCall}
+              handleReconnect={handleReconnect}
+              user={user}
+              patientData={patientData}
+              consultationData={consultationData}
+              anonIdentifier={anonIdentifier}
+              callTimer={callTimer}
+              micActive={micActive}
+              cameraActive={cameraActive}
+              toggleMic={toggleMic}
+              toggleCamera={toggleCamera}
+              onEndCall={handleCompleteConsultation}
+            />
 
             {/* Encrypted Clinical Chat Drawer */}
-            <div className="bg-white p-4 rounded-2xl border border-[#BDDDFA] shadow-sm flex flex-col justify-between min-h-[320px] flex-1">
-              <div className="border-b border-[#BDDDFA]/60 pb-2 mb-2 flex justify-between items-center">
-                <span className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#059669]" />
-                  <span>Encrypted Peer Chat</span>
-                </span>
-                <span className="text-[10px] font-bold text-[#059669]">AES-256-GCM</span>
-              </div>
-              <div ref={scrollRef} className="flex-grow overflow-y-auto pr-1 space-y-2 max-h-[220px] flex flex-col text-xs">
-                {messages.length === 0 ? (
-                  <p className="text-center text-[11px] text-slate-400 my-auto">Direct encrypted channel open with patient.</p>
-                ) : (
-                  messages.map((msg, i) => {
-                    const isMe = Boolean(msg.isSelf || (msg.sender && msg.sender === user.username));
-                    return (
-                      <div key={msg.id || i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                        <span className="text-[9px] text-[#94A3B8] px-1 font-semibold">{isMe ? 'You' : msg.sender}</span>
-                        <div className={`p-2.5 rounded-xl text-xs ${isMe ? 'bg-[#059669] text-white' : 'bg-[#E7F0FC] text-[#0F172A] border border-[#BDDDFA]'}`}>
-                          {msg.message}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[9px] text-slate-400 px-1 mt-0.5">
-                          <span>{msg.timestamp}</span>
-                          {isMe && (
-                            <span className={msg.status === 'read' ? 'text-emerald-600 font-bold' : 'text-slate-500'}>
-                              {msg.status === 'read' ? '✓✓ Read' : (msg.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              <div className="flex gap-2 border-t border-[#BDDDFA]/60 pt-2.5 mt-2">
-                <input
-                  type="text"
-                  value={inputVal}
-                  onChange={e => setInputVal(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendText()}
-                  placeholder="Type message to patient..."
-                  className="flex-grow py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white"
-                />
-                <button
-                  onClick={sendText}
-                  className="bg-[#059669] hover:bg-[#047857] text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center cursor-pointer"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            <ClinicalChatPanel
+              compact={true}
+              messages={messages}
+              user={user}
+              isAnonymous={isAnonymous}
+              anonIdentifier={anonIdentifier}
+              e2eeStatus={e2eeStatus}
+              fingerprint={fingerprint}
+              inputVal={inputVal}
+              setInputVal={setInputVal}
+              onSendText={sendText}
+              scrollRef={scrollRef}
+              placeholder="Type message to patient..."
+            />
 
             {/* Dedicated Consultation Records Access */}
             <div className="bg-white p-3.5 rounded-2xl border border-[#BDDDFA] shadow-sm flex items-center justify-between">
@@ -1683,441 +1387,51 @@ export const ClinicalRoom = ({ token, user, consultationId, appointmentMode, ini
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left pane: Encrypted Clinical Chat */}
-        <div className={`bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px] ${appointmentMode === 'chat' ? 'lg:col-span-3' : 'lg:col-span-1'}`}>
-          <div className="border-b border-[#BDDDFA]/60 pb-3 mb-3 space-y-2.5">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-[#059669]" />
-                <span>Encrypted Chat</span>
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${e2eeStatus === 'secure' ? 'bg-emerald-50 text-[#059669] border border-emerald-200' :
-                  e2eeStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
-                    'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
-                {e2eeStatus === 'secure' ? 'E2EE: ACTIVE' : `E2EE: ${e2eeStatus.toUpperCase()}`}
-              </span>
-            </div>
-
-            {/* Cryptographic Metadata Banner */}
-            <div className="bg-[#E7F0FC]/60 p-2.5 rounded-xl text-[10px] space-y-1 border border-[#BDDDFA]">
-              <div className="flex justify-between text-[#55647C]">
-                <span>Key Exchange: <strong className="text-[#0F172A]">ECDH P-256</strong></span>
-                <span>Cipher: <strong className="text-[#0F172A]">AES-256-GCM</strong></span>
-              </div>
-              {fingerprint && (
-                <div className="text-[9px] font-mono text-[#55647C] flex justify-between pt-1 border-t border-[#BDDDFA]/60">
-                  <span>Security Fingerprint:</span>
-                  <span className="font-bold text-[#059669]">{fingerprint}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Messages Scroll Area */}
-          <div ref={scrollRef} className="flex-grow overflow-y-auto pr-1 space-y-3 max-h-[360px] flex flex-col">
-            {messages.length === 0 ? (
-              <div className="text-center text-xs text-[#55647C] my-auto p-6 space-y-2">
-                <Lock className="w-8 h-8 text-[#94A3B8] mx-auto" />
-                {e2eeStatus === 'secure' ? (
-                  <p>End-to-End Encrypted channel established. Messages sent here cannot be intercepted by the server.</p>
-                ) : (
-                  <p>Establishing cryptographic handshake tunnel with peer...</p>
-                )}
-              </div>
-            ) : (
-              messages.map((msg, i) => {
-                if (msg.isError) {
-                  return (
-                    <div key={i} className="bg-red-50 border border-red-200 p-2.5 rounded-xl text-xs text-red-700 self-center max-w-[90%] font-mono my-1">
-                      <div className="font-bold flex items-center gap-1 text-[10px]">
-                        <AlertCircle size={12} />
-                        <span>INTEGRITY ERROR</span>
-                      </div>
-                      <p>{msg.message}</p>
-                    </div>
-                  );
-                }
-                const isMe = Boolean(msg.isSelf || (msg.sender && msg.sender === user.username));
-                const displayName = isMe
-                  ? 'You'
-                  : (isAnonymous && user.role === 'doctor' ? anonIdentifier : (msg.sender || 'Participant'));
-                return (
-                  <div key={msg.id || i} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                    <span className="text-[10px] text-[#94A3B8] mb-0.5 px-1 font-semibold">{displayName}</span>
-                    <div className={`p-3 rounded-2xl text-xs leading-relaxed ${isMe
-                        ? 'bg-[#059669] text-white rounded-br-sm'
-                        : 'bg-[#E7F0FC] text-[#0F172A] rounded-bl-sm border border-[#BDDDFA]'
-                      }`}>
-                      {msg.message}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[9px] text-slate-400 px-1 mt-0.5">
-                      <span>{msg.timestamp}</span>
-                      {isMe && (
-                        <span className={msg.status === 'read' ? 'text-emerald-600 font-bold' : 'text-slate-500'}>
-                          {msg.status === 'read' ? '✓✓ Read' : (msg.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Chat Input */}
-          <div className="flex gap-2 border-t border-[#BDDDFA]/60 pt-3 mt-2">
-            <input
-              type="text"
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendText()}
-              placeholder={e2eeStatus === 'secure' ? "Type encrypted clinical message..." : "Type message to doctor..."}
-              className="flex-grow !min-h-[46px] !py-2 !px-3 text-xs"
-            />
-            <button
-              onClick={sendText}
-              className="bg-[#059669] hover:bg-[#047857] text-white font-bold px-4 rounded-[10px] text-xs flex items-center justify-center cursor-pointer"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
+        <div className={`flex flex-col ${appointmentMode === 'chat' ? 'lg:col-span-3' : 'lg:col-span-1'}`}>
+          <ClinicalChatPanel
+            compact={false}
+            messages={messages}
+            user={user}
+            isAnonymous={isAnonymous}
+            anonIdentifier={anonIdentifier}
+            e2eeStatus={e2eeStatus}
+            fingerprint={fingerprint}
+            inputVal={inputVal}
+            setInputVal={setInputVal}
+            onSendText={sendText}
+            scrollRef={scrollRef}
+            placeholder={e2eeStatus === 'secure' ? "Type encrypted clinical message..." : "Type message to doctor..."}
+          />
         </div>
 
         {/* Right pane: WebRTC Video / Twilio Dialer */}
         {appointmentMode !== 'chat' && (
           <div className="lg:col-span-2 space-y-6">
 
-            {/* --- CASE A1: ANONYMOUS CONSULTATION (AUDIO ONLY) --- */}
-            {isAudioOnly && (
-              <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px]">
-                {/* Hidden Audio Element for incoming remote peer stream */}
-                <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-
-                {/* Header Status Bar */}
-                <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2.5 mb-4 text-xs font-semibold">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-pulse" />
-                    <span className="text-[#059669] font-bold">
-                      Audio Consultation
-                    </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                      webrtcStatus === 'connected' ? 'bg-emerald-50 text-[#059669] border border-emerald-200' :
-                      webrtcStatus === 'connecting' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                      webrtcStatus === 'reconnecting' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
-                      'bg-slate-100 text-slate-600 border border-slate-200'
-                    }`}>
-                      {webrtcStatus === 'connected' ? 'Connected' : webrtcStatus.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleReconnect}
-                      title="Reconnect Audio"
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#BDDDFA] hover:bg-[#E7F0FC] text-[11px] text-[#55647C] font-semibold cursor-pointer"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      <span>Reconnect</span>
-                    </button>
-                    <SecurityBadge text="End-to-End Encrypted" />
-                  </div>
-                </div>
-
-                {/* Pre-Call Setup Screen */}
-                {setupScreen ? (
-                  <div className="flex-grow flex flex-col items-center justify-center p-6 border border-[#BDDDFA] rounded-2xl bg-gradient-to-b from-[#F4F6F9] to-[#E7F0FC]/40 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center mb-3.5 shadow-sm">
-                      <Mic className="w-8 h-8" />
-                    </div>
-
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200 mb-2">
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>{user.role === 'doctor' ? anonIdentifier : 'Anonymous Consultation'}</span>
-                    </div>
-
-                    <h3 className="text-base sm:text-lg font-bold text-[#0F172A] mb-1">
-                      {user.role === 'doctor' ? 'Pre-Consultation Audio Check' : 'Start Anonymous Consultation'}
-                    </h3>
-
-                    <p className="text-xs text-[#55647C] max-w-md mb-4 leading-relaxed">
-                      {user.role === 'doctor'
-                        ? 'You are conducting an audio consultation with an anonymous patient. Video is disabled to protect patient privacy.'
-                        : 'Your microphone will be enabled for doctor communication. Camera and personal details remain completely hidden.'}
-                    </p>
-
-                    {/* Patient Privacy Notice */}
-                    {user.role !== 'doctor' && (
-                      <div className="p-3 mb-4 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 max-w-md flex items-center gap-2.5">
-                        <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
-                        <span className="font-semibold text-[11px]">
-                          During Consultation, Your identity is hidden from the doctor
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Microphone Preview Box */}
-                    <div className="w-72 p-3.5 rounded-xl bg-white border border-[#BDDDFA] shadow-sm mb-5 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#059669] flex items-center justify-center">
-                          <Mic className="w-4 h-4" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-xs font-bold text-[#0F172A]">Microphone Ready</p>
-                          <p className="text-[10px] text-[#55647C]">Audio-only stream (No Camera)</p>
-                        </div>
-                      </div>
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-pulse" />
-                    </div>
-
-                    <button
-                      onClick={handleJoinCall}
-                      className="px-6 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm cursor-pointer"
-                    >
-                      <Mic className="w-4 h-4" />
-                      <span>Join Audio Consultation</span>
-                    </button>
-                  </div>
-                ) : (
-                  /* Active Audio Consultation Stage */
-                  <div className="flex-grow flex flex-col justify-between">
-                    <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] border border-[#1E293B] min-h-[380px] flex flex-col items-center justify-center p-6 text-center shadow-inner">
-                      
-                      {/* Top Overlay Badge */}
-                      <div className="absolute top-3 left-3 bg-[#0F172A]/90 px-3 py-1 rounded-lg text-[10px] text-white font-semibold flex items-center gap-1.5 border border-[#334155]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
-                        <span>Anonymous Audio Stream • AES-256 E2EE</span>
-                      </div>
-
-                      {/* Call Duration Pill */}
-                      <div className="absolute top-3 right-3 bg-black/60 px-3 py-1 rounded-lg text-xs font-mono font-bold text-[#34D399] flex items-center gap-1.5 border border-white/10">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{callTimer}</span>
-                      </div>
-
-                      {/* Doctor vs Patient View Center Display */}
-                      {user.role === 'doctor' ? (
-                        /* Doctor View: Strictly anonymous, zero patient PII */
-                        <div className="space-y-3 max-w-sm">
-                          <div className="w-24 h-24 rounded-full bg-purple-900/60 border-2 border-purple-400 text-purple-300 flex items-center justify-center mx-auto shadow-lg shadow-purple-900/30">
-                            <Shield className="w-12 h-12" />
-                          </div>
-                          <div>
-                            <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">
-                              {anonIdentifier}
-                            </h2>
-                            <p className="text-xs sm:text-sm font-semibold text-purple-300 mt-0.5">
-                              Audio Consultation
-                            </p>
-                            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-bold mt-2">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                              <span>Connected</span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Patient View: Clear privacy confirmation and Doctor's profile */
-                        <div className="space-y-3 max-w-md">
-                          <div className="w-20 h-20 rounded-full bg-emerald-900/50 border-2 border-[#34D399] text-[#34D399] flex items-center justify-center mx-auto shadow-lg shadow-emerald-900/30">
-                            <Mic className="w-10 h-10" />
-                          </div>
-
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-900/60 border border-purple-400/30 text-purple-200 text-xs font-bold">
-                            <Lock className="w-3.5 h-3.5 text-purple-300" />
-                            <span>Your Session: {anonIdentifier}</span>
-                          </div>
-
-                          <div>
-                            <h2 className="text-lg sm:text-xl font-black text-white">
-                              {consultationData?.doctor?.name ? `Dr. ${consultationData.doctor.name}` : 'Consulting Doctor'}
-                            </h2>
-                            <p className="text-xs text-slate-300">
-                              {consultationData?.doctor?.specialty || 'General Telemedicine Specialist'}
-                            </p>
-                            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-bold mt-2">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                              <span>Connected</span>
-                            </div>
-                          </div>
-
-                          {/* Privacy message banner */}
-                          <div className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-500/30 text-[11px] text-purple-200 max-w-xs mx-auto">
-                            <p className="font-semibold flex items-center justify-center gap-1.5">
-                              <ShieldCheck className="w-4 h-4 text-purple-300" />
-                              <span>During Consultation, Your identity is hidden from the doctor</span>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Real-time Dynamic Sound Wave Visualizer */}
-                      <div className="flex items-center justify-center gap-1.5 h-10 mt-6 mb-2">
-                        {[35, 65, 40, 85, 55, 95, 75, 45, 90, 60, 100, 70, 50, 80, 30].map((h, i) => (
-                          <div
-                            key={i}
-                            className={`w-1.5 rounded-full transition-all duration-300 ${
-                              micActive
-                                ? 'bg-gradient-to-t from-[#059669] to-[#34D399] animate-pulse'
-                                : 'bg-slate-700'
-                            }`}
-                            style={{
-                              height: micActive ? `${h}%` : '20%',
-                              animationDelay: `${i * 60}ms`
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                    </div>
-
-                    {/* Bottom Controls HUD */}
-                    <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-[#BDDDFA]/60">
-                      <button
-                        onClick={toggleMic}
-                        className={`p-3 rounded-full border cursor-pointer transition-colors ${
-                          micActive
-                            ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]'
-                            : 'bg-red-500 border-red-600 text-white'
-                        }`}
-                        title={micActive ? "Mute Microphone" : "Unmute Microphone"}
-                      >
-                        {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                      </button>
-
-                      <button
-                        onClick={handleReconnect}
-                        className="p-3 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA] cursor-pointer"
-                        title="Reconnect Session"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={user?.role === 'doctor' ? handleCompleteConsultation : handleHangup}
-                        className="p-3 rounded-full bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer shadow-sm hover:shadow"
-                        title="End Consultation"
-                      >
-                        <PhoneOff className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* --- CASE A2: WEBRTC VIDEO consultation --- */}
-            {!isAudioOnly && appointmentMode === 'video' && (
-              <div className="bg-white p-5 rounded-2xl border border-[#BDDDFA] flex flex-col justify-between min-h-[520px]">
-
-                {/* Header Status Bar */}
-                <div className="flex justify-between items-center border-b border-[#BDDDFA]/60 pb-2.5 mb-4 text-xs font-semibold">
-                  <span className="text-[#059669] flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Live Medical WebRTC Room</span>
-                  </span>
-                  <SecurityBadge text="Direct Peer-to-Peer" />
-                </div>
-
-                {/* Pre-Call Setup Screen */}
-                {setupScreen ? (
-                  <div className="flex-grow flex flex-col items-center justify-center p-6 border border-[#BDDDFA] rounded-2xl bg-[#F4F6F9] text-center">
-                    <div className="w-12 h-12 rounded-[10px] bg-[#E7F0FC] text-[#059669] border border-[#BDDDFA] flex items-center justify-center mb-3">
-                      <Video className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-sm sm:text-base font-bold text-[#0F172A] mb-1">
-                      Pre-Consultation Device Check
-                    </h3>
-                    <p className="text-xs text-[#55647C] max-w-sm mb-5 leading-relaxed">
-                      Check your camera and microphone preview before joining the consultation room.
-                    </p>
-
-                    {/* Camera Preview Frame */}
-                    <div className="relative w-72 h-44 bg-[#0F172A] rounded-2xl overflow-hidden mb-5 border border-[#BDDDFA] flex items-center justify-center">
-                      <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]"></video>
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider" id="camIndicator">
-                        Camera Ready
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleJoinCall}
-                      className="px-6 py-2.5 rounded-[10px] bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs flex items-center gap-2 cursor-pointer"
-                    >
-                      <Video className="w-4 h-4" />
-                      <span>Join Consultation Call</span>
-                    </button>
-                  </div>
-                ) : (
-                  /* Active Conference Screen with Floating Self View */
-                  <div className="flex-grow flex flex-col justify-between">
-                    <div className="relative rounded-2xl overflow-hidden bg-[#0F172A] border border-[#1E293B] min-h-[380px] flex items-center justify-center">
-
-                      {/* Remote Participant Stream */}
-                      <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
-
-                      {/* Fallback Overlay if remote video is not streaming yet */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0F172A]/80 text-center p-4">
-                        <div className="w-16 h-16 rounded-full bg-[#1E293B] border border-[#334155] text-[#34D399] flex items-center justify-center mb-3">
-                          <User className="w-8 h-8" />
-                        </div>
-                        <p className="text-xs font-bold text-white uppercase tracking-wider">Awaiting remote participant...</p>
-                        <p className="text-[11px] text-[#CBD5E1] mt-1">Direct peer connection will begin automatically when peer joins.</p>
-                      </div>
-
-                      {/* Top Overlay Badge */}
-                      <div className="absolute top-3 left-3 bg-[#0F172A]/80 px-2.5 py-1 rounded-lg text-[10px] text-white font-semibold flex items-center gap-1.5 border border-[#334155]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#34D399]" />
-                        <span>Consultation Stream (AES-256 E2EE)</span>
-                      </div>
-
-                      {/* Floating Picture-in-Picture Local Self-View */}
-                      <div className="absolute bottom-3 right-3 w-36 sm:w-44 h-24 sm:h-28 rounded-xl overflow-hidden border-2 border-white/20 bg-black">
-                        <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]"></video>
-                        <span className="absolute bottom-1 left-1.5 px-1.5 py-0.5 rounded bg-black/70 text-[8px] text-white font-bold">You (Local)</span>
-                      </div>
-
-                    </div>
-
-                    {/* Bottom Controls HUD */}
-                    <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-[#BDDDFA]/60">
-                      <button
-                        onClick={() => setMicActive(!micActive)}
-                        className={`p-3 rounded-full border cursor-pointer ${micActive
-                            ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]'
-                            : 'bg-red-500 border-red-600 text-white'
-                          }`}
-                        title={micActive ? "Mute Microphone" : "Unmute Microphone"}
-                      >
-                        {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                      </button>
-
-                      <button
-                        onClick={() => setCameraActive(!cameraActive)}
-                        className={`p-3 rounded-full border cursor-pointer ${cameraActive
-                            ? 'bg-[#E7F0FC] border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA]'
-                            : 'bg-red-500 border-red-600 text-white'
-                          }`}
-                        title={cameraActive ? "Turn Off Camera" : "Turn On Camera"}
-                      >
-                        {cameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-                      </button>
-
-                      <button
-                        className="p-3 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] text-[#0F172A] hover:bg-[#BDDDFA] cursor-pointer"
-                        title="Share Screen"
-                      >
-                        <Monitor className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={user?.role === 'doctor' ? handleCompleteConsultation : handleHangup}
-                        className="p-3 rounded-full bg-[#DC2626] hover:bg-[#B91C1C] text-white cursor-pointer"
-                        title="End Consultation"
-                      >
-                        <PhoneOff className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* --- CASE A: WEBRTC VIDEO / AUDIO STAGE --- */}
+            {(isAudioOnly || appointmentMode === 'video') && (
+              <VideoStage
+                isDoctorView={false}
+                isAudioOnly={isAudioOnly}
+                appointmentMode={appointmentMode}
+                setupScreen={setupScreen}
+                webrtcStatus={webrtcStatus}
+                localVideoRef={localVideoRef}
+                remoteVideoRef={remoteVideoRef}
+                remoteAudioRef={remoteAudioRef}
+                handleJoinCall={handleJoinCall}
+                handleReconnect={handleReconnect}
+                user={user}
+                patientData={patientData}
+                consultationData={consultationData}
+                anonIdentifier={anonIdentifier}
+                callTimer={callTimer}
+                micActive={micActive}
+                cameraActive={cameraActive}
+                toggleMic={toggleMic}
+                toggleCamera={toggleCamera}
+                onEndCall={user?.role === 'doctor' ? handleCompleteConsultation : handleHangup}
+              />
             )}
 
             {/* --- CASE B: TWILIO TELEPHONY PHONE callback integration --- */}
