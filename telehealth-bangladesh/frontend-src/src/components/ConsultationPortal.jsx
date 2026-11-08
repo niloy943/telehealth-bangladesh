@@ -286,7 +286,7 @@ export const ConsultationPortal = ({
         window.dispatchEvent(new CustomEvent('healnsight_prescription_updated', {
           detail: { consultationId, patientId: patId, doctorId: user?.id }
         }));
-        try { localStorage.setItem('healnsight_last_prescription_sync', Date.now().toString()); } catch {}
+        try { localStorage.setItem('healnsight_last_prescription_sync', Date.now().toString()); } catch { }
         if (fetchAppointments) fetchAppointments();
         setTimeout(() => {
           setRxModalAppt(null);
@@ -486,7 +486,7 @@ export const ConsultationPortal = ({
           <p className="text-xs text-[#55647C]">
             {isDoctor
               ? "Review patient symptoms, launch encrypted video/audio rooms, and inspect records"
-              : "Review past and upcoming visits, join video rooms, and inspect medical prescriptions"}
+              : ""}
           </p>
         </div>
 
@@ -1039,7 +1039,7 @@ export const ConsultationPortal = ({
         onSuccess={() => {
           if (fetchAppointments) fetchAppointments();
           window.dispatchEvent(new CustomEvent('healnsight_records_updated'));
-          try { localStorage.setItem('healnsight_last_record_sync', Date.now().toString()); } catch {}
+          try { localStorage.setItem('healnsight_last_record_sync', Date.now().toString()); } catch { }
           triggerNotification("Records Synchronized", "Consultation medical reports updated successfully.", "security");
         }}
       />

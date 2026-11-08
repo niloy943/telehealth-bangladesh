@@ -34,3 +34,4 @@ export const MultimodalVisionPanel = ({ legacyImageProfiles = [] }) => {
 };
 
 export default MultimodalVisionPanel;
+

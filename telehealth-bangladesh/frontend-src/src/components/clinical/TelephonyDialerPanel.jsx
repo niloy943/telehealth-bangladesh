@@ -144,3 +144,4 @@ export const TelephonyDialerPanel = ({
 };
 
 export default TelephonyDialerPanel;
+
