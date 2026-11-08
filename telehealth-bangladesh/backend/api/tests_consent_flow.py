@@ -397,3 +397,4 @@ class ConsentManagerFlowTests(APITestCase):
         self.client.force_authenticate(user=self.doctor)
         bad_approve = self.client.post(f'/api/consent/requests/999/approve/', format='json')
         self.assertEqual(bad_approve.status_code, status.HTTP_403_FORBIDDEN)
+
