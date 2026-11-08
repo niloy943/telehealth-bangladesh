@@ -3,7 +3,8 @@ import {
   ShieldCheck, Shield, Lock, Eye, AlertCircle, CheckCircle2,
   Clock, Calendar, User, FileText, RefreshCw, X, PlusCircle,
   AlertTriangle, History, Activity, Sliders, ChevronRight,
-  Check, Phone, Info, Zap, Download, Database, ShieldAlert
+  Check, Phone, Info, Zap, Download, Database, ShieldAlert,
+  Search
 } from 'lucide-react';
 import {
   Card, CardHeader, CardTitle, CardDescription, CardContent,
@@ -61,17 +62,20 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
     custom_hours: 24,
     can_view_lab_reports: true,
     can_view_prescriptions: true,
-    can_view_clinical_notes: true
+    can_view_clinical_notes: true,
+    selected_record_ids: []
   });
 
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
+  const [grantDoctorSearch, setGrantDoctorSearch] = useState('');
   const [grantForm, setGrantForm] = useState({
     doctor_id: '',
     duration_type: '24_hours',
     custom_hours: 24,
     can_view_lab_reports: true,
     can_view_prescriptions: true,
-    can_view_clinical_notes: true
+    can_view_clinical_notes: true,
+    selected_record_ids: []
   });
 
   const [submittingAction, setSubmittingAction] = useState(false);
@@ -257,7 +261,14 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(modifyForm)
+        body: JSON.stringify({
+          duration_type: modifyForm.duration_type,
+          custom_hours: modifyForm.custom_hours,
+          can_view_lab_reports: modifyForm.can_view_lab_reports,
+          can_view_prescriptions: modifyForm.can_view_prescriptions,
+          can_view_clinical_notes: modifyForm.can_view_clinical_notes,
+          allowed_record_ids: modifyForm.selected_record_ids
+        })
       });
 
       if (resp.ok) {
@@ -267,7 +278,7 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
           "security"
         );
         setModifyModalConsent(null);
-        loadDashboard();
+        await loadDashboard();
         notifySync();
       } else {
         const err = await resp.json();
@@ -283,7 +294,11 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
   // 5. Grant Direct Consent Handler
   const handleGrantDirect = async () => {
     if (!grantForm.doctor_id) {
-      triggerNotification("Doctor Required", "Please select a physician to grant access.", "warning");
+      triggerNotification("Physician Required", "Please select a registered physician to grant access.", "warning");
+      return;
+    }
+    if (!grantForm.can_view_lab_reports && !grantForm.can_view_prescriptions && !grantForm.can_view_clinical_notes) {
+      triggerNotification("Permission Required", "Please select at least one record category permission.", "warning");
       return;
     }
     setSubmittingAction(true);
@@ -294,17 +309,37 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(grantForm)
+        body: JSON.stringify({
+          doctor_id: grantForm.doctor_id,
+          duration_type: grantForm.duration_type,
+          custom_hours: grantForm.custom_hours,
+          can_view_lab_reports: grantForm.can_view_lab_reports,
+          can_view_prescriptions: grantForm.can_view_prescriptions,
+          can_view_clinical_notes: grantForm.can_view_clinical_notes,
+          allowed_record_ids: grantForm.selected_record_ids
+        })
       });
 
       if (resp.ok) {
+        const selectedDoc = availableDoctors.find(d => String(d.id) === String(grantForm.doctor_id));
+        const docName = selectedDoc ? selectedDoc.name : `Doctor #${grantForm.doctor_id}`;
         triggerNotification(
           "Access Delegated",
-          "Proactive consent granted to the physician.",
+          `Proactive consent successfully granted to ${docName}.`,
           "security"
         );
         setIsGrantModalOpen(false);
-        loadDashboard();
+        setGrantDoctorSearch('');
+        setGrantForm({
+          doctor_id: '',
+          duration_type: '24_hours',
+          custom_hours: 24,
+          can_view_lab_reports: true,
+          can_view_prescriptions: true,
+          can_view_clinical_notes: true,
+          selected_record_ids: []
+        });
+        await loadDashboard();
         notifySync();
       } else {
         const err = await resp.json();
@@ -598,13 +633,17 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
                         size="sm"
                         icon={Sliders}
                         onClick={() => {
+                          const existingIds = (c.permissions || [])
+                            .filter(p => p.is_allowed && p.record)
+                            .map(p => p.record);
                           setModifyModalConsent(c);
                           setModifyForm({
-                            duration_type: c.duration_type,
+                            duration_type: c.duration_type || '24_hours',
                             custom_hours: 24,
-                            can_view_lab_reports: c.can_view_lab_reports,
-                            can_view_prescriptions: c.can_view_prescriptions,
-                            can_view_clinical_notes: c.can_view_clinical_notes
+                            can_view_lab_reports: c.can_view_lab_reports ?? true,
+                            can_view_prescriptions: c.can_view_prescriptions ?? true,
+                            can_view_clinical_notes: c.can_view_clinical_notes ?? true,
+                            selected_record_ids: existingIds
                           });
                         }}
                       >
@@ -1159,6 +1198,60 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
             </label>
           </div>
 
+          {/* Selective Medical Records */}
+          {patientRecords.length > 0 && (
+            <div className="space-y-1.5 pt-2 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#0F172A] block">
+                  Select Specific Records (Optional)
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModifyForm({ ...modifyForm, selected_record_ids: patientRecords.map(r => r.id) })}
+                    className="text-[10px] text-[#059669] font-bold hover:underline"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-slate-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => setModifyForm({ ...modifyForm, selected_record_ids: [] })}
+                    className="text-[10px] text-slate-500 font-medium hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {modifyForm.selected_record_ids.length > 0
+                  ? `${modifyForm.selected_record_ids.length} of ${patientRecords.length} records selected`
+                  : 'All records in permitted categories are accessible.'}
+              </p>
+              <div className="max-h-36 overflow-y-auto space-y-1 pr-1 border border-slate-200 rounded-xl p-2 bg-slate-50">
+                {patientRecords.map(r => (
+                  <label key={r.id} className="flex items-center justify-between p-1.5 hover:bg-white rounded text-xs cursor-pointer">
+                    <div className="truncate max-w-[280px]">
+                      <span className="font-medium text-slate-800 block truncate">{r.title || r.file_name}</span>
+                      <span className="text-[10px] text-slate-500">{r.record_type} &bull; {new Date(r.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={modifyForm.selected_record_ids.includes(r.id)}
+                      onChange={e => {
+                        const next = e.target.checked
+                          ? [...modifyForm.selected_record_ids, r.id]
+                          : modifyForm.selected_record_ids.filter(id => id !== r.id);
+                        setModifyForm({ ...modifyForm, selected_record_ids: next });
+                      }}
+                      className="rounded text-[#059669]"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-200">
             <Button variant="outline" size="sm" onClick={() => setModifyModalConsent(null)}>
               Cancel
@@ -1179,46 +1272,151 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
       {/* ── MODAL 5: GRANT DIRECT ACCESS MODAL ── */}
       <Modal
         isOpen={isGrantModalOpen}
-        onClose={() => setIsGrantModalOpen(false)}
+        onClose={() => {
+          setIsGrantModalOpen(false);
+          setGrantDoctorSearch('');
+        }}
         title="Grant Medical Record Access to Doctor"
-        subtitle="Proactively authorize a physician to inspect your medical history."
-        maxWidth="max-w-lg"
+        subtitle="Authorize a verified physician to inspect your medical history."
+        maxWidth="max-w-xl"
       >
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0F172A] block">Select Physician</label>
-            {availableDoctors.length > 0 ? (
-              <select
-                value={grantForm.doctor_id}
-                onChange={e => setGrantForm({ ...grantForm, doctor_id: e.target.value })}
-                className="w-full p-2.5 text-xs border border-[#BDDDFA] rounded-xl outline-none"
-              >
-                <option value="">-- Select from your consultation doctors --</option>
-                {availableDoctors.map(doc => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.name} ({doc.specialty})
-                  </option>
-                ))}
-              </select>
+          {/* 1. Doctor Selection & Search */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[#0F172A] block">Select Physician</label>
+              <span className="text-[11px] text-[#059669] font-semibold">
+                {availableDoctors.length} Registered Doctor{availableDoctors.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {/* If doctor already selected, show verified doctor card */}
+            {grantForm.doctor_id ? (
+              (() => {
+                const doc = availableDoctors.find(d => String(d.id) === String(grantForm.doctor_id));
+                return (
+                  <div className="p-3.5 rounded-2xl border-2 border-emerald-300 bg-emerald-50/40 flex items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-white border border-emerald-300 text-[#059669] flex items-center justify-center font-bold text-base shadow-xs">
+                        {doc?.name?.replace('Dr. ', '')?.[0] || 'D'}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-[#0F172A]">{doc?.name || `Doctor #${grantForm.doctor_id}`}</h4>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            BMDC Verified
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#059669] font-semibold mt-0.5">
+                          {doc?.specialty || 'General Practitioner'} &bull; <span className="text-slate-600 font-normal">{doc?.hospital || 'HealNSight Medical Center'}</span>
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                          BMDC Reg: {doc?.bmdc_reg || 'BMDC-VERIFIED'} {doc?.has_appointment && <span className="text-emerald-700 font-bold ml-1.5">&bull; Prior Consultation</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setGrantForm({ ...grantForm, doctor_id: '' })}
+                      className="text-xs shrink-0 bg-white hover:bg-slate-50"
+                    >
+                      Change
+                    </Button>
+                  </div>
+                );
+              })()
             ) : (
-              <input
-                type="text"
-                placeholder="Doctor Username or ID"
-                value={grantForm.doctor_id}
-                onChange={e => setGrantForm({ ...grantForm, doctor_id: e.target.value })}
-                className="w-full p-2.5 text-xs border border-[#BDDDFA] rounded-xl outline-none"
-              />
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={grantDoctorSearch}
+                    onChange={e => setGrantDoctorSearch(e.target.value)}
+                    placeholder="Search doctor by name, specialty, hospital, or BMDC..."
+                    className="w-full pl-9 pr-8 py-2 text-xs border border-[#BDDDFA] rounded-xl outline-none focus:border-[#059669]"
+                  />
+                  {grantDoctorSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setGrantDoctorSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 border border-slate-200 rounded-xl p-2 bg-slate-50/60">
+                  {(() => {
+                    const searchLower = grantDoctorSearch.toLowerCase().trim();
+                    const filtered = availableDoctors.filter(d => {
+                      if (!searchLower) return true;
+                      return (
+                        (d.name || '').toLowerCase().includes(searchLower) ||
+                        (d.specialty || '').toLowerCase().includes(searchLower) ||
+                        (d.hospital || '').toLowerCase().includes(searchLower) ||
+                        (d.username || '').toLowerCase().includes(searchLower) ||
+                        (d.bmdc_reg || '').toLowerCase().includes(searchLower)
+                      );
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="text-center py-4 text-xs text-slate-500">
+                          No registered doctors found matching "{grantDoctorSearch}".
+                        </div>
+                      );
+                    }
+
+                    return filtered.map(doc => (
+                      <div
+                        key={doc.id}
+                        onClick={() => setGrantForm({ ...grantForm, doctor_id: doc.id })}
+                        className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 transition cursor-pointer flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-[#059669] flex items-center justify-center font-bold text-xs shrink-0">
+                            {doc.name?.replace('Dr. ', '')?.[0] || 'D'}
+                          </div>
+                          <div className="truncate">
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="font-bold text-xs text-[#0F172A] truncate">{doc.name}</span>
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                                Verified
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#059669] truncate">
+                              {doc.specialty} &bull; <span className="text-slate-500">{doc.hospital}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-[11px] h-7 px-2.5 text-[#059669] border-emerald-300 hover:bg-emerald-50 shrink-0"
+                        >
+                          Select
+                        </Button>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0F172A] block">Duration Window</label>
+          {/* 2. Duration Window */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-200">
+            <label className="text-xs font-bold text-[#0F172A] block">Consent Duration Window</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { id: 'consultation_only', label: 'Consultation' },
+                { id: 'consultation_only', label: 'Consultation (2h)' },
                 { id: '24_hours', label: '24 Hours' },
                 { id: '7_days', label: '7 Days' },
-                { id: 'custom', label: 'Custom' }
+                { id: 'custom', label: 'Custom Hours' }
               ].map(opt => (
                 <button
                   key={opt.id}
@@ -1233,41 +1431,120 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
                 </button>
               ))}
             </div>
+
+            {grantForm.duration_type === 'custom' && (
+              <div className="pt-2 flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="720"
+                  value={grantForm.custom_hours}
+                  onChange={e => setGrantForm({ ...grantForm, custom_hours: parseInt(e.target.value) || 24 })}
+                  className="w-24 p-2 text-xs border border-[#BDDDFA] rounded-lg"
+                />
+                <span className="text-xs text-slate-600">hours of access</span>
+              </div>
+            )}
           </div>
 
+          {/* 3. Category Permissions */}
           <div className="space-y-2 pt-2 border-t border-slate-200">
-            <label className="text-xs font-bold text-[#0F172A] block">Permissions</label>
-            <label className="flex items-center gap-2 text-xs text-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={grantForm.can_view_lab_reports}
-                onChange={e => setGrantForm({ ...grantForm, can_view_lab_reports: e.target.checked })}
-                className="rounded text-[#059669]"
-              />
-              <span>Lab Reports &amp; Diagnostic Records</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs text-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={grantForm.can_view_prescriptions}
-                onChange={e => setGrantForm({ ...grantForm, can_view_prescriptions: e.target.checked })}
-                className="rounded text-[#059669]"
-              />
-              <span>Prescriptions &amp; Medication Vault</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs text-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={grantForm.can_view_clinical_notes}
-                onChange={e => setGrantForm({ ...grantForm, can_view_clinical_notes: e.target.checked })}
-                className="rounded text-[#059669]"
-              />
-              <span>Clinical Notes &amp; History</span>
-            </label>
+            <label className="text-xs font-bold text-[#0F172A] block">Record Category Permissions</label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs text-slate-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={grantForm.can_view_lab_reports}
+                  onChange={e => setGrantForm({ ...grantForm, can_view_lab_reports: e.target.checked })}
+                  className="rounded text-[#059669]"
+                />
+                <span className="font-semibold">Lab Reports &amp; Diagnostic Records</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={grantForm.can_view_prescriptions}
+                  onChange={e => setGrantForm({ ...grantForm, can_view_prescriptions: e.target.checked })}
+                  className="rounded text-[#059669]"
+                />
+                <span className="font-semibold">Prescriptions &amp; Medication Vault</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={grantForm.can_view_clinical_notes}
+                  onChange={e => setGrantForm({ ...grantForm, can_view_clinical_notes: e.target.checked })}
+                  className="rounded text-[#059669]"
+                />
+                <span className="font-semibold">Clinical Notes &amp; Consultation Summaries</span>
+              </label>
+            </div>
           </div>
 
+          {/* 4. Selective Medical Records */}
+          {patientRecords.length > 0 && (
+            <div className="space-y-1.5 pt-2 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#0F172A] block">
+                  Select Specific Medical Records (Optional)
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGrantForm({ ...grantForm, selected_record_ids: patientRecords.map(r => r.id) })}
+                    className="text-[10px] text-[#059669] font-bold hover:underline"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-slate-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => setGrantForm({ ...grantForm, selected_record_ids: [] })}
+                    className="text-[10px] text-slate-500 font-medium hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {grantForm.selected_record_ids.length > 0
+                  ? `${grantForm.selected_record_ids.length} of ${patientRecords.length} records selected`
+                  : 'Leave empty to authorize all records in permitted categories.'}
+              </p>
+              <div className="max-h-36 overflow-y-auto space-y-1 pr-1 border border-slate-200 rounded-xl p-2 bg-slate-50">
+                {patientRecords.map(r => (
+                  <label key={r.id} className="flex items-center justify-between p-1.5 hover:bg-white rounded text-xs cursor-pointer">
+                    <div className="truncate max-w-[280px]">
+                      <span className="font-medium text-slate-800 block truncate">{r.title || r.file_name}</span>
+                      <span className="text-[10px] text-slate-500">{r.record_type} &bull; {new Date(r.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={grantForm.selected_record_ids.includes(r.id)}
+                      onChange={e => {
+                        const next = e.target.checked
+                          ? [...grantForm.selected_record_ids, r.id]
+                          : grantForm.selected_record_ids.filter(id => id !== r.id);
+                        setGrantForm({ ...grantForm, selected_record_ids: next });
+                      }}
+                      className="rounded text-[#059669]"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Modal Footer Actions */}
           <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-200">
-            <Button variant="outline" size="sm" onClick={() => setIsGrantModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsGrantModalOpen(false);
+                setGrantDoctorSearch('');
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -1275,6 +1552,7 @@ export const PatientConsentManager = ({ token, user, onTabChange }) => {
               size="md"
               icon={ShieldCheck}
               loading={submittingAction}
+              disabled={!grantForm.doctor_id || (!grantForm.can_view_lab_reports && !grantForm.can_view_prescriptions && !grantForm.can_view_clinical_notes)}
               onClick={handleGrantDirect}
               className="bg-[#059669] hover:bg-[#047857] text-white font-bold"
             >

@@ -124,7 +124,9 @@ class ConsentAuthorizationEngine:
             ).order_by('-revoked_at').first()
 
             expired_consent = PatientConsent.objects.filter(
-                patient=patient, doctor=doctor, status='active', valid_until__lte=now
+                patient=patient, doctor=doctor
+            ).filter(
+                Q(status='expired') | Q(valid_until__lte=now)
             ).order_by('-valid_until').first()
 
             if revoked_consent:
@@ -169,6 +171,24 @@ class ConsentAuthorizationEngine:
 
         # 5. Check Record-Level Restrictions
         if record_id:
+            # If explicit allowed records were specified, this record MUST be in the allowed list
+            has_explicit_allowed = ConsentPermission.objects.filter(
+                consent=active_consent, is_allowed=True, record__isnull=False
+            ).exists()
+            if has_explicit_allowed:
+                is_explicitly_allowed = ConsentPermission.objects.filter(
+                    consent=active_consent, record_id=record_id, is_allowed=True
+                ).exists()
+                if not is_explicitly_allowed:
+                    return {
+                        'is_authorized': False,
+                        'status': 'RECORD_WITHHELD',
+                        'reason': "Patient explicitly restricted access to specific medical records and excluded this record.",
+                        'active_consent': active_consent,
+                        'emergency_log': None,
+                        'permitted_categories': allowed_cats
+                    }
+
             perm = ConsentPermission.objects.filter(consent=active_consent, record_id=record_id).first()
             if perm and not perm.is_allowed:
                 return {
@@ -227,12 +247,13 @@ class PatientConsentDashboardView(APIView):
         for ec in expired_consents:
             ec.status = 'expired'
             ec.save(update_fields=['status'])
+            Consent.objects.filter(patient=user, doctor=ec.doctor, status='granted').update(status='expired', granted=False)
             ConsentHistory.objects.create(
                 consent=ec,
                 patient=user,
                 doctor=ec.doctor,
                 action='EXPIRED',
-                details=f"Consent validity window expired at {now.isoformat()}.",
+                details=f"Consent validity window expired at {now.strftime('%b %d, %Y %I:%M %p')}.",
                 ip_address=get_client_ip(request)
             )
 
@@ -259,19 +280,45 @@ class PatientConsentDashboardView(APIView):
         # 5. Emergency Settings
         emergency_setting, _ = EmergencyAccessSetting.objects.get_or_create(patient=user)
 
-        # 6. Available Doctors (for proactive granting)
-        appointments = Appointment.objects.filter(patient=user).select_related('doctor', 'doctor__doctor_profile').order_by('-id')
+        # 6. Available Doctors (both previously consulted and all registered verified physicians)
         doctor_map = {}
+        # Prioritize doctors with prior consultations/appointments
+        appointments = Appointment.objects.filter(patient=user).select_related('doctor', 'doctor__doctor_profile').order_by('-id')
         for appt in appointments:
             doc = appt.doctor
             if doc and doc.id not in doctor_map:
-                spec = doc.doctor_profile.specialty if hasattr(doc, 'doctor_profile') and doc.doctor_profile else 'Specialist'
+                prof = getattr(doc, 'doctor_profile', None)
+                full_name = f"Dr. {doc.first_name} {doc.last_name}".strip() if (doc.first_name or doc.last_name) else f"Dr. {doc.username}"
                 doctor_map[doc.id] = {
                     'id': doc.id,
-                    'name': f"Dr. {doc.first_name or doc.username}",
-                    'specialty': spec,
+                    'name': full_name,
                     'username': doc.username,
+                    'specialty': prof.specialty if prof else 'Medical Specialist',
+                    'hospital': prof.hospital if (prof and prof.hospital) else 'Central Medical Hospital',
+                    'bmdc_reg': doc.bmdc_reg or 'BMDC-VERIFIED',
+                    'experience': prof.experience if prof else 1,
+                    'verified': (prof.verification_status == 'approved') if prof else True,
+                    'has_appointment': True,
                     'appointment_id': appt.id
+                }
+
+        # Include all other active registered doctors from database
+        all_registered_doctors = User.objects.filter(role='doctor', is_active=True).select_related('doctor_profile').order_by('first_name', 'username')
+        for doc in all_registered_doctors:
+            if doc.id not in doctor_map:
+                prof = getattr(doc, 'doctor_profile', None)
+                full_name = f"Dr. {doc.first_name} {doc.last_name}".strip() if (doc.first_name or doc.last_name) else f"Dr. {doc.username}"
+                doctor_map[doc.id] = {
+                    'id': doc.id,
+                    'name': full_name,
+                    'username': doc.username,
+                    'specialty': prof.specialty if prof else 'General Practitioner',
+                    'hospital': prof.hospital if (prof and prof.hospital) else 'HealNSight Telehealth Network',
+                    'bmdc_reg': doc.bmdc_reg or 'BMDC-VERIFIED',
+                    'experience': prof.experience if prof else 1,
+                    'verified': (prof.verification_status == 'approved') if prof else True,
+                    'has_appointment': False,
+                    'appointment_id': None
                 }
 
         # 7. Patient's Health Records (for selective record sharing)
@@ -596,7 +643,7 @@ class PatientModifyDurationView(APIView):
         elif duration_type == '7_days':
             valid_until = now + timedelta(days=7)
         elif duration_type == 'custom':
-            custom_hours = int(request.data.get('custom_hours', 24))
+            custom_hours = max(1, min(720, int(request.data.get('custom_hours', 24))))
             valid_until = now + timedelta(hours=custom_hours)
         else:
             duration_type = '24_hours'
@@ -614,6 +661,32 @@ class PatientModifyDurationView(APIView):
             consent.can_view_clinical_notes = bool(request.data['can_view_clinical_notes'])
 
         consent.save()
+
+        # Update selective record permissions if passed
+        if 'allowed_record_ids' in request.data:
+            allowed_record_ids = request.data.get('allowed_record_ids', [])
+            consent.permissions.all().delete()
+            if allowed_record_ids:
+                valid_rids = list(HealthRecord.objects.filter(patient=user, id__in=allowed_record_ids).values_list('id', flat=True))
+                for rid in valid_rids:
+                    ConsentPermission.objects.create(
+                        consent=consent,
+                        record_id=rid,
+                        record_category='Selected Record',
+                        is_allowed=True
+                    )
+
+        if 'withheld_record_ids' in request.data:
+            withheld_record_ids = request.data.get('withheld_record_ids', [])
+            if withheld_record_ids:
+                valid_withheld = list(HealthRecord.objects.filter(patient=user, id__in=withheld_record_ids).values_list('id', flat=True))
+                for rid in valid_withheld:
+                    ConsentPermission.objects.create(
+                        consent=consent,
+                        record_id=rid,
+                        record_category='Withheld Record',
+                        is_allowed=False
+                    )
 
         # Update legacy model
         legacy_c = Consent.objects.filter(patient=user, doctor=consent.doctor).first()
@@ -656,15 +729,23 @@ class PatientGrantConsentDirectView(APIView):
 
         doctor_id = request.data.get('doctor_id') or request.data.get('doctorId')
         if not doctor_id:
-            return Response({"error": "doctor_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Physician is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             if str(doctor_id).isdigit():
-                doctor = User.objects.get(id=int(doctor_id), role='doctor')
+                target_user = User.objects.get(id=int(doctor_id))
             else:
-                doctor = User.objects.get(username__iexact=str(doctor_id), role='doctor')
+                target_user = User.objects.get(username__iexact=str(doctor_id))
         except User.DoesNotExist:
-            return Response({"error": "Doctor not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Physician not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user.id == user.id:
+            return Response({"error": "Cannot grant consent to self."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if target_user.role != 'doctor':
+            return Response({"error": "Selected user is not a registered doctor."}, status=status.HTTP_400_BAD_REQUEST)
+
+        doctor = target_user
 
         duration_type = request.data.get('duration_type', '24_hours')
         now = timezone.now()
@@ -674,7 +755,7 @@ class PatientGrantConsentDirectView(APIView):
         elif duration_type == '7_days':
             valid_until = now + timedelta(days=7)
         elif duration_type == 'custom':
-            custom_hours = int(request.data.get('custom_hours', 24))
+            custom_hours = max(1, min(720, int(request.data.get('custom_hours', 24))))
             valid_until = now + timedelta(hours=custom_hours)
         else:
             duration_type = '24_hours'
@@ -684,8 +765,16 @@ class PatientGrantConsentDirectView(APIView):
         can_view_lab_reports = bool(request.data.get('can_view_lab_reports', True))
         can_view_clinical_notes = bool(request.data.get('can_view_clinical_notes', True))
 
-        consultation_id = request.data.get('consultation_id')
+        if not (can_view_prescriptions or can_view_lab_reports or can_view_clinical_notes):
+            return Response({"error": "At least one category permission must be selected."}, status=status.HTTP_400_BAD_REQUEST)
+
+        consultation_id = request.data.get('consultation_id') or request.data.get('consultationId')
         consultation = Consultation.objects.filter(id=consultation_id).first() if consultation_id else None
+
+        # Invalidate any existing active consents between this patient and doctor to maintain deterministic state
+        PatientConsent.objects.filter(patient=user, doctor=doctor, status='active').update(
+            status='expired'
+        )
 
         consent = PatientConsent.objects.create(
             patient=user,
@@ -698,6 +787,30 @@ class PatientGrantConsentDirectView(APIView):
             can_view_lab_reports=can_view_lab_reports,
             can_view_clinical_notes=can_view_clinical_notes
         )
+
+        # Handle selective record permissions
+        allowed_record_ids = request.data.get('allowed_record_ids', [])
+        withheld_record_ids = request.data.get('withheld_record_ids', [])
+
+        if allowed_record_ids:
+            valid_record_ids = list(HealthRecord.objects.filter(patient=user, id__in=allowed_record_ids).values_list('id', flat=True))
+            for rid in valid_record_ids:
+                ConsentPermission.objects.create(
+                    consent=consent,
+                    record_id=rid,
+                    record_category='Selected Record',
+                    is_allowed=True
+                )
+
+        if withheld_record_ids:
+            valid_withheld_ids = list(HealthRecord.objects.filter(patient=user, id__in=withheld_record_ids).values_list('id', flat=True))
+            for rid in valid_withheld_ids:
+                ConsentPermission.objects.create(
+                    consent=consent,
+                    record_id=rid,
+                    record_category='Withheld Record',
+                    is_allowed=False
+                )
 
         # Update legacy model
         legacy_c, _ = Consent.objects.get_or_create(
@@ -712,16 +825,31 @@ class PatientGrantConsentDirectView(APIView):
 
         # Audit & History
         ip = get_client_ip(request)
+        scope_desc = f"{len(allowed_record_ids)} specific record(s)" if allowed_record_ids else "All records in permitted categories"
         ConsentHistory.objects.create(
             consent=consent,
             patient=user,
             doctor=doctor,
             action='APPROVED',
             performed_by=user,
-            details=f"Patient directly granted consent to Dr. {doctor.username} ({duration_type}, expires {valid_until.strftime('%b %d, %Y %I:%M %p')}).",
+            details=f"Patient granted access to Dr. {doctor.first_name or doctor.username} ({duration_type.replace('_', ' ')}, valid until {valid_until.strftime('%b %d, %Y %I:%M %p')}). Scope: {scope_desc}.",
             ip_address=ip
         )
-        write_audit_log(user, "GRANT_CONSENT", f"Patient granted access to Dr. {doctor.username}", request)
+        write_audit_log(user, "GRANT_CONSENT", f"Patient granted access to Dr. {doctor.username} (Valid until {valid_until.strftime('%Y-%m-%d %H:%M')})", request)
+
+        # Broadcast
+        broadcast_consent_event(
+            'consent_approved',
+            patient_id=user.id,
+            doctor_id=doctor.id,
+            consultation_id=consultation.id if consultation else None,
+            extra_data={'consent_id': consent.id, 'duration_type': duration_type}
+        )
+
+        return Response({
+            "message": "Consent granted successfully.",
+            "consent": PatientConsentSerializer(consent).data
+        }, status=status.HTTP_201_CREATED)
 
         # Broadcast
         broadcast_consent_event(
@@ -1068,9 +1196,15 @@ class DoctorApprovedRecordsView(APIView):
                 q_filter |= Q(record_type__icontains=cat)
             records_query = records_query.filter(q_filter)
 
-        # Check withheld records
+        # Check explicit allowed and withheld records
         active_consent = eval_result.get('active_consent')
         if active_consent:
+            explicit_allowed = list(ConsentPermission.objects.filter(
+                consent=active_consent, is_allowed=True, record__isnull=False
+            ).values_list('record_id', flat=True))
+            if explicit_allowed:
+                records_query = records_query.filter(id__in=explicit_allowed)
+
             withheld_ids = list(ConsentPermission.objects.filter(
                 consent=active_consent, is_allowed=False
             ).values_list('record_id', flat=True))

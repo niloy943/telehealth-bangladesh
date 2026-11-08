@@ -164,6 +164,21 @@ class HealthRecordViewSet(APIView):
                     q_cat |= Q(record_type__icontains=c)
                 filtered_records = filtered_records.filter(q_cat)
 
+            # Apply selective allowed & withheld permissions
+            active_consent = eval_result.get('active_consent')
+            if active_consent:
+                explicit_allowed = list(ConsentPermission.objects.filter(
+                    consent=active_consent, is_allowed=True, record__isnull=False
+                ).values_list('record_id', flat=True))
+                if explicit_allowed:
+                    filtered_records = filtered_records.filter(id__in=explicit_allowed)
+
+                withheld_ids = list(ConsentPermission.objects.filter(
+                    consent=active_consent, is_allowed=False
+                ).values_list('record_id', flat=True))
+                if withheld_ids:
+                    filtered_records = filtered_records.exclude(id__in=withheld_ids)
+
             write_audit_log(user, "VIEW_HEALTH_RECORD", f"Doctor accessed authorized health records for Patient #{patient_user.id} ({eval_result['status']})", request)
             for rec in filtered_records:
                 ConsentAuthorizationEngine.log_access(
@@ -485,6 +500,37 @@ class FileDownloadView(APIView):
         file_path = os.path.join(storage_service.local_dir, filename)
         if not os.path.exists(file_path):
             return Response({"error": "File not found or access denied."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Enforce patient-controlled consent when a physician downloads a patient file
+        user = request.user
+        if user.role == 'doctor':
+            rec = HealthRecord.objects.filter(file_name=filename).first()
+            if rec:
+                from api.consent_views import ConsentAuthorizationEngine
+                eval_res = ConsentAuthorizationEngine.evaluate_access(user, rec.patient, record_id=rec.id)
+                if not eval_res['is_authorized']:
+                    ConsentAuthorizationEngine.log_access(
+                        patient=rec.patient,
+                        doctor=user,
+                        record=rec,
+                        access_type='DOWNLOAD',
+                        permission_status='DENIED',
+                        reason=eval_res['reason'],
+                        request=request
+                    )
+                    return Response({"error": f"Access Denied: {eval_res['reason']}"}, status=status.HTTP_403_FORBIDDEN)
+
+                # Log authorized download
+                ConsentAuthorizationEngine.log_access(
+                    patient=rec.patient,
+                    doctor=user,
+                    record=rec,
+                    access_type='DOWNLOAD',
+                    permission_status=eval_res['status'],
+                    reason="Doctor downloaded record file",
+                    request=request
+                )
+                write_audit_log(user, "DOWNLOAD_HEALTH_RECORD", f"Doctor downloaded {filename} for Patient #{rec.patient.id}", request)
 
         from django.http import FileResponse
         return FileResponse(open(file_path, 'rb'))
