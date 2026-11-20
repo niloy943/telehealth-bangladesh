@@ -308,7 +308,8 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
       experience: doc.experience || 1,
       bio: doc.bio || '',
       verification_status: doc.verification_status || 'approved',
-      is_active: doc.user?.is_active !== false
+      is_active: doc.user?.is_active !== false,
+      avatar: doc.user?.avatar || ''
     });
     setEditDocError('');
   };
@@ -1059,8 +1060,12 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                           {/* Header with Avatar, Name, Status */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] flex items-center justify-center text-[#059669] font-bold text-sm">
-                                {d.user?.first_name ? d.user.first_name[0].toUpperCase() : 'Dr'}
+                              <div className="w-11 h-11 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] overflow-hidden flex items-center justify-center text-[#059669] font-bold text-sm shrink-0">
+                                {d.user?.avatar ? (
+                                  <img src={d.user.avatar} alt="Doctor" className="w-full h-full object-cover" />
+                                ) : (
+                                  d.user?.first_name ? d.user.first_name[0].toUpperCase() : 'Dr'
+                                )}
                               </div>
                               <div>
                                 <h4 className="text-sm font-bold text-[#0F172A] leading-tight">
@@ -1200,8 +1205,12 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                             {/* Doctor identity */}
                             <td className="py-3 px-3">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] flex items-center justify-center text-[#059669] font-bold text-xs">
-                                  {d.user?.first_name ? d.user.first_name[0].toUpperCase() : 'Dr'}
+                                <div className="w-8 h-8 rounded-full bg-[#E7F0FC] border border-[#BDDDFA] overflow-hidden flex items-center justify-center text-[#059669] font-bold text-xs shrink-0">
+                                  {d.user?.avatar ? (
+                                    <img src={d.user.avatar} alt="Doctor" className="w-full h-full object-cover" />
+                                  ) : (
+                                    d.user?.first_name ? d.user.first_name[0].toUpperCase() : 'Dr'
+                                  )}
                                 </div>
                                 <div>
                                   <p className="font-bold text-[#0F172A]">
@@ -1375,9 +1384,13 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
                             {/* User details */}
                             <td className="py-3.5 px-3">
                               <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${isSuper ? 'bg-[#0F172A] text-white' : 'bg-[#E7F0FC] border border-[#BDDDFA] text-[#059669]'
+                                <div className={`w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center font-bold text-xs shrink-0 ${isSuper ? 'bg-[#0F172A] text-white' : 'bg-[#E7F0FC] border border-[#BDDDFA] text-[#059669]'
                                   }`}>
-                                  {admin.first_name ? admin.first_name[0].toUpperCase() : admin.username[0].toUpperCase()}
+                                  {admin.avatar ? (
+                                    <img src={admin.avatar} alt="Staff" className="w-full h-full object-cover" />
+                                  ) : (
+                                    admin.first_name ? admin.first_name[0].toUpperCase() : admin.username[0].toUpperCase()
+                                  )}
                                 </div>
                                 <div>
                                   <p className="font-bold text-[#0F172A]">
@@ -1591,6 +1604,60 @@ export const AdminDashboard = ({ token, activeTab = 'audit', onTabChange }) => {
               {onboardError}
             </div>
           )}
+
+          {/* Doctor Profile Photo in Admin Edit Modal */}
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full border-2 border-[#168CF5] overflow-hidden bg-white flex items-center justify-center font-bold text-[#168CF5] text-base shrink-0">
+                {editDocForm.avatar ? (
+                  <img src={editDocForm.avatar} alt="Doctor Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{editDocForm.first_name ? editDocForm.first_name[0].toUpperCase() : 'Dr'}</span>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#0F172A]">Doctor Profile Photo</p>
+                <p className="text-[11px] text-[#55647C]">
+                  {editDocForm.avatar ? 'Custom photo uploaded' : 'No photo uploaded'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                id="adminDocAvatarInput"
+                accept="image/*"
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    if (f.size > 2 * 1024 * 1024) {
+                      setEditDocError('Maximum image size is 2MB.');
+                      return;
+                    }
+                    const r = new FileReader();
+                    r.onload = () => setEditDocForm(prev => ({ ...prev, avatar: r.result }));
+                    r.readAsDataURL(f);
+                  }
+                }}
+                className="hidden"
+              />
+              <label
+                htmlFor="adminDocAvatarInput"
+                className="px-3 py-1.5 text-xs font-semibold bg-[#168CF5] hover:bg-[#1270c4] text-white rounded-xl cursor-pointer shadow-xs transition-colors"
+              >
+                {editDocForm.avatar ? 'Change Photo' : 'Upload Photo'}
+              </label>
+              {editDocForm.avatar && (
+                <button
+                  type="button"
+                  onClick={() => setEditDocForm(prev => ({ ...prev, avatar: '' }))}
+                  className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer"
+                >
+                  Remove Photo
+                </button>
+              )}
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -298,11 +298,11 @@ export const ConsultationPortal = ({
             <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">
               {isDoctor ? "Clinical Consultations & Queue" : "My Consultations"}
             </h1>
-            <p className="text-xs sm:text-sm text-[#55647C] max-w-2xl leading-relaxed">
-              {isDoctor
-                ? "Manage appointments, talk to patients, review records, and sign prescriptions."
-                : ""}
-            </p>
+            {!isDoctor && (
+              <p className="text-xs sm:text-sm text-[#55647C] max-w-2xl leading-relaxed">
+                Connect with certified physicians for scheduled video, audio, or secure chat consultations.
+              </p>
+            )}
           </div>
 
           {/* Action Buttons Right Side */}
@@ -510,16 +510,24 @@ export const ConsultationPortal = ({
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                     <div className="flex items-start gap-4">
                       {/* Avatar / Icon Badge */}
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base shrink-0 border ${isAnonymous
+                      <div className={`w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-base shrink-0 border ${isAnonymous
                         ? "bg-purple-100 text-purple-800 border-purple-300 shadow-xs"
                         : "bg-[#E7F0FC] text-[#059669] border-[#BDDDFA]"
                         }`}>
                         {isAnonymous ? (
                           <Lock className="w-6 h-6 text-purple-700" />
                         ) : isDoctor ? (
-                          patientName[0]?.toUpperCase() || "P"
+                          appt.patient_details?.avatar ? (
+                            <img src={appt.patient_details.avatar} alt="Patient" className="w-full h-full object-cover" />
+                          ) : (
+                            patientName[0]?.toUpperCase() || "P"
+                          )
                         ) : (
-                          <Stethoscope className="w-6 h-6 text-[#059669]" />
+                          appt.doctor_details?.avatar ? (
+                            <img src={appt.doctor_details.avatar} alt="Doctor" className="w-full h-full object-cover" />
+                          ) : (
+                            <Stethoscope className="w-6 h-6 text-[#059669]" />
+                          )
                         )}
                       </div>
 

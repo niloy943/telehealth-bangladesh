@@ -54,6 +54,7 @@ urlpatterns = [
     
     # E2EE Patient Records & Consent
     path('api/records/', HealthRecordViewSet.as_view(), name='health_records_list_create'),
+    path('api/records/<int:pk>/', HealthRecordViewSet.as_view(), name='health_record_detail'),
     path('api/consent/', ConsentViewSet.as_view(), name='consent_list_create'),
     path('api/consent/<int:pk>/', ConsentViewSet.as_view(), name='consent_revoke'),
     

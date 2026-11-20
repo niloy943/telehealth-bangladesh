@@ -10,20 +10,19 @@
 *::before,
 *::after {
   font-family: 'Inter', 'Plus Jakarta Sans', 'Nunito', 'Hind Siliguri', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, sans-serif;
-  /* Disable animations and transitions globally for a static, instant medical UX */
-  animation: none !important;
-  transition: none !important;
-  scroll-behavior: auto !important;
+  box-sizing: border-box;
 }
 
-*:hover,
-*:active,
-*:focus {
-  --tw-scale-x: 1 !important;
-  --tw-scale-y: 1 !important;
-  transform: none !important;
-  animation: none !important;
-  transition: none !important;
+/* Accessible motion: only suppress animations when user requests reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {
@@ -151,7 +150,7 @@ textarea:disabled,
 }
 
 /* -------------------------------------------------------------
-   GLOBAL FORM & INPUT CONTROLS SPECIFICATION
+   GLOBAL FORM & INPUT CONTROLS SPECIFICATION (HEALTHCARE DESIGN SYSTEM)
    ------------------------------------------------------------- */
 
 input[type="text"],
@@ -167,16 +166,17 @@ select,
 textarea {
   width: 100%;
   display: block;
-  background-color: #E7F0FC !important;
-  border: none !important;
-  border-radius: 15px !important;
-  min-height: 52px !important;
-  color: #111827 !important;
-  font-size: 14px !important;
-  padding: 0.75rem 1.25rem;
+  background-color: #FFFFFF !important;
+  border: 1px solid #BDDDFA !important;
+  border-radius: 10px !important;
+  min-height: 42px !important;
+  color: #0F172A !important;
+  font-size: 13.5px !important;
+  padding: 0.625rem 0.875rem;
   outline: none !important;
   box-shadow: none !important;
   box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .input-with-icon-left,
@@ -185,14 +185,15 @@ input.has-icon-left {
 }
 
 textarea {
-  min-height: 96px !important;
+  min-height: 84px !important;
+  resize: vertical;
 }
 
 input::placeholder,
 textarea::placeholder,
 select::placeholder {
-  color: #4B5563 !important;
-  opacity: 0.8 !important;
+  color: #64748B !important;
+  opacity: 0.85 !important;
 }
 
 input:focus,
@@ -201,9 +202,9 @@ textarea:focus,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.25) !important;
-  outline-offset: 1px !important;
-  box-shadow: none !important;
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15) !important;
+  outline: none !important;
 }
 
 /* -------------------------------------------------------------
@@ -306,13 +307,16 @@ textarea:focus-visible {
 .radial-glow,
 .pulse-glow,
 .spotlight-card::before,
-.tilt-card,
-.animate-fade,
-.animate-pulse,
-.animate-bounce,
-.animate-spin {
-  animation: none !important;
-  transform: none !important;
+.tilt-card {
+  display: none !important;
+}
+
+/* Accessible focus indicators for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #059669 !important;
+  outline-offset: 2px !important;
 }
 
 /* No custom floating cursor */

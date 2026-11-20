@@ -12,6 +12,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     nid = models.CharField(max_length=20, blank=True, null=True, help_text="National Identification Number (Bangladesh)")
     bmdc_reg = models.CharField(max_length=30, blank=True, null=True, help_text="Bangladesh Medical & Dental Council Registration No.")
+    avatar = models.TextField(blank=True, null=True, help_text="Stored Base64 string or URL of avatar")
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

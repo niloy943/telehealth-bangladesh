@@ -16,6 +16,7 @@ import {
   EmptyState, LoadingState, ErrorState, Modal
 } from './ui';
 import { AIHealthAssistant } from './AIHealthAssistant';
+import { EmergencyModal } from './EmergencyModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin;
 
@@ -165,11 +166,17 @@ export const PatientDashboard = ({
   const [consents, setConsents] = useState([]);
   const [consentForm, setConsentForm] = useState({ doctorId: "", hours: 24 });
 
-  // Health Records state
+  // Health Records & Lab Reports state
   const [records, setRecords] = useState([]);
   const [recordForm, setRecordForm] = useState({ record_type: "Blood report", content: "" });
   const [recordProgress, setRecordProgress] = useState(0);
   const [recordSuccess, setRecordSuccess] = useState(false);
+  const [selectedReportFile, setSelectedReportFile] = useState(null);
+  const [isUploadingReport, setIsUploadingReport] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [reportError, setReportError] = useState("");
+  const [deletingRecordId, setDeletingRecordId] = useState(null);
+  const labFileInputRef = React.useRef(null);
 
   // Prescriptions & Pharmacy Orders
   const [prescriptions, setPrescriptions] = useState([]);
@@ -191,6 +198,7 @@ export const PatientDashboard = ({
 
   // Blockchain audit verification map
   const [blockchainVerifiedMap, setBlockchainVerifiedMap] = useState({});
+  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
 
   // ─── Daily Health Checkup & Vitals State ───
   const defaultVitals = {
@@ -623,11 +631,87 @@ export const PatientDashboard = ({
     } catch (err) { console.error(err); }
   };
 
+  const handleLabFileSelect = (file) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setReportError("File size exceeds 10MB limit.");
+      triggerNotification("Upload Error", "Lab report must be less than 10MB.", "security");
+      return;
+    }
+    setReportError("");
+    setSelectedReportFile(file);
+
+    // Auto-detect category from filename
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.includes("blood") || lowerName.includes("cbc") || lowerName.includes("serum")) {
+      setRecordForm(prev => ({ ...prev, record_type: "Blood report" }));
+    } else if (lowerName.includes("ecg") || lowerName.includes("echo") || lowerName.includes("cardio")) {
+      setRecordForm(prev => ({ ...prev, record_type: "Cardiology ECG" }));
+    } else if (lowerName.includes("xray") || lowerName.includes("x-ray") || lowerName.includes("ct") || lowerName.includes("mri") || lowerName.includes("ultrasound")) {
+      setRecordForm(prev => ({ ...prev, record_type: "Radiology Scan" }));
+    }
+
+    if (!recordForm.content) {
+      setRecordForm(prev => ({
+        ...prev,
+        content: `Diagnostic Lab Document: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+      }));
+    }
+  };
+
+  const handleLabFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleLabFileSelect(file);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleLabFileDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleLabFileSelect(file);
+  };
+
   const handleCreateRecord = async (e) => {
     if (e) e.preventDefault();
-    if (!recordForm.content) return;
+    if (!recordForm.content && !selectedReportFile) {
+      triggerNotification("Empty Record", "Please enter diagnostic details or attach a report file.", "warning");
+      return;
+    }
+
+    setIsUploadingReport(true);
+    setRecordProgress(25);
 
     try {
+      let finalContent = recordForm.content;
+
+      // 1. If file attached, upload to storage first
+      if (selectedReportFile) {
+        setRecordProgress(50);
+        const formData = new FormData();
+        formData.append("file", selectedReportFile);
+
+        const uploadResp = await fetch(`${API_BASE}/api/storage/upload/`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (uploadResp.ok) {
+          const uploadData = await uploadResp.json();
+          const noteText = recordForm.content || `Diagnostic report: ${selectedReportFile.name}`;
+          finalContent = `${noteText}\n\n📎 Attached Document: ${selectedReportFile.name} (${(selectedReportFile.size / 1024).toFixed(1)} KB)\n[File Ref: ${uploadData.file_url}]`;
+        } else {
+          const errData = await uploadResp.json().catch(() => ({}));
+          throw new Error(errData.error || "Failed to upload document file.");
+        }
+      }
+
+      setRecordProgress(80);
+
+      // 2. Commit encrypted health record
       const resp = await fetch(`${API_BASE}/api/records/`, {
         method: "POST",
         headers: {
@@ -636,35 +720,85 @@ export const PatientDashboard = ({
         },
         body: JSON.stringify({
           record_type: recordForm.record_type,
-          content: recordForm.content
+          content: finalContent
         })
       });
+
       if (resp.status === 201) {
-        triggerNotification("Record Encrypted & Saved", "Medical record has been hashed, encrypted, and stored.", "medical");
+        setRecordProgress(100);
+        setRecordSuccess(true);
+        triggerNotification(
+          "Record Encrypted & Saved",
+          selectedReportFile
+            ? `"${selectedReportFile.name}" has been encrypted and saved to your records.`
+            : "Medical record has been hashed, encrypted, and stored.",
+          "medical"
+        );
         setRecordForm({ record_type: "Blood report", content: "" });
-        setRecordSuccess(false);
-        setRecordProgress(0);
+        setSelectedReportFile(null);
+        setTimeout(() => {
+          setRecordSuccess(false);
+          setRecordProgress(0);
+        }, 1200);
         fetchRecords();
+      } else {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.detail || errData.error || "Failed to save record.");
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error("Health record save error:", err);
+      triggerNotification("Save Error", err.message || "Failed to save record.", "security");
+    } finally {
+      setIsUploadingReport(false);
+    }
   };
 
-  const simulateRecordUpload = (e) => {
-    e.preventDefault();
-    setRecordProgress(100);
-    setRecordSuccess(true);
-    const mockContent = `Blood report parameters: Fasting Glucose: 5.4 mmol/L, HbA1c: 5.6%, Platelets: 245K. File: clinical_test_signed.pdf`;
-    const recData = { record_type: "Blood report", content: mockContent };
-    fetch(`${API_BASE}/api/records/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify(recData)
-    }).then(() => {
-      triggerNotification("Document Stored", "Report saved into encrypted ledger.", "medical");
-      fetchRecords();
-      setRecordProgress(0);
-      setRecordSuccess(false);
-    });
+  const handleDeleteRecord = async (recordId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this health record?")) return;
+    setDeletingRecordId(recordId);
+    try {
+      const resp = await fetch(`${API_BASE}/api/records/${recordId}/`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      if (resp.ok) {
+        triggerNotification("Record Deleted", "Health record removed from ledger.", "medical");
+        fetchRecords();
+      } else {
+        triggerNotification("Delete Failed", "Unable to delete record.", "security");
+      }
+    } catch (err) {
+      console.error(err);
+      triggerNotification("Network Error", "Failed to delete record.", "security");
+    } finally {
+      setDeletingRecordId(null);
+    }
+  };
+
+  const parseRecordAttachment = (rawContent) => {
+    if (!rawContent) return null;
+    const fileRefMatch = rawContent.match(/\[File Ref:\s*([^\]]+)\]/i);
+    const fileNameMatch = rawContent.match(/📎 Attached Document:\s*([^(]+)\s*\(([^)]+)\)/i);
+    
+    if (fileRefMatch) {
+      return {
+        file_url: fileRefMatch[1].trim(),
+        file_name: fileNameMatch ? fileNameMatch[1].trim() : 'Lab_Report_Document',
+        file_size: fileNameMatch ? fileNameMatch[2].trim() : ''
+      };
+    }
+    const mockFileMatch = rawContent.match(/File:\s*([a-zA-Z0-9_.-]+)/i);
+    if (mockFileMatch) {
+      return {
+        file_url: `/api/storage/file/${mockFileMatch[1]}`,
+        file_name: mockFileMatch[1],
+        file_size: 'Diagnostic File'
+      };
+    }
+    return null;
   };
 
   const handleAddToCart = (med) => {
@@ -782,17 +916,39 @@ export const PatientDashboard = ({
   };
 
   const handleTriggerSOS = () => {
-    triggerNotification("EMERGENCY ALERT BROADCAST", "SOS coordinates transmitted to emergency contacts and nearby medical facilities.", "security");
-    const alarm = document.getElementById("audioRingtone");
-    if (alarm) {
-      alarm.play().catch(() => { });
-      setTimeout(() => alarm.pause(), 4000);
-    }
+    setEmergencyModalOpen(true);
   };
 
-  const handleVerifyBlockchainRecord = (recordType, recordId) => {
-    triggerNotification("Ledger Audit Verified", `SHA-256 Hash matches on-chain cryptographic ledger for record #${recordId}.`, "security");
-    setBlockchainVerifiedMap(prev => ({ ...prev, [`${recordType}_${recordId}`]: true }));
+  const handleVerifyBlockchainRecord = async (recordType, recordId) => {
+    try {
+      const resp = await fetch(`${API_BASE}/api/blockchain/verify-record/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          record_type: recordType,
+          record_id: parseInt(recordId)
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.verified) {
+          triggerNotification("Ledger Audit Verified", `Cryptographic hash matches immutable ledger: ${data.data_hash ? data.data_hash.substring(0, 16) + '...' : 'Verified on-chain'}.`, "security");
+          setBlockchainVerifiedMap(prev => ({ ...prev, [`${recordType}_${recordId}`]: true }));
+        } else {
+          triggerNotification("Integrity Alert", data.message || `Hash mismatch detected for record #${recordId}.`, "warning");
+          setBlockchainVerifiedMap(prev => ({ ...prev, [`${recordType}_${recordId}`]: false }));
+        }
+      } else {
+        const err = await resp.json().catch(() => ({}));
+        triggerNotification("Verification Notice", err.error || "Record integrity check completed with advisory notice.", "warning");
+      }
+    } catch (e) {
+      console.error("Blockchain verification error:", e);
+      triggerNotification("Audit Service Offline", "Could not reach cryptographic verification service. Please try again later.", "warning");
+    }
   };
 
   // Time-based greeting helper
@@ -824,7 +980,53 @@ export const PatientDashboard = ({
       {subView === 'overview' && (() => {
         const bmiData = getBMIData(vitals.weight, vitals.height);
         return (
-          <div className="space-y-8">
+          <div className="space-y-6">
+
+            {/* Next Scheduled Appointment Callout Banner */}
+            {nextAppointment && (
+              <div className="bg-gradient-to-r from-emerald-50 via-white to-blue-50 border border-emerald-200/80 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#059669] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#059669]">Next Upcoming Consultation</span>
+                      <StatusBadge status={nextAppointment.status} size="sm" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#0F172A] mt-0.5">
+                      Dr. {nextAppointment.doctor_details?.first_name} {nextAppointment.doctor_details?.last_name} • <span className="font-semibold text-[#059669]">{nextAppointment.doctor_details?.specialty || 'General Practitioner'}</span>
+                    </h3>
+                    <div className="flex items-center gap-3 text-xs text-[#55647C] mt-1">
+                      <span className="font-semibold text-[#0F172A] flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-[#168CF5]" /> {nextAppointment.date} at {nextAppointment.time}
+                      </span>
+                      <span>•</span>
+                      <span className="capitalize font-semibold text-[#168CF5]">
+                        {nextAppointment.consultation_type === 'audio' ? '🎙️ Anonymous Audio' : nextAppointment.consultation_type === 'video' ? '📹 Video Call' : '💬 Encrypted Chat'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {nextAppointment.status === 'approved' && nextAppointment.consultation ? (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => onSelectConsultation({ id: nextAppointment.consultation.id, mode: nextAppointment.consultation.type })}
+                      icon={nextAppointment.consultation_type === 'audio' ? Mic : Video}
+                      className="font-bold shadow-xs whitespace-nowrap"
+                    >
+                      {nextAppointment.consultation_type === 'audio' ? 'Join Audio Room' : 'Join Video Room'}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-lg border border-[#BDDDFA] font-medium whitespace-nowrap">
+                      Awaiting Doctor Confirmation
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* 1. Greeting & Daily Health Checkup Panel (Replaces marked quick action buttons) */}
             <div className="bg-white border border-[#BDDDFA] rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -1009,7 +1211,7 @@ export const PatientDashboard = ({
                       </div>
                       <div>
                         <CardTitle>Upcoming Consultations</CardTitle>
-                        <CardDescription></CardDescription>
+                        <CardDescription>Scheduled telemedicine appointments and secure room links</CardDescription>
                       </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setSubView('booking')}>
@@ -1400,7 +1602,7 @@ export const PatientDashboard = ({
         <div className="space-y-6">
           <PageHeader
             title="Find a Verified Doctor"
-
+            subtitle="Search certified medical specialists in Bangladesh, inspect BMDC credentials, and book visits."
             action={
               <Button variant="outline" size="sm" onClick={() => setSubView('overview')}>
                 Back to Health Home
@@ -1477,7 +1679,18 @@ export const PatientDashboard = ({
                       <div className="w-10 h-10 rounded-xl bg-[#E7F0FC] text-[#0F172A] font-bold flex items-center justify-center text-sm border border-[#BDDDFA]">
                         {doc.user?.first_name?.[0] || 'D'}
                       </div>
-                      <VerifiedBadge text={` ${doc.bmdc_reg || 'Verified'}`} />
+                      {doc.verification_status === 'approved' ? (
+                        <VerifiedBadge text={`BMDC Reg: ${doc.bmdc_reg || 'Verified'}`} />
+                      ) : doc.verification_status === 'pending' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wider">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          <span>KYC Review</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider">
+                          <span>Unverified</span>
+                        </span>
+                      )}
                     </div>
                     <CardTitle className="mt-3">
                       Dr. {doc.user?.first_name} {doc.user?.last_name}
@@ -1590,25 +1803,95 @@ export const PatientDashboard = ({
                     />
                   </div>
 
-                  <Button type="submit" variant="primary" size="sm" icon={PlusCircle}>
-                    Save Encrypted Record
+                  <Button type="submit" variant="primary" size="sm" icon={PlusCircle} loading={isUploadingReport} disabled={isUploadingReport}>
+                    {isUploadingReport ? "Encrypting & Saving..." : "+ Save Encrypted Record"}
                   </Button>
                 </form>
 
-                {/* Drag & Drop Area */}
-                <div
-                  onDragOver={e => e.preventDefault()}
-                  onDrop={simulateRecordUpload}
-                  onClick={simulateRecordUpload}
-                  className="border-2 border-dashed border-[#BDDDFA] bg-[#E7F0FC] rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center justify-center hover:bg-white"
-                >
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#BDDDFA] text-[#059669] flex items-center justify-center mb-3">
-                    <Upload className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-xs font-bold text-[#0F172A]">Drop lab report file here</h4>
-                  <p className="text-[10px] text-[#55647C] mt-1 max-w-xs">
-                    Drag and drop PDF/JPEG reports or click
-                  </p>
+                {/* Drag & Drop Lab Report Area */}
+                <div>
+                  <input
+                    type="file"
+                    ref={labFileInputRef}
+                    accept=".pdf,.png,.jpg,.jpeg,.dcm,.doc,.docx,.txt"
+                    onChange={handleLabFileInputChange}
+                    className="hidden"
+                  />
+
+                  {selectedReportFile ? (
+                    /* Selected File Review Card */
+                    <div className="border-2 border-[#168CF5] bg-[#E7F0FC] rounded-2xl p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-xs">
+                      <div className="w-full flex items-center justify-between pb-2 border-b border-[#BDDDFA]">
+                        <span className="text-[11px] font-bold text-[#059669] flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" /> Ready to Encrypt &amp; Save
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedReportFile(null); setRecordForm(prev => ({ ...prev, content: '' })); }}
+                          className="p-1 text-[#FF7A7A] hover:bg-rose-100 rounded-lg transition-colors cursor-pointer"
+                          title="Remove file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="py-2 flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#BDDDFA] text-[#168CF5] flex items-center justify-center mb-2 shadow-xs">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <h4 className="text-xs font-bold text-[#0F172A] truncate max-w-[220px]" title={selectedReportFile.name}>
+                          {selectedReportFile.name}
+                        </h4>
+                        <p className="text-[10px] text-[#55647C] font-mono mt-0.5">
+                          {(selectedReportFile.size / 1024).toFixed(1)} KB • {selectedReportFile.type || 'Document'}
+                        </p>
+                      </div>
+
+                      <div className="w-full flex items-center justify-center gap-2 pt-2 border-t border-[#BDDDFA]">
+                        <button
+                          type="button"
+                          onClick={() => labFileInputRef.current?.click()}
+                          className="px-3 py-1 bg-white hover:bg-[#d8e8fa] border border-[#BDDDFA] text-[#168CF5] rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Change File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedReportFile(null); setRecordForm(prev => ({ ...prev, content: '' })); }}
+                          className="px-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Dropzone Idle State */
+                    <div
+                      onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleLabFileDrop}
+                      onClick={() => labFileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center justify-center min-h-[190px] transition-all ${
+                        isDragging
+                          ? 'border-[#168CF5] bg-[#d8e8fa] scale-[1.01]'
+                          : 'border-[#BDDDFA] bg-[#E7F0FC] hover:bg-white hover:border-[#168CF5]'
+                      }`}
+                    >
+                      <div className="w-11 h-11 rounded-full bg-white border border-[#BDDDFA] text-[#059669] flex items-center justify-center mb-2.5 shadow-xs">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                      <h4 className="text-xs font-bold text-[#0F172A]">Drop lab report file here</h4>
+                      <p className="text-[10px] text-[#55647C] mt-1 max-w-xs">
+                        Drag &amp; drop PDF, JPEG, PNG reports or click to browse
+                      </p>
+                      <span className="mt-2.5 inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white text-[#168CF5] border border-[#BDDDFA]">
+                        PDF, JPG, PNG, DOC (Max 10MB)
+                      </span>
+                    </div>
+                  )}
+                  {reportError && (
+                    <p className="text-[11px] text-rose-600 font-semibold mt-1 text-center">{reportError}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -1627,17 +1910,80 @@ export const PatientDashboard = ({
             <div className="space-y-3">
               {records.map(rec => (
                 <Card key={rec.id}>
-                  <CardContent className="flex items-center gap-3.5 p-4 pr-5 sm:pr-6">
-                    <div className="w-9 h-9 rounded-xl bg-[#E7F0FC] text-[#059669] flex items-center justify-center shrink-0 border border-[#BDDDFA]">
+                  <CardContent className="flex items-start gap-3.5 p-4 pr-5 sm:pr-6">
+                    <div className="w-9 h-9 rounded-xl bg-[#E7F0FC] text-[#059669] flex items-center justify-center shrink-0 border border-[#BDDDFA] mt-0.5">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs font-bold text-[#0F172A]">{rec.record_type}</h4>
-                        <SecurityBadge text="AES-256 GCM" />
+                      <div className="flex items-center gap-2 flex-wrap justify-between">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-[#0F172A]">{rec.record_type}</h4>
+                          <SecurityBadge text="AES-256 GCM" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={blockchainVerifiedMap[`health_record_${rec.id}`] ? "secondary" : "outline"}
+                            size="sm"
+                            icon={ShieldCheck}
+                            onClick={() => handleVerifyBlockchainRecord('health_record', rec.id)}
+                            className={blockchainVerifiedMap[`health_record_${rec.id}`] ? "text-[#059669] border-[#059669]" : "text-xs"}
+                          >
+                            {blockchainVerifiedMap[`health_record_${rec.id}`] ? "Ledger Verified" : "Verify Integrity"}
+                          </Button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRecord(rec.id)}
+                            disabled={deletingRecordId === rec.id}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete this medical record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-xs text-[#334155] mt-1 leading-relaxed break-words">{rec.content}</p>
-                      <p className="text-[10px] text-[#55647C] mt-1">Record ID: #{rec.id} • SHA-256 Hash Protected</p>
+
+                      {/* Display Clinical Notes */}
+                      <p className="text-xs text-[#334155] mt-1.5 leading-relaxed break-words whitespace-pre-line">
+                        {((rec.content || rec.decrypted_content || "").replace(/\[File Ref:[^\]]+\]/g, '').replace(/📎 Attached Document:[^\n]+/g, '').trim()) || (rec.content || rec.decrypted_content || "Diagnostic record stored.")}
+                      </p>
+
+                      {/* Attached File Action Badge */}
+                      {(() => {
+                        const attachment = parseRecordAttachment(rec.content || rec.decrypted_content);
+                        if (!attachment) return null;
+                        const fullFileUrl = attachment.file_url.startsWith('http') ? attachment.file_url : `${API_BASE}${attachment.file_url}`;
+                        return (
+                          <div className="mt-2.5 p-2.5 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA] flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-white text-[#168CF5] flex items-center justify-center border border-[#BDDDFA] shrink-0">
+                                <FileText className="w-3.5 h-3.5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-[#0F172A] truncate max-w-[200px] sm:max-w-xs">{attachment.file_name}</p>
+                                <p className="text-[10px] text-[#55647C]">{attachment.file_size || 'Attached Report Document'}</p>
+                              </div>
+                            </div>
+
+                            <a
+                              href={fullFileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-[#168CF5] hover:text-white border border-[#BDDDFA] rounded-lg text-xs font-bold text-[#168CF5] transition-colors shadow-xs"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>View / Download Report</span>
+                            </a>
+                          </div>
+                        );
+                      })()}
+
+                      <div className="flex items-center gap-3 text-[10px] text-[#55647C] mt-2 pt-1 border-t border-[#BDDDFA]/40 font-mono">
+                        <span>Record ID: #{rec.id}</span>
+                        <span>•</span>
+                        <span>{rec.created_at ? new Date(rec.created_at).toLocaleDateString() : 'Active'}</span>
+                        <span>•</span>
+                        <span className="text-[#059669] font-semibold">SHA-256 Hash Protected</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1695,18 +2041,29 @@ export const PatientDashboard = ({
                     </div>
                   </CardContent>
 
-                  <CardFooter className="flex items-center justify-between">
+                  <CardFooter className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-[10px] text-[#55647C]">
                       {new Date(p.created_at || Date.now()).toLocaleDateString()}
                     </span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon={Download}
-                      onClick={() => downloadPrescriptionPDF(p)}
-                    >
-                      Download PDF
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={blockchainVerifiedMap[`prescription_${p.id}`] ? "secondary" : "outline"}
+                        size="sm"
+                        icon={ShieldCheck}
+                        onClick={() => handleVerifyBlockchainRecord('prescription', p.id)}
+                        className={blockchainVerifiedMap[`prescription_${p.id}`] ? "text-[#059669] border-[#059669]" : ""}
+                      >
+                        {blockchainVerifiedMap[`prescription_${p.id}`] ? "Ledger Verified" : "Verify Ledger"}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={Download}
+                        onClick={() => downloadPrescriptionPDF(p)}
+                      >
+                        Download PDF
+                      </Button>
+                    </div>
                   </CardFooter>
                 </Card>
               ))}
@@ -2221,6 +2578,20 @@ export const PatientDashboard = ({
         title={`Book with Dr. ${bookingModalDoc?.user?.first_name} ${bookingModalDoc?.user?.last_name}`}
         subtitle={`${bookingModalDoc?.specialty || ''} • Consultation Fee: ৳${bookingModalDoc?.fees || 500} BDT`}
       >
+        {/* Doctor Photo in Booking Modal */}
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA] mb-4">
+          <div className="w-12 h-12 rounded-full border-2 border-[#168CF5] overflow-hidden bg-white flex items-center justify-center font-bold text-[#168CF5] text-lg shrink-0">
+            {bookingModalDoc?.user?.avatar ? (
+              <img src={bookingModalDoc.user.avatar} alt="Doctor" className="w-full h-full object-cover" />
+            ) : (
+              <span>{bookingModalDoc?.user?.first_name ? bookingModalDoc.user.first_name[0].toUpperCase() : 'Dr'}</span>
+            )}
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-[#0F172A]">Dr. {bookingModalDoc?.user?.first_name} {bookingModalDoc?.user?.last_name}</h4>
+            <p className="text-[11px] text-[#059669] font-semibold">{bookingModalDoc?.specialty || 'General Practice'} • {bookingModalDoc?.hospital || 'Hospital Specialist'}</p>
+          </div>
+        </div>
         <form onSubmit={handleBookAppointment} className="space-y-4">
           {/* Doctor Available Schedule */}
           {Array.isArray(bookingModalDoc?.schedule) && bookingModalDoc.schedule.length > 0 && (
@@ -2819,6 +3190,14 @@ export const PatientDashboard = ({
           </div>
         </form>
       </Modal>
+
+      {/* Emergency SOS Modal */}
+      <EmergencyModal
+        isOpen={emergencyModalOpen}
+        onClose={() => setEmergencyModalOpen(false)}
+        token={token}
+        user={user}
+      />
 
     </div>
   );

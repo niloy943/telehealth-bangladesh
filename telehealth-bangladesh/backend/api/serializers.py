@@ -117,7 +117,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name', 
-            'role', 'phone', 'nid', 'bmdc_reg', 'is_active', 
+            'role', 'phone', 'nid', 'bmdc_reg', 'avatar', 'is_active', 
             'is_staff', 'is_superuser', 'date_joined', 'last_login'
         )
 
@@ -323,16 +323,20 @@ class PrescriptionSerializer(serializers.ModelSerializer):
 class HealthRecordSerializer(serializers.ModelSerializer):
     patient_details = UserSerializer(source='patient', read_only=True)
     decrypted_content = serializers.SerializerMethodField()
+    content = serializers.SerializerMethodField()
 
     class Meta:
         model = HealthRecord
-        fields = ('id', 'patient', 'patient_details', 'record_type', 'decrypted_content', 'created_at', 'updated_at')
+        fields = ('id', 'patient', 'patient_details', 'record_type', 'decrypted_content', 'content', 'created_at', 'updated_at')
 
     def get_decrypted_content(self, obj):
         try:
             return obj.get_content()
         except Exception:
             return "[Decryption Error]"
+
+    def get_content(self, obj):
+        return self.get_decrypted_content(obj)
 
 class ConsentSerializer(serializers.ModelSerializer):
     patient_details = UserSerializer(source='patient', read_only=True)

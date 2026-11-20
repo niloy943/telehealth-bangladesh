@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   User, Shield, Lock, FileText, Activity, Settings, Upload, CheckCircle2,
   AlertTriangle, Key, History, Eye, ArrowUp, RefreshCw, ZoomIn,
-  Calendar, Clock, Plus, Trash2
+  Calendar, Clock, Plus, Trash2, AlertCircle, ZoomOut, Camera, X
 } from 'lucide-react';
 import { useLanguage } from './LanguageContext';
 import { useNotifications } from './NotificationCenter';
@@ -32,6 +32,10 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
     emergency_contact: user?.emergency_contact || user?.patient_profile?.emergency_contact || '',
   });
 
+  const [personalSaving, setPersonalSaving] = useState(false);
+  const [personalSaved, setPersonalSaved] = useState(false);
+  const [personalError, setPersonalError] = useState('');
+
   const [passwordForm, setPasswordForm] = useState({
     current: '',
     new: '',
@@ -47,6 +51,10 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
     allergies: user?.patient_profile?.allergies || '',
     chronic_conditions: user?.patient_profile?.chronic_conditions || ''
   });
+
+  const [medicalSaving, setMedicalSaving] = useState(false);
+  const [medicalSaved, setMedicalSaved] = useState(false);
+  const [medicalError, setMedicalError] = useState('');
 
   // Default weekly consultation schedule
   const DEFAULT_DOCTOR_SCHEDULE = [
@@ -65,17 +73,44 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
       : DEFAULT_DOCTOR_SCHEDULE
   });
 
+  const [professionalSaving, setProfessionalSaving] = useState(false);
+  const [professionalSaved, setProfessionalSaved] = useState(false);
+  const [professionalError, setProfessionalError] = useState('');
+
   useEffect(() => {
-    if (user?.doctor_profile) {
-      setProfessionalForm(prev => ({
+    if (user) {
+      setPersonalForm(prev => ({
         ...prev,
-        specialty: user.doctor_profile.specialty || '',
-        hospital: user.doctor_profile.hospital || '',
-        fees: user.doctor_profile.fees !== undefined ? user.doctor_profile.fees : 500,
-        schedule: Array.isArray(user.doctor_profile.schedule) && user.doctor_profile.schedule.length > 0
-          ? user.doctor_profile.schedule
-          : prev.schedule
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: user.address || user.patient_profile?.address || prev.address || '',
+        emergency_contact: user.emergency_contact || user.patient_profile?.emergency_contact || prev.emergency_contact || '',
       }));
+
+      if (user.patient_profile) {
+        setMedicalForm(prev => ({
+          ...prev,
+          blood_group: user.patient_profile.blood_group || prev.blood_group || 'O+',
+          height: user.patient_profile.height || prev.height || '',
+          weight: user.patient_profile.weight || prev.weight || '',
+          allergies: user.patient_profile.allergies || prev.allergies || '',
+          chronic_conditions: user.patient_profile.chronic_conditions || prev.chronic_conditions || ''
+        }));
+      }
+
+      if (user.doctor_profile) {
+        setProfessionalForm(prev => ({
+          ...prev,
+          specialty: user.doctor_profile.specialty || '',
+          hospital: user.doctor_profile.hospital || '',
+          fees: user.doctor_profile.fees !== undefined ? user.doctor_profile.fees : 500,
+          schedule: Array.isArray(user.doctor_profile.schedule) && user.doctor_profile.schedule.length > 0
+            ? user.doctor_profile.schedule
+            : prev.schedule
+        }));
+      }
     }
   }, [user]);
 
@@ -103,12 +138,24 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
     }));
   };
 
-  // Upload States
-  const [avatarPreview, setAvatarPreview] = useState(null);
+  // Upload States & Avatar Management
+  const [avatarPreview, setAvatarPreview] = useState(
+    user?.avatar || (user?.id ? localStorage.getItem(`healnsight_avatar_${user.id}`) : null) || null
+  );
   const [avatarCropOpen, setAvatarCropOpen] = useState(false);
   const [avatarZoom, setAvatarZoom] = useState(1);
   const [avatarProgress, setAvatarProgress] = useState(0);
   const [avatarSuccess, setAvatarSuccess] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const stored = user.id ? localStorage.getItem(`healnsight_avatar_${user.id}`) : null;
+      setAvatarPreview(user.avatar || stored || null);
+    }
+  }, [user?.avatar, user?.id]);
 
   const [docProgress, setDocProgress] = useState(0);
   const [docUploaded, setDocUploaded] = useState(false);
@@ -142,30 +189,117 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
   const securityScore = calculateSecurityScore();
 
-  // Drag and Drop Profile Image triggers
+  // Profile Image Selection & Handling
   const handleAvatarSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert("Maximum size 2MB allowed.");
+        setAvatarError("Maximum photo size is 2MB.");
+        triggerNotification("Upload Error", "Profile image exceeds 2MB limit.", "system");
         return;
       }
+      if (!file.type.startsWith('image/')) {
+        setAvatarError("Please select a valid image file (JPEG, PNG, WEBP).");
+        return;
+      }
+      setAvatarError('');
       const reader = new FileReader();
       reader.onload = () => {
         setAvatarPreview(reader.result);
         setAvatarCropOpen(true);
+        setAvatarZoom(1);
       };
       reader.readAsDataURL(file);
     }
+    if (e.target) e.target.value = '';
   };
 
-  const handleConfirmCrop = () => {
+  const handleConfirmCrop = async () => {
+    if (!avatarPreview) return;
+    setAvatarSaving(true);
     setAvatarProgress(100);
     setAvatarSuccess(true);
     setAvatarCropOpen(false);
-    triggerNotification("Profile Photo Updated", "Your new user avatar photo has been uploaded successfully.", "system");
+
+    if (user?.id) {
+      try {
+        localStorage.setItem(`healnsight_avatar_${user.id}`, avatarPreview);
+      } catch (err) {
+        console.warn("Storage quota exceeded for avatar", err);
+      }
+    }
+
+    const updatedUser = { ...user, avatar: avatarPreview };
+    if (onUpdateUser) onUpdateUser(updatedUser);
+
+    try {
+      if (token) {
+        const resp = await fetch(`${API_BASE}/api/profile/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ avatar: avatarPreview })
+        });
+        if (resp.ok) {
+          const savedData = await resp.json();
+          if (onUpdateUser) onUpdateUser({ ...updatedUser, ...savedData });
+        }
+      }
+      triggerNotification("Profile Photo Updated", "Your profile photo has been saved successfully.", "system");
+    } catch (err) {
+      console.error("Avatar save API error:", err);
+      triggerNotification("Notice", "Profile photo updated locally.", "system");
+    } finally {
+      setAvatarSaving(false);
+    }
+
     setActivities(prevAct => [
       { id: Date.now(), action: 'Profile Avatar Photo Uploaded', ip: '127.0.0.1', date: 'Just now' },
+      ...prevAct
+    ]);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarSaving(true);
+    setAvatarPreview(null);
+    setAvatarCropOpen(false);
+    setAvatarSuccess(false);
+    setConfirmDeleteOpen(false);
+
+    if (user?.id) {
+      localStorage.removeItem(`healnsight_avatar_${user.id}`);
+    }
+
+    const updatedUser = { ...user, avatar: null };
+    if (onUpdateUser) onUpdateUser(updatedUser);
+
+    try {
+      if (token) {
+        const resp = await fetch(`${API_BASE}/api/profile/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ avatar: "" })
+        });
+        if (resp.ok) {
+          const savedData = await resp.json();
+          if (onUpdateUser) onUpdateUser({ ...updatedUser, ...savedData, avatar: null });
+        }
+      }
+      triggerNotification("Profile Photo Removed", "Your profile photo has been removed and reset to initials.", "system");
+    } catch (err) {
+      console.error("Avatar remove API error:", err);
+      triggerNotification("Notice", "Profile photo removed locally.", "system");
+    } finally {
+      setAvatarSaving(false);
+    }
+
+    setActivities(prevAct => [
+      { id: Date.now(), action: 'Profile Avatar Photo Removed', ip: '127.0.0.1', date: 'Just now' },
       ...prevAct
     ]);
   };
@@ -192,6 +326,10 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
   // Save Forms
   const handleSavePersonal = async (e) => {
     e.preventDefault();
+    setPersonalSaving(true);
+    setPersonalSaved(false);
+    setPersonalError('');
+
     const updatedUser = {
       ...user,
       first_name: personalForm.first_name,
@@ -202,8 +340,8 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
       emergency_contact: personalForm.emergency_contact
     };
 
-    if (token) {
-      try {
+    try {
+      if (token) {
         const resp = await fetch(`${API_BASE}/api/profile/`, {
           method: 'PUT',
           headers: {
@@ -222,18 +360,28 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
         if (resp.ok) {
           const savedData = await resp.json();
           onUpdateUser({ ...updatedUser, ...savedData });
+          setPersonalSaved(true);
           triggerNotification("Profile Updated", "Your demographic details have been saved.", "system");
+          setTimeout(() => setPersonalSaved(false), 4000);
         } else {
+          const errData = await resp.json().catch(() => ({}));
+          const errMsg = errData.detail || errData.message || (typeof errData === 'object' ? Object.values(errData).flat().join(', ') : 'Failed to update profile.');
+          setPersonalError(errMsg);
           onUpdateUser(updatedUser);
           triggerNotification("Notice", "Profile updated locally.", "system");
         }
-      } catch (err) {
-        console.error("Profile save error:", err);
+      } else {
         onUpdateUser(updatedUser);
+        setPersonalSaved(true);
+        triggerNotification("Profile Updated", "Your demographic details have been saved.", "system");
+        setTimeout(() => setPersonalSaved(false), 4000);
       }
-    } else {
+    } catch (err) {
+      console.error("Profile save error:", err);
+      setPersonalError(err.message || "Failed to save profile. Check network connection.");
       onUpdateUser(updatedUser);
-      triggerNotification("Profile Updated", "Your demographic details have been saved.", "system");
+    } finally {
+      setPersonalSaving(false);
     }
 
     setActivities(prev => [
@@ -244,6 +392,10 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
   const handleSaveMedical = async (e) => {
     e.preventDefault();
+    setMedicalSaving(true);
+    setMedicalSaved(false);
+    setMedicalError('');
+
     const updatedUser = {
       ...user,
       patient_profile: {
@@ -252,8 +404,8 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
       }
     };
 
-    if (token) {
-      try {
+    try {
+      if (token) {
         const resp = await fetch(`${API_BASE}/api/profile/`, {
           method: 'PUT',
           headers: {
@@ -269,18 +421,27 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
         if (resp.ok) {
           const savedData = await resp.json();
           onUpdateUser({ ...updatedUser, ...savedData });
+          setMedicalSaved(true);
           triggerNotification("Medical Records Modified", "Your clinical indicators have been saved.", "medical");
+          setTimeout(() => setMedicalSaved(false), 4000);
         } else {
+          const errData = await resp.json().catch(() => ({}));
+          setMedicalError(errData.detail || errData.message || "Failed to update medical records.");
           onUpdateUser(updatedUser);
           triggerNotification("Notice", "Medical records updated locally.", "medical");
         }
-      } catch (err) {
-        console.error("Medical save error:", err);
+      } else {
         onUpdateUser(updatedUser);
+        setMedicalSaved(true);
+        triggerNotification("Medical Records Modified", "Clinical indicators saved.", "medical");
+        setTimeout(() => setMedicalSaved(false), 4000);
       }
-    } else {
+    } catch (err) {
+      console.error("Medical save error:", err);
+      setMedicalError(err.message || "Failed to update medical indicators.");
       onUpdateUser(updatedUser);
-      triggerNotification("Medical Records Modified", "Clinical indicators saved.", "medical");
+    } finally {
+      setMedicalSaving(false);
     }
 
     setActivities(prev => [
@@ -291,6 +452,10 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
   const handleSaveProfessional = async (e) => {
     e.preventDefault();
+    setProfessionalSaving(true);
+    setProfessionalSaved(false);
+    setProfessionalError('');
+
     const updatedUser = {
       ...user,
       doctor_profile: {
@@ -299,8 +464,8 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
       }
     };
 
-    if (token) {
-      try {
+    try {
+      if (token) {
         const resp = await fetch(`${API_BASE}/api/profile/`, {
           method: 'PUT',
           headers: {
@@ -317,18 +482,27 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
         if (resp.ok) {
           const savedData = await resp.json();
           onUpdateUser({ ...updatedUser, ...savedData });
+          setProfessionalSaved(true);
           triggerNotification("Doctor Profile Updated", "Specialty, fee, and schedule saved to database.", "system");
+          setTimeout(() => setProfessionalSaved(false), 4000);
         } else {
+          const errData = await resp.json().catch(() => ({}));
+          setProfessionalError(errData.detail || errData.message || "Failed to update professional data.");
           onUpdateUser(updatedUser);
           triggerNotification("Notice", "Professional data updated locally.", "system");
         }
-      } catch (err) {
-        console.error("Professional save error:", err);
+      } else {
         onUpdateUser(updatedUser);
+        setProfessionalSaved(true);
+        triggerNotification("Professional Data Updated", "Specialist affiliations and fees updated.", "system");
+        setTimeout(() => setProfessionalSaved(false), 4000);
       }
-    } else {
+    } catch (err) {
+      console.error("Professional save error:", err);
+      setProfessionalError(err.message || "Failed to update professional data.");
       onUpdateUser(updatedUser);
-      triggerNotification("Professional Data Updated", "Specialist affiliations and fees updated.", "system");
+    } finally {
+      setProfessionalSaving(false);
     }
 
     setActivities(prev => [
@@ -360,21 +534,72 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
       <div className="lg:col-span-1 space-y-6">
 
         {/* Profile Card Summary */}
-        <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl text-center space-y-4">
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="w-full h-full rounded-full border-2 border-[#168CF5] overflow-hidden bg-[#E7F0FC] flex items-center justify-center font-bold text-[#0F172A] text-3xl">
+        <div className="bg-white border border-[#BDDDFA] p-6 rounded-2xl text-center space-y-4 shadow-xs">
+          <div className="relative w-28 h-28 mx-auto group">
+            <div className="w-full h-full rounded-full border-2 border-[#168CF5] overflow-hidden bg-[#E7F0FC] flex items-center justify-center font-bold text-[#0F172A] text-3xl shadow-xs transition-transform">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <span>{user?.first_name ? user.first_name[0] : (user?.username ? user.username[0] : 'U')}</span>
+                <span className="text-[#168CF5]">{user?.first_name ? user.first_name[0].toUpperCase() : (user?.username ? user.username[0].toUpperCase() : 'U')}</span>
               )}
             </div>
 
+            {/* Quick Interactive Overlay Badge to Upload/Change Photo */}
+            <label
+              htmlFor="avatarFileQuick"
+              title="Upload / Change Profile Photo"
+              className="absolute bottom-0 right-0 p-2 bg-[#168CF5] hover:bg-[#1270c4] text-white rounded-full shadow-md border-2 border-white cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </label>
+
+            {/* Quick Remove Button on Avatar when photo is present */}
+            {avatarPreview && (
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteOpen(true)}
+                title="Remove Profile Photo"
+                className="absolute top-0 right-0 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md border-2 border-white cursor-pointer transition-transform hover:scale-110 flex items-center justify-center"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+
             {/* Verified Badge */}
-            {(user?.bmdc_reg || docUploaded) && (
-              <span className="absolute bottom-0 right-0 bg-[#059669] text-white p-1 rounded-full border-2 border-white" title="KYC Verified Specialist">
-                <CheckCircle2 className="w-4 h-4 fill-current text-white" />
+            {(user?.bmdc_reg || docUploaded) && !avatarPreview && (
+              <span className="absolute bottom-0 left-0 bg-[#059669] text-white p-1 rounded-full border-2 border-white" title="KYC Verified Specialist">
+                <CheckCircle2 className="w-3.5 h-3.5 fill-current text-white" />
               </span>
+            )}
+          </div>
+
+          {/* Quick Photo Action Buttons */}
+          <div className="flex items-center justify-center gap-1.5 pt-1">
+            <input
+              type="file"
+              id="avatarFileQuick"
+              accept="image/*"
+              onChange={handleAvatarSelect}
+              className="hidden"
+            />
+            <label
+              htmlFor="avatarFileQuick"
+              className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-semibold text-[#168CF5] bg-[#E7F0FC] hover:bg-[#d8e8fa] border border-[#BDDDFA] rounded-full cursor-pointer transition-colors"
+            >
+              <Camera className="w-3 h-3" />
+              <span>{avatarPreview ? 'Change Photo' : 'Add Photo'}</span>
+            </label>
+
+            {avatarPreview && (
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-full cursor-pointer transition-colors"
+                title="Remove profile photo"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Remove</span>
+              </button>
             )}
           </div>
 
@@ -447,6 +672,46 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
             <form onSubmit={handleSavePersonal} className="space-y-4">
               <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#BDDDFA] pb-2 mb-4">Edit Profile</h3>
 
+              {/* Profile Photo Quick Controls Strip */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#E7F0FC] border border-[#BDDDFA] mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full border-2 border-[#168CF5] overflow-hidden bg-white flex items-center justify-center font-bold text-[#168CF5] text-lg shrink-0">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{user?.first_name ? user.first_name[0].toUpperCase() : (user?.username ? user.username[0].toUpperCase() : 'U')}</span>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-[#0F172A]">Profile Photo</h4>
+                    <p className="text-[11px] text-[#55647C]">
+                      {avatarPreview ? 'Custom photo is currently displayed across your portal.' : 'No photo uploaded. Initials are displayed.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <label
+                    htmlFor="avatarFileQuick"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#168CF5] hover:bg-[#1270c4] rounded-xl cursor-pointer transition-colors shadow-xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{avatarPreview ? 'Change Photo' : 'Upload Photo'}</span>
+                  </label>
+                  {avatarPreview && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="danger"
+                      onClick={() => setConfirmDeleteOpen(true)}
+                      icon={Trash2}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[#0F172A] mb-1 font-semibold">First Name</label>
@@ -479,8 +744,27 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                 <input required type="text" value={personalForm.emergency_contact} onChange={e => setPersonalForm({ ...personalForm, emergency_contact: e.target.value })} className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-[#111827] outline-none" />
               </div>
 
-              <Button type="submit" variant="primary">
-                Save  Data
+              {personalSaved && (
+                <div className="p-3 rounded-xl bg-[#E7F0FC] border border-[#059669] text-[#059669] text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
+                  <span>Profile details saved successfully!</span>
+                </div>
+              )}
+              {personalError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-[#FF7A7A] text-[#DC2626] text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
+                  <span>{personalError}</span>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                loading={personalSaving}
+                disabled={personalSaving}
+                className="min-w-[130px]"
+              >
+                {personalSaving ? "Saving..." : personalSaved ? "Saved!" : "Save Data"}
               </Button>
             </form>
           )}
@@ -500,48 +784,109 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
               {/* Profile Photo Uploader */}
               <div className="space-y-3">
-                <h4 className="font-bold text-[#0F172A]">Update Profile</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-[#0F172A]">Profile Picture &amp; Identity Avatar</h4>
+                  {avatarPreview && (
+                    <span className="text-[11px] font-semibold text-[#059669] flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Photo Configured
+                    </span>
+                  )}
+                </div>
 
                 {avatarCropOpen ? (
-                  <div className="bg-[#E7F0FC] p-4 border border-[#BDDDFA] rounded-xl space-y-4">
-                    <p className="text-[10px] text-[#55647C]">Avatar image loaded. Click confirm to save:</p>
+                  <div className="bg-[#E7F0FC] p-5 border border-[#BDDDFA] rounded-2xl space-y-4">
+                    <p className="text-xs font-medium text-[#0F172A] text-center">Adjust &amp; Confirm Avatar Photo:</p>
 
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-[#168CF5] mx-auto bg-white flex items-center justify-center">
+                    <div className="relative w-36 h-36 rounded-full overflow-hidden border-4 border-[#168CF5] mx-auto bg-white flex items-center justify-center shadow-lg">
                       {avatarPreview && (
                         <img
                           src={avatarPreview}
                           alt="Crop Preview"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform"
+                          style={{ transform: `scale(${avatarZoom})` }}
                         />
                       )}
                     </div>
 
-                    <div className="flex gap-2 justify-center">
-                      <Button size="sm" variant="primary" onClick={handleConfirmCrop}>
-                        Confirm Avatar
+                    {/* Zoom control slider */}
+                    <div className="flex items-center justify-center gap-3 max-w-xs mx-auto">
+                      <button
+                        type="button"
+                        onClick={() => setAvatarZoom(z => Math.max(0.8, Number((z - 0.1).toFixed(2))))}
+                        className="p-1 rounded bg-white border border-[#BDDDFA] text-[#55647C] hover:text-[#0F172A]"
+                        title="Zoom out"
+                      >
+                        <ZoomOut className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        type="range"
+                        min="0.8"
+                        max="2.5"
+                        step="0.05"
+                        value={avatarZoom}
+                        onChange={e => setAvatarZoom(parseFloat(e.target.value))}
+                        className="w-32 accent-[#168CF5]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setAvatarZoom(z => Math.min(2.5, Number((z + 0.1).toFixed(2))))}
+                        className="p-1 rounded bg-white border border-[#BDDDFA] text-[#55647C] hover:text-[#0F172A]"
+                        title="Zoom in"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-[10px] text-[#55647C] font-mono">{Math.round(avatarZoom * 100)}%</span>
+                    </div>
+
+                    <div className="flex gap-2 justify-center pt-2">
+                      <Button size="sm" variant="primary" onClick={handleConfirmCrop} loading={avatarSaving}>
+                        Confirm &amp; Save Avatar
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setAvatarCropOpen(false)}>
+                      <Button size="sm" variant="outline" onClick={() => { setAvatarCropOpen(false); setAvatarPreview(user?.avatar || null); }}>
                         Cancel
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-4 bg-[#E7F0FC] p-4 rounded-xl border border-[#BDDDFA]">
-                    <input
-                      type="file"
-                      id="avatarFile"
-                      accept="image/*"
-                      onChange={handleAvatarSelect}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="avatarFile"
-                      className="border border-dashed border-[#BDDDFA] bg-white rounded-xl px-5 py-4 cursor-pointer text-center flex-grow"
-                    >
-                      <Upload className="w-5 h-5 mx-auto text-[#55647C] mb-1" />
-                      <span className="font-bold block text-[#0F172A]">Select Avatar image</span>
-                      <span className="text-[10px] text-[#55647C] block uppercase mt-0.5">JPEG or PNG (Max 2MB)</span>
-                    </label>
+                  <div className="bg-[#E7F0FC] p-4 rounded-xl border border-[#BDDDFA] flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-full border-2 border-[#168CF5] overflow-hidden bg-white flex items-center justify-center font-bold text-[#168CF5] text-xl shrink-0">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{user?.first_name ? user.first_name[0].toUpperCase() : (user?.username ? user.username[0].toUpperCase() : 'U')}</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-bold block text-[#0F172A]">
+                          {avatarPreview ? "Custom Profile Photo Active" : "No Profile Photo Configured"}
+                        </span>
+                        <span className="text-[11px] text-[#55647C] block mt-0.5">
+                          JPEG, PNG or WEBP (Max 2MB). Recommended square image.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="avatarFileQuick"
+                        className="border border-[#BDDDFA] bg-white hover:bg-[#d8e8fa] text-[#168CF5] rounded-xl px-4 py-2 cursor-pointer text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span>{avatarPreview ? "Change Photo" : "Upload Photo"}</span>
+                      </label>
+
+                      {avatarPreview && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => setConfirmDeleteOpen(true)}
+                          icon={Trash2}
+                        >
+                          Remove Photo
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -620,8 +965,27 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                 <textarea rows="2" placeholder="e.g. Hypertension - Napa 500mg daily" value={medicalForm.chronic_conditions} onChange={e => setMedicalForm({ ...medicalForm, chronic_conditions: e.target.value })} className="w-full bg-[#E7F0FC] rounded-[15px] p-2.5 text-[#111827] outline-none"></textarea>
               </div>
 
-              <Button type="submit" variant="primary">
-                Save Medical Records
+              {medicalSaved && (
+                <div className="p-3 rounded-xl bg-[#E7F0FC] border border-[#059669] text-[#059669] text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
+                  <span>Medical records saved successfully!</span>
+                </div>
+              )}
+              {medicalError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-[#FF7A7A] text-[#DC2626] text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
+                  <span>{medicalError}</span>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                loading={medicalSaving}
+                disabled={medicalSaving}
+                className="min-w-[180px]"
+              >
+                {medicalSaving ? "Saving Records..." : medicalSaved ? "Saved!" : "Save Medical Records"}
               </Button>
             </form>
           )}
@@ -790,9 +1154,28 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
                 </div>
               </div>
 
+              {professionalSaved && (
+                <div className="p-3 rounded-xl bg-[#E7F0FC] border border-[#059669] text-[#059669] text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
+                  <span>Professional information and schedule saved successfully!</span>
+                </div>
+              )}
+              {professionalError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-[#FF7A7A] text-[#DC2626] text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
+                  <span>{professionalError}</span>
+                </div>
+              )}
+
               <div className="pt-3 border-t border-[#BDDDFA]">
-                <Button type="submit" variant="primary">
-                  Save Professional Information &amp; Schedule
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={professionalSaving}
+                  disabled={professionalSaving}
+                  className="min-w-[220px]"
+                >
+                  {professionalSaving ? "Saving Schedule..." : professionalSaved ? "Saved!" : "Save Professional Information & Schedule"}
                 </Button>
               </div>
             </form>
@@ -877,6 +1260,40 @@ export const ProfileManagement = ({ user, onUpdateUser, token, activeSection = '
 
       </div>
 
+      {/* Remove Photo Confirmation Modal */}
+      {confirmDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-[#BDDDFA]">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h4 className="text-sm font-bold text-[#0F172A]">Remove Profile Photo?</h4>
+              <p className="text-xs text-[#55647C]">
+                Your photo will be deleted and your profile will revert to default initials.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-center pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setConfirmDeleteOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={handleRemoveAvatar}
+                loading={avatarSaving}
+                disabled={avatarSaving}
+              >
+                Yes, Remove Photo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

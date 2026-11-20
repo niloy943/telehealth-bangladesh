@@ -110,22 +110,27 @@ class UserProfileView(APIView):
     def get(self, request):
         user = request.user
         data = UserSerializer(user).data
+        try:
+            p_profile = PatientProfile.objects.filter(user=user).first()
+            if p_profile:
+                data['address'] = p_profile.address or ''
+                data['emergency_contact'] = p_profile.emergency_contact or ''
+                if user.role == 'patient':
+                    data['patient_profile'] = {
+                        "address": p_profile.address,
+                        "date_of_birth": str(p_profile.date_of_birth) if p_profile.date_of_birth else None,
+                        "blood_group": p_profile.blood_group,
+                        "emergency_contact": p_profile.emergency_contact
+                    }
+        except Exception:
+            data['address'] = ''
+            data['emergency_contact'] = ''
+
         if user.role == 'doctor':
             try:
                 profile = DoctorProfile.objects.get(user=user)
                 data['doctor_profile'] = DoctorProfileSerializer(profile).data
             except DoctorProfile.DoesNotExist:
-                pass
-        elif user.role == 'patient':
-            try:
-                profile = PatientProfile.objects.get(user=user)
-                data['patient_profile'] = {
-                    "address": profile.address,
-                    "date_of_birth": str(profile.date_of_birth) if profile.date_of_birth else None,
-                    "blood_group": profile.blood_group,
-                    "emergency_contact": profile.emergency_contact
-                }
-            except PatientProfile.DoesNotExist:
                 pass
         return Response(data)
 
@@ -138,26 +143,30 @@ class UserProfileView(APIView):
             if restricted in data:
                 data.pop(restricted)
         
+        if 'avatar' in data:
+            user.avatar = data['avatar'] or ''
+            user.save()
         serializer = UserSerializer(user, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # Also persist patient_profile or doctor_profile fields if provided
-        if user.role == 'patient':
-            try:
-                p_profile, _ = PatientProfile.objects.get_or_create(user=user)
-                if 'address' in data:
-                    p_profile.address = data['address']
-                if 'emergency_contact' in data:
-                    p_profile.emergency_contact = data['emergency_contact']
+        # Persist address & emergency contact for any user in their profile record
+        try:
+            p_profile, _ = PatientProfile.objects.get_or_create(user=user)
+            if 'address' in data:
+                p_profile.address = data['address']
+            if 'emergency_contact' in data:
+                p_profile.emergency_contact = data['emergency_contact']
+            if user.role == 'patient':
                 if 'blood_group' in data:
                     p_profile.blood_group = data['blood_group']
                 if 'date_of_birth' in data and data['date_of_birth']:
                     p_profile.date_of_birth = data['date_of_birth']
-                p_profile.save()
-            except Exception as e:
-                logger.warning(f"Error updating patient profile: {e}")
-        elif user.role == 'doctor':
+            p_profile.save()
+        except Exception as e:
+            logger.warning(f"Error updating demographic/patient profile: {e}")
+
+        if user.role == 'doctor':
             try:
                 d_profile, _ = DoctorProfile.objects.get_or_create(user=user)
                 if 'specialty' in data:
@@ -391,6 +400,8 @@ class AdminDoctorActionView(APIView):
             user.phone = data['phone']
         if 'bmdc_reg' in data:
             user.bmdc_reg = data['bmdc_reg']
+        if 'avatar' in data:
+            user.avatar = data['avatar'] or ''
         if 'is_active' in data:
             user.is_active = bool(data['is_active'])
             if not user.is_active:
@@ -1006,6 +1017,22 @@ class HealthRecordViewSet(APIView):
 
         write_audit_log(user, "CREATE_HEALTH_RECORD", f"Patient uploaded record ID: {record.id} ({record_type})", request)
         return Response(HealthRecordSerializer(record).data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, pk=None):
+        user = request.user
+        record_id = pk or request.data.get('id')
+        if not record_id:
+            return Response({"error": "Record ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if user.role == 'admin' or user.is_staff or user.is_superuser:
+                record = HealthRecord.objects.get(id=record_id)
+            else:
+                record = HealthRecord.objects.get(id=record_id, patient=user)
+            record.delete()
+            write_audit_log(user, "DELETE_HEALTH_RECORD", f"Deleted health record #{record_id}", request)
+            return Response({"message": f"Health record #{record_id} deleted successfully."})
+        except HealthRecord.DoesNotExist:
+            return Response({"error": "Health record not found or access denied."}, status=status.HTTP_404_NOT_FOUND)
 
 class ConsentViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -2103,7 +2130,7 @@ class FileUploadView(APIView):
             return Response(res, status=status.HTTP_400_BAD_REQUEST)
 
 class FileDownloadView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, filename):
         file_path = os.path.join(storage_service.local_dir, filename)

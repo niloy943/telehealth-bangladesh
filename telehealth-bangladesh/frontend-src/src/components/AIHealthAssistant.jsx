@@ -135,7 +135,7 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
 
         <div className="hidden sm:flex items-center gap-2 text-xs text-[#55647C] bg-white px-3 py-1.5 rounded-[10px] border border-[#BDDDFA]">
           <ShieldCheck className="w-4 h-4 text-[#059669]" />
-          <span>Server-Side </span>
+          <span>Server-Side Guardrails</span>
         </div>
       </div>
 
@@ -236,9 +236,10 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
 
         {/* Loading Indicator */}
         {loading && (
-          <div className="flex flex-col items-start">
-            <div className="p-4 rounded-2xl rounded-bl-none bg-[#E7F0FC] border border-[#BDDDFA] text-[#0F172A] text-xs">
-              <span className="font-semibold text-xs">Analyzing medical guidelines...</span>
+          <div className="flex flex-col items-start animate-in fade-in duration-200">
+            <div className="p-3.5 rounded-2xl rounded-bl-none bg-[#E7F0FC] border border-[#BDDDFA] text-[#0F172A] text-xs flex items-center gap-2.5 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-[#059669] animate-pulse" />
+              <span className="font-semibold text-xs text-[#0F172A]">Analyzing verified medical guidelines...</span>
             </div>
           </div>
         )}
@@ -264,13 +265,13 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
       </div>
 
       {/* 4. Input Bar */}
-      <div className="p-4 border-t border-[#BDDDFA]/60 bg-[#F4F6F9] shrink-0">
+      <div className="p-3 sm:p-4 border-t border-[#BDDDFA]/60 bg-[#F4F6F9] shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             sendMessage();
           }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-2 sm:gap-3"
         >
           <input
             type="text"
@@ -285,7 +286,7 @@ export const AIHealthAssistant = ({ token, user, onNavigateBooking }) => {
           <button
             type="submit"
             disabled={!inputValue.trim() || loading}
-            className="px-5 min-h-[52px] rounded-[10px] bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center gap-2 cursor-pointer"
+            className="px-4 sm:px-5 min-h-[42px] rounded-[10px] bg-[#059669] hover:bg-[#047857] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center gap-2 cursor-pointer transition-colors"
           >
             <Send className="w-4 h-4" />
             <span className="hidden sm:inline">Send</span>

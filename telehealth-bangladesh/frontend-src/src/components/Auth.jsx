@@ -544,7 +544,7 @@ export const Auth = ({ onLoginSuccess, onBackToLanding }) => {
             Secure, Verified Telemedicine for <span className="text-[#34D399]">Bangladesh</span>
           </h1>
           <p className="text-xs max-w-sm mx-auto leading-relaxed text-[#CBD5E1]">
-
+            Encrypted digital health records, licensed BMDC doctors, and confidential clinical consultations.
           </p>
         </div>
 

@@ -400,19 +400,28 @@ export const DoctorDashboard = ({
       {/* 1. Clinical Workspace Header & Status Bar */}
       <div className="bg-white border border-[#BDDDFA] rounded-2xl p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-[#059669] uppercase tracking-wider">
-                Clinical Workspace
-              </span>
-              <VerifiedBadge text={`BMDC Reg: ${user.doctor_profile?.bmdc_reg || 'Certified'}`} />
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl border-2 border-[#168CF5] bg-[#E7F0FC] overflow-hidden flex items-center justify-center text-[#168CF5] font-bold text-xl shrink-0 shadow-xs">
+              {user.avatar ? (
+                <img src={user.avatar} alt="Dr. Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span>{user.first_name ? user.first_name[0].toUpperCase() : 'Dr'}</span>
+              )}
             </div>
-            <h1 className="text-lg font-bold text-[#0F172A] tracking-tight">
-              Dr. {user.first_name} {user.last_name}
-            </h1>
-            <p className="text-sm text-[#55647C] mt-0.5">
-              {[user.doctor_profile?.specialty || 'General Practitioner', user.doctor_profile?.hospital].filter(Boolean).join(' • ')} • <span className="font-semibold text-[#059669] font-mono">Fee: ৳{user.doctor_profile?.fees || 500} BDT</span>
-            </p>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold text-[#059669] uppercase tracking-wider">
+                  Clinical Workspace
+                </span>
+                <VerifiedBadge text={`BMDC Reg: ${user.doctor_profile?.bmdc_reg || 'Certified'}`} />
+              </div>
+              <h1 className="text-lg font-bold text-[#0F172A] tracking-tight">
+                Dr. {user.first_name} {user.last_name}
+              </h1>
+              <p className="text-sm text-[#55647C] mt-0.5">
+                {[user.doctor_profile?.specialty || 'General Practitioner', user.doctor_profile?.hospital].filter(Boolean).join(' • ')} • <span className="font-semibold text-[#059669] font-mono">Fee: ৳{user.doctor_profile?.fees || 500} BDT</span>
+              </p>
+            </div>
           </div>
 
           {/* Quick Doctor Workstation Toggles */}
@@ -467,7 +476,8 @@ export const DoctorDashboard = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle>Patient Consultation Queue</CardTitle>
-                <CardDescription>Review appointment bookings, accept visits, and start encrypted clinical consultations.</CardDescription>
+                <CardDescription>
+                </CardDescription>
               </div>
               <div className="relative max-w-xs w-full">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -983,13 +993,42 @@ export const DoctorDashboard = ({
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {patientRecords.map(rec => (
-              <div key={rec.id} className="p-3.5 rounded-xl border border-[#BDDDFA] bg-[#E7F0FC] space-y-1">
+              <div key={rec.id} className="p-3.5 rounded-xl border border-[#BDDDFA] bg-[#E7F0FC] space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#0F172A] uppercase">{rec.record_type}</span>
                   <SecurityBadge text="Decrypted (AES-256)" />
                 </div>
-                <p className="text-xs text-[#334155] leading-relaxed">{rec.content}</p>
-                <span className="text-[10px] text-[#55647C] block pt-1">Record ID #{rec.id}</span>
+                <p className="text-xs text-[#334155] leading-relaxed whitespace-pre-line">
+                  {((rec.content || rec.decrypted_content || "").replace(/\[File Ref:[^\]]+\]/g, '').replace(/📎 Attached Document:[^\n]+/g, '').trim()) || (rec.content || rec.decrypted_content || "Diagnostic record stored.")}
+                </p>
+                {/* Doctor View of Attached Lab Report Document */}
+                {(() => {
+                  const raw = rec.content || rec.decrypted_content || '';
+                  const match = raw.match(/\[File Ref:\s*([^\]]+)\]/i) || raw.match(/File:\s*([a-zA-Z0-9_.-]+)/i);
+                  const nameMatch = raw.match(/📎 Attached Document:\s*([^(]+)/i);
+                  if (!match) return null;
+                  const rawUrl = match[1].trim().startsWith('/api/') ? match[1].trim() : `/api/storage/file/${match[1].trim()}`;
+                  const fileUrl = rawUrl.startsWith('http') ? rawUrl : `${API_BASE}${rawUrl}`;
+                  const docName = nameMatch ? nameMatch[1].trim() : (match[1].includes('/') ? match[1].split('/').pop() : match[1]);
+                  return (
+                    <div className="p-2.5 rounded-xl bg-white border border-[#BDDDFA] flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate">
+                        <FileText className="w-4 h-4 text-[#168CF5] shrink-0" />
+                        <span className="text-xs font-bold text-[#0F172A] truncate">{docName}</span>
+                      </div>
+                      <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-[#E7F0FC] text-[#168CF5] hover:bg-[#168CF5] hover:text-white rounded-lg transition-colors shrink-0 shadow-xs"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Open Report</span>
+                      </a>
+                    </div>
+                  );
+                })()}
+                <span className="text-[10px] text-[#55647C] block pt-1 font-mono">Record ID #{rec.id}</span>
               </div>
             ))}
           </div>

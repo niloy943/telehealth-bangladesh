@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { Bell, BellOff, Volume2, VolumeX, ShieldAlert, Calendar, FileText, ShoppingBag, X } from 'lucide-react';
 
 const NotificationContext = createContext();
@@ -14,6 +14,10 @@ export const useNotifications = () => {
 // Subtle Web Audio notification chime
 const playNotificationChime = () => {
   try {
+    // Hard guard: if muted in localStorage, immediately abort playing any sound
+    if (typeof window !== 'undefined' && localStorage.getItem('healnsight_notifications_muted') === 'true') {
+      return;
+    }
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
     const ctx = new AudioContextClass();
@@ -44,21 +48,32 @@ export const NotificationProvider = ({ children }) => {
     }
   });
 
-  const toggleMute = () => {
+  const isMutedRef = useRef(isMuted);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
+  const toggleMute = useCallback(() => {
     setIsMuted(prev => {
       const next = !prev;
+      isMutedRef.current = next;
       try {
         localStorage.setItem('healnsight_notifications_muted', String(next));
       } catch (e) {}
-      if (!next) {
-        // Feedback chime when unmuting
+      if (next) {
+        // Immediately dismiss all active popup toasts when muting
+        setToasts([]);
+      } else {
+        // Feedback chime only when unmuting
         playNotificationChime();
       }
       return next;
     });
-  };
+  }, []);
 
-  const triggerNotification = (title, message, category = 'system') => {
+  const triggerNotification = useCallback((title, message, category = 'system') => {
+    const isSilenced = isMutedRef.current || (typeof window !== 'undefined' && localStorage.getItem('healnsight_notifications_muted') === 'true');
+
     const newNotif = {
       id: Date.now() + Math.random().toString(36).substr(2, 9),
       title,
@@ -70,32 +85,33 @@ export const NotificationProvider = ({ children }) => {
 
     setNotifications(prev => [newNotif, ...prev]);
 
-    // Only display popup toast and play sound when not muted
-    if (!isMuted) {
+    // Only display popup toast and play sound when not silenced/muted
+    if (!isSilenced) {
       setToasts(prev => [...prev, newNotif]);
       setTimeout(() => {
-        removeToast(newNotif.id);
+        setToasts(prev => prev.filter(t => t.id !== newNotif.id));
       }, 4500);
 
       playNotificationChime();
     }
-  };
+  }, []);
 
-  const removeToast = (id) => {
+  const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  }, []);
 
-  const markAsRead = (id) => {
+  const markAsRead = useCallback((id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
+  }, []);
 
-  const markAllRead = () => {
+  const markAllRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+  }, []);
 
-  const clearNotifications = () => {
+  const clearNotifications = useCallback(() => {
     setNotifications([]);
-  };
+    setToasts([]);
+  }, []);
 
   return (
     <NotificationContext.Provider value={{
@@ -117,7 +133,7 @@ export const NotificationProvider = ({ children }) => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="bg-white border border-[#BDDDFA] rounded-2xl shadow-xl p-4 flex gap-3 pointer-events-auto relative"
+            className="bg-white border border-[#BDDDFA] rounded-2xl shadow-xl p-4 flex gap-3 pointer-events-auto relative animate-in fade-in slide-in-from-bottom-2 duration-200"
           >
             {/* Category indicator icon */}
             <div className="shrink-0">
@@ -175,14 +191,32 @@ export const NotificationProvider = ({ children }) => {
 export const NotificationDropdown = ({ isOpen, onClose, user }) => {
   const { notifications, markAsRead, markAllRead, clearNotifications, isMuted, toggleMute } = useNotifications();
   const [filter, setFilter] = useState('all');
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        const isBellBtn = e.target.closest('button[aria-label="Notifications"]');
+        if (!isBellBtn) {
+          onClose?.();
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   const filtered = notifications.filter(n => filter === 'all' || n.category === filter);
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  if (!isOpen) return null;
-
   return (
-    <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white border border-[#BDDDFA] rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
+    <div 
+      ref={dropdownRef}
+      className="absolute right-0 top-12 w-80 sm:w-96 bg-white border border-[#BDDDFA] rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
+    >
       {/* Title Header */}
       <div className="px-4 py-3.5 border-b border-[#BDDDFA]/60 flex justify-between items-center bg-[#F4F6F9]">
         <div>
@@ -217,7 +251,7 @@ export const NotificationDropdown = ({ isOpen, onClose, user }) => {
             title={isMuted ? "Unmute alerts and popups" : "Mute alerts and popups"}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-[8px] text-[11px] font-semibold transition-all cursor-pointer border ${
               isMuted
-                ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 shadow-xs'
+                ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200 shadow-xs'
                 : 'bg-white text-[#55647C] border-[#BDDDFA] hover:text-[#0F172A] hover:bg-[#E7F0FC]'
             }`}
           >
@@ -250,6 +284,13 @@ export const NotificationDropdown = ({ isOpen, onClose, user }) => {
               Clear
             </button>
           )}
+          <button
+            onClick={onClose}
+            title="Close"
+            className="p-1 rounded-lg text-[#94A3B8] hover:text-[#0F172A] hover:bg-[#E2E8F0] cursor-pointer ml-1"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 

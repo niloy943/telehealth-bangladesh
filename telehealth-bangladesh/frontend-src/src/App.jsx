@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './components/LanguageContext';
 import { NotificationProvider, NotificationDropdown, useNotifications } from './components/NotificationCenter';
@@ -6,6 +6,7 @@ import { Auth } from './components/Auth';
 import { LandingPage } from './components/LandingPage';
 import { CommandPalette } from './components/CommandPalette';
 import { SupportWidget } from './components/SupportWidget';
+import { EmergencyModal } from './components/EmergencyModal';
 import {
   Activity, LayoutDashboard, CalendarPlus, FileHeart, ShieldCheck,
   ShoppingBag, ShieldAlert, LogOut, Home, Bell, BellOff, Globe,
@@ -66,6 +67,7 @@ const MainApp = () => {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLanding, setShowLanding] = useState(!localStorage.getItem("tv_token"));
 
@@ -88,6 +90,10 @@ const MainApp = () => {
         });
         if (resp.status === 200) {
           const data = await resp.json();
+          if (!data.avatar && data.id) {
+            const cachedAvatar = localStorage.getItem(`healnsight_avatar_${data.id}`);
+            if (cachedAvatar) data.avatar = cachedAvatar;
+          }
           setUser(data);
 
           // Route Guard: Sync initial URL path based on authoritative backend role
@@ -154,6 +160,13 @@ const MainApp = () => {
     setActiveTab(newTab);
   };
 
+  const knownPendingIdsRef = useRef(null);
+
+  useEffect(() => {
+    // Reset tracked pending appointments when user or authentication token changes
+    knownPendingIdsRef.current = null;
+  }, [user?.id, token]);
+
   const fetchAppointments = async () => {
     if (!token) return;
     try {
@@ -162,15 +175,43 @@ const MainApp = () => {
       });
       const data = await resp.json();
       setAppointments(data);
-      if (data.some(a => a.status === 'pending') && user?.role === 'doctor') {
-        triggerNotification("New Appointment Request", "A patient is awaiting your confirmation.", "appointment");
+
+      if (Array.isArray(data) && user?.role === 'doctor') {
+        const pendingAppointments = data.filter(a => a.status === 'pending');
+        const currentPendingIds = new Set(pendingAppointments.map(a => a.id));
+
+        if (knownPendingIdsRef.current === null) {
+          // Initial load: record existing pending IDs so we don't spam alerts on every poll
+          knownPendingIdsRef.current = currentPendingIds;
+          if (pendingAppointments.length > 0) {
+            triggerNotification(
+              "Pending Appointment Requests",
+              `You have ${pendingAppointments.length} pending appointment ${pendingAppointments.length === 1 ? 'request' : 'requests'} awaiting review.`,
+              "appointment"
+            );
+          }
+        } else {
+          // Polling updates: strictly alert ONLY for freshly arrived pending requests!
+          const newAppointments = pendingAppointments.filter(a => !knownPendingIdsRef.current.has(a.id));
+          if (newAppointments.length > 0) {
+            newAppointments.forEach(apt => {
+              triggerNotification(
+                "New Appointment Request",
+                `Patient ${apt.patient_details?.username || apt.patient_name || 'appointment'} is awaiting your confirmation.`,
+                "appointment"
+              );
+              knownPendingIdsRef.current.add(apt.id);
+            });
+          }
+          knownPendingIdsRef.current = currentPendingIds;
+        }
       }
     } catch (err) { console.error(err); }
   };
 
   useEffect(() => {
     fetchAppointments();
-    const interval = setInterval(fetchAppointments, 15000);
+    const interval = setInterval(fetchAppointments, 20000);
     return () => clearInterval(interval);
   }, [token, activeTab, user]);
 
@@ -228,9 +269,7 @@ const MainApp = () => {
   const handlePaletteAction = (actionId) => {
     if (actionId === 'logout') { setLogoutModalOpen(true); }
     else if (actionId === 'sos') {
-      const alarm = document.getElementById("audioRingtone");
-      if (alarm) { alarm.play().catch(() => { }); setTimeout(() => alarm.pause(), 4000); }
-      triggerNotification("Emergency SOS Alert", "Broadcasting location to emergency contacts.", "security");
+      setEmergencyModalOpen(true);
     } else if (actionId === 'toggle-availability') {
       triggerNotification("Availability Updated", "Your status has been updated.", "system");
     } else if (actionId === 'rekey') {
@@ -487,8 +526,12 @@ const MainApp = () => {
         <div className="border-t border-[#1E293B] bg-[#0F172A] p-3.5 shrink-0">
           {!sidebarCollapsed ? (
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[10px] bg-[#1E293B] border border-[#334155] flex items-center justify-center text-[#F8FAFC] font-bold text-xs shrink-0 uppercase">
-                {(user.first_name || user.username)[0]}
+              <div className="w-8 h-8 rounded-[10px] bg-[#1E293B] border border-[#334155] overflow-hidden flex items-center justify-center text-[#F8FAFC] font-bold text-xs shrink-0 uppercase">
+                {user.avatar ? (
+                  <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  (user.first_name || user.username)[0]
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-[#F8FAFC] truncate">{user.first_name || user.username}</p>
@@ -502,8 +545,12 @@ const MainApp = () => {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 rounded-[10px] bg-[#1E293B] border border-[#334155] flex items-center justify-center text-[#F8FAFC] font-bold text-xs uppercase">
-                {(user.first_name || user.username)[0]}
+              <div className="w-8 h-8 rounded-[10px] bg-[#1E293B] border border-[#334155] overflow-hidden flex items-center justify-center text-[#F8FAFC] font-bold text-xs uppercase">
+                {user.avatar ? (
+                  <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  (user.first_name || user.username)[0]
+                )}
               </div>
               <button onClick={() => setLogoutModalOpen(true)}
                 className="p-1.5 text-[#FF7A7A] hover:bg-[#FF7A7A]/10 rounded-lg cursor-pointer"
@@ -671,6 +718,14 @@ const MainApp = () => {
           </div>
         </div>
       )}
+
+      {/* Emergency SOS Modal */}
+      <EmergencyModal
+        isOpen={emergencyModalOpen}
+        onClose={() => setEmergencyModalOpen(false)}
+        token={token}
+        user={user}
+      />
     </div>
   );
 };
