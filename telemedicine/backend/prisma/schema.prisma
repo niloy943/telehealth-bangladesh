@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum ConsultationStatus {
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PrescriptionState {
+  DRAFT
+  APPROVED
+  GENERATING
+  READY
+  LOCKED
+}
+
+enum DocumentSecurityStatus {
+  ACTIVE
+  LOCKED
+  QUARANTINED
+}
+
+enum SecurityEventType {
+  SECURITY_LOCK
+  INTEGRITY_FAILURE
+  FAILED_AUTH
+  UNAUTHORIZED_ACCESS_ATTEMPT
+  LOCKDOWN_TRIGGERED
+  OTP_RECOVERY_SUCCESS
+  OTP_RECOVERY_FAILED
+}
+
+enum LockReason {
+  INTEGRITY_HASH_MISMATCH
+  SUSPICIOUS_DOWNLOAD_ACTIVITY
+  REVOKED_SESSION_REUSE
+  FAILED_AUTHENTICATION_BURST
+  ADMIN_MANUAL_LOCK
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  phone           String?           @unique
+  name            String
+  role            UserRole          @default(PATIENT)
+  passwordHash    String
+  doctorLicense   String?
+  isVerified      Boolean           @default(false)
+  mfaSecret       String?
+  mfaEnabled      Boolean           @default(false)
+  mfaBackupCodes  String?
+  lastTotpStep    BigInt?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  doctorConsultations   Consultation[]      @relation("DoctorConsultations")
+  patientConsultations  Consultation[]      @relation("PatientConsultations")
+  doctorGrants          ConsultationGrant[] @relation("DoctorGrants")
+  doctorPrescriptions   Prescription[]      @relation("DoctorPrescriptions")
+  patientPrescriptions  Prescription[]      @relation("PatientPrescriptions")
+  otpChallenges         OtpChallenge[]
+  auditLogs             AuditLog[]
+
+  @@map("users")
+}
+
+model Consultation {
+  id              String              @id @default(uuid())
+  doctorId        String
+  patientId       String
+  roomName        String              @unique
+  status          ConsultationStatus  @default(SCHEDULED)
+  scheduledAt     DateTime
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  doctor          User                @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  patient         User                @relation("PatientConsultations", fields: [patientId], references: [id])
+  grants          ConsultationGrant[]
+  prescription    Prescription?
+
+  @@index([doctorId, status])
+  @@index([patientId, status])
+  @@map("consultations")
+}
+
+model ConsultationGrant {
+  id                String        @id @default(uuid())
+  consultationId    String
+  doctorId          String
+  patientId         String
+  grantedAt         DateTime      @default(now())
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  revocationReason  String?
+
+  consultation      Consultation  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  doctor            User          @relation("DoctorGrants", fields: [doctorId], references: [id])
+
+  @@index([doctorId, consultationId, revokedAt])
+  @@map("consultation_grants")
+}
+
+model Prescription {
+  id              String             @id @default(uuid())
+  consultationId  String             @unique
+  doctorId        String
+  patientId       String
+  state           PrescriptionState  @default(DRAFT)
+  version         Int                @default(1)
+  diagnosis       String?
+  symptoms        String?
+  advice          String?
+  approvedAt      DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  consultation    Consultation       @relation(fields: [consultationId], references: [id])
+  doctor          User               @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  patient         User               @relation("PatientPrescriptions", fields: [patientId], references: [id])
+  items           PrescriptionItem[]
+  files           PrescriptionFile[]
+
+  @@index([patientId, state])
+  @@index([doctorId])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id              String        @id @default(uuid())
+  prescriptionId  String
+  medicineName    String
+  dosage          String
+  frequency       String
+  duration        String
+  instructions    String?
+  createdAt       DateTime      @default(now())
+
+  prescription    Prescription  @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@map("prescription_items")
+}
+
+model PrescriptionFile {
+  id                  String                  @id @default(uuid())
+  prescriptionId      String
+  version             Int                     @default(1)
+  storageKey          String
+  fileName            String
+  fileSizeBytes       Int
+  mimeType            String                  @default("application/pdf")
+  iv                  String
+  authTag             String
+  wrappedKey          String
+  keyId               String
+  encryptionAlgo      String                  @default("aes-256-gcm")
+  sha256Hash          String
+  blockchainTxId      String?
+  blockchainTimestamp DateTime?
+  securityStatus      DocumentSecurityStatus  @default(ACTIVE)
+  isReady             Boolean                 @default(false)
+  lockedAt            DateTime?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  prescription        Prescription            @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  securityEvents      SecurityEvent[]
+  locks               DocumentLock[]
+
+  @@index([prescriptionId, version])
+  @@index([securityStatus, isReady])
+  @@map("prescription_files")
+}
+
+model SecurityEvent {
+  id            String             @id @default(uuid())
+  documentId    String?
+  userId        String?
+  type          SecurityEventType
+  severity      String             @default("HIGH")
+  reason        String
+  ipAddress     String?
+  userAgent     String?
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+
+  document      PrescriptionFile?  @relation(fields: [documentId], references: [id])
+
+  @@index([documentId])
+  @@index([type, createdAt])
+  @@map("security_events")
+}
+
+model DocumentLock {
+  id                String            @id @default(uuid())
+  documentId        String
+  reason            LockReason
+  description       String?
+  isRecoverable     Boolean           @default(true)
+  unlockedAt        DateTime?
+  unlockedByUserId  String?
+  unlockMethod      String?
+  createdAt         DateTime          @default(now())
+
+  document          PrescriptionFile  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, isRecoverable, unlockedAt])
+  @@map("document_locks")
+}
+
+model OtpChallenge {
+  id          String    @id @default(uuid())
+  userId      String
+  documentId  String?
+  codeHash    String
+  purpose     String    @default("DOCUMENT_RECOVERY")
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  isUsed      Boolean   @default(false)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, isUsed, expiresAt])
+  @@map("otp_challenges")
+}
+
+model AuditLog {
+  id            String    @id @default(uuid())
+  userId        String?
+  action        String
+  resourceType  String
+  resourceId    String?
+  ipAddress     String?
+  status        String    @default("SUCCESS")
+  details       Json?
+  timestamp     DateTime  @default(now())
+
+  user          User?     @relation(fields: [userId], references: [id])
+
+  @@index([userId, timestamp])
+  @@index([action, timestamp])
+  @@map("audit_logs")
+}
+

@@ -38,23 +38,49 @@ def main():
 
     print("\n>>> Launching Django Backend, Node.js Auth, FastAPI Worker, & Frontend services...")
 
+    import socket
+    auth_port = 5000
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('127.0.0.1', 5000))
+    except OSError:
+        auth_port = 5001
+
+    node_env = os.environ.copy()
+    node_env["PORT"] = str(auth_port)
+    frontend_env = os.environ.copy()
+    frontend_env["VITE_AUTH_API_BASE"] = f"http://localhost:{auth_port}"
+
     # Spawn backend
     backend_proc = subprocess.Popen([py_exe, backend_script])
     
     # Spawn Node.js Auth
-    node_backend_proc = subprocess.Popen([py_exe, node_backend_script])
+    node_backend_proc = subprocess.Popen([py_exe, node_backend_script], env=node_env)
     
     # Spawn FastAPI Upstream Worker
     fastapi_proc = subprocess.Popen([py_exe, fastapi_script])
+
+    # Spawn E-Prescription & Security Vault Gateway (Port 5002)
+    ep_gateway_proc = None
+    telemed_dir = os.path.normpath(os.path.join(base_dir, "..", "telemedicine", "backend"))
+    telemed_index = os.path.join(telemed_dir, "src", "index.ts")
+    if os.path.exists(telemed_index):
+        import shutil
+        node_bin = shutil.which("node") or "node"
+        ep_env = os.environ.copy()
+        ep_env["PORT"] = "5002"
+        ep_gateway_proc = subprocess.Popen([node_bin, "--experimental-strip-types", "src/index.ts"], cwd=telemed_dir, env=ep_env)
     
     # Spawn frontend
-    frontend_proc = subprocess.Popen([py_exe, frontend_script])
+    frontend_proc = subprocess.Popen([py_exe, frontend_script], env=frontend_env)
 
     print("\n=======================================================")
     print(" HealNSight Telemedicine Platform is running!")
     print(" Django Backend API: http://127.0.0.1:8000")
-    print(" Node.js Auth API: http://localhost:5000")
+    print(f" Node.js Auth API: http://localhost:{auth_port}")
     print(" FastAPI Upstream Worker: http://localhost:6000")
+    if ep_gateway_proc:
+        print(" E-Prescription Vault Gateway: http://localhost:5002")
     print(" Frontend Web Application: http://localhost:3000")
     print(" Press Ctrl+C in this terminal to stop all servers.")
     print("=======================================================\n")
@@ -71,6 +97,9 @@ def main():
             if fastapi_proc.poll() is not None:
                 print("FastAPI server stopped unexpectedly.")
                 break
+            if ep_gateway_proc and ep_gateway_proc.poll() is not None:
+                print("E-Prescription Gateway server stopped unexpectedly.")
+                break
             if frontend_proc.poll() is not None:
                 print("Frontend server stopped unexpectedly.")
                 break
@@ -82,10 +111,14 @@ def main():
         backend_proc.terminate()
         node_backend_proc.terminate()
         fastapi_proc.terminate()
+        if ep_gateway_proc:
+            ep_gateway_proc.terminate()
         frontend_proc.terminate()
         backend_proc.wait()
         node_backend_proc.wait()
         fastapi_proc.wait()
+        if ep_gateway_proc:
+            ep_gateway_proc.wait()
         frontend_proc.wait()
         print("All servers stopped successfully.")
 

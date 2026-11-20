@@ -98,25 +98,29 @@ class BlockchainIntegrityService:
         Commits a record hash to the local ledger database, generates proof hash, then anchors to Sepolia smart contract.
         """
         from api.models import BlockchainRecord
-        last_block = BlockchainRecord.objects.order_by('-block_number').first()
-        prev_hash = last_block.data_hash if last_block else "0000000000000000000000000000000000000000000000000000000000000000"
-        block_num = (last_block.block_number + 1) if last_block else 1
+        from django.db import transaction
 
-        data_hash = self.calculate_hash(record_type, record_id, payload, prev_hash)
+        # Atomic lock to prevent concurrency race conditions & chain forks
+        with transaction.atomic():
+            last_block = BlockchainRecord.objects.select_for_update().order_by('-block_number').first()
+            prev_hash = last_block.data_hash if last_block else "0000000000000000000000000000000000000000000000000000000000000000"
+            block_num = (last_block.block_number + 1) if last_block else 1
 
-        # Save local block first
-        block = BlockchainRecord.objects.create(
-            record_type=record_type,
-            record_id=record_id,
-            data_hash=data_hash,
-            prev_hash=prev_hash,
-            block_number=block_num,
-            blockchain_network="Ethereum Sepolia" if self.rpc_url else "Sepolia Sim",
-            contract_address=self.contract_address or "0x0000000000000000000000000000000000000000",
-            blockchain_status="BLOCKCHAIN_PENDING"
-        )
+            data_hash = self.calculate_hash(record_type, record_id, payload, prev_hash)
 
-        # Trigger Sepolia anchoring
+            # Save local block first within atomic lock
+            block = BlockchainRecord.objects.create(
+                record_type=record_type,
+                record_id=record_id,
+                data_hash=data_hash,
+                prev_hash=prev_hash,
+                block_number=block_num,
+                blockchain_network="Ethereum Sepolia" if self.rpc_url else "Sepolia Sim",
+                contract_address=self.contract_address or "0x0000000000000000000000000000000000000000",
+                blockchain_status="BLOCKCHAIN_PENDING"
+            )
+
+        # Trigger Sepolia anchoring outside transaction lock
         self.anchor_hash_onchain(block, data_hash, prev_hash, record_type, str(record_id))
         return block
 

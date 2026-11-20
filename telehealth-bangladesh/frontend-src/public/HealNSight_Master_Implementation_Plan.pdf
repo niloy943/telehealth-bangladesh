@@ -1,0 +1,881 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [8 0 R 10 0 R 12 0 R 14 0 R 16 0 R 18 0 R 20 0 R 22 0 R 24 0 R 26 0 R] /Count 10 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold >>
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 2616 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 1 of 10) Tj ET
+1.50 w 0.020 0.450 0.720 RG 0.040 0.160 0.280 rg 45.00 716.89 505.28 70.00 re B
+BT /F2 15.0 Tf 0.300 0.800 1.000 rg 63.00 760.89 Td (HealNSight Telemedicine Bangladesh) Tj ET
+BT /F2 11.0 Tf 1.000 1.000 1.000 rg 63.00 742.89 Td (Secure E-Prescription System: Master Implementation Plan & Architecture) Tj ET
+BT /F1 8.5 Tf 0.750 0.850 0.950 rg 63.00 728.89 Td (AES-256-GCM Envelope Encryption * Hyperledger Fabric Blockchain * Google Authenticator TOTP) Tj ET
+0.950 0.980 1.000 rg 45.00 671.89 505.28 24.00 re f
+3.50 w 0.020 0.520 0.850 RG 45.00 695.89 m 45.00 671.89 l S
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 683.89 Td (Project: Telemedicine Bangladesh / HealNSight Platform) Tj ET
+0.950 0.980 1.000 rg 45.00 609.89 505.28 54.00 re f
+3.50 w 0.020 0.520 0.850 RG 45.00 663.89 m 45.00 609.89 l S
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 651.89 Td (Security Baseline: AES-256-GCM Envelope Encryption \(Cloud KMS Wrapped\) + Hyperledger) Tj ET
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 640.89 Td (Fabric Blockchain Hash Anchoring + Server-Enforced Consultation Grants + Google) Tj ET
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 629.89 Td (Authenticator \(RFC 6238 TOTP\) Digital Signing + Automatic Threat Lockdown & Dual-Mode) Tj ET
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 618.89 Td (Recovery) Tj ET
+0.950 0.980 1.000 rg 45.00 547.89 505.28 54.00 re f
+3.50 w 0.020 0.520 0.850 RG 45.00 601.89 m 45.00 547.89 l S
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 589.89 Td (Core Clinical Invariant: Doctors formulate prescriptions during video/audio) Tj ET
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 578.89 Td (consultations; upon approval, doctor consultation grants are immediately and) Tj ET
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 567.89 Td (irreversibly revoked. Finalized decrypted PDF documents can only be retrieved by the) Tj ET
+BT /F3 8.5 Tf 0.150 0.250 0.380 rg 57.00 556.89 Td (authenticated patient.) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 533.89 m 550.28 533.89 l S
+0.020 0.450 0.720 rg 45.00 491.89 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 494.89 Td (1. System Architecture & Logical Topology) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 489.89 m 550.28 489.89 l S
+
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 7568 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 2 of 10) Tj ET
+0.70 w 0.850 0.880 0.920 RG 0.960 0.970 0.980 rg 45.00 324.89 505.28 462.00 re B
+2.50 w 0.200 0.500 0.800 RG 45.00 786.89 m 45.00 324.89 l S
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 777.89 Td (flowchart TD) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 767.89 Td (    subgraph Doctor_Workstation ["Doctor Workstation \(Port 3000\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 757.89 Td (        D_UI["In-Call / Full-Screen Rx Portal"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 747.89 Td (        D_MFA["Google Authenticator \(RFC 6238 TOTP\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 737.89 Td (        D_Draft["In-Memory Draft Store \(Zero RAM Bleed\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 727.89 Td (    end) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 717.89 Td () Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 707.89 Td (    subgraph API_Gateway ["Secure E-Prescription Gateway \(Port 5002\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 697.89 Td (        AUTH_GUARD["Consultation Access Guard\\n\(canViewPatient / canApprove\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 687.89 Td (        CRYPTO_ENGINE["AES-256-GCM Engine\\n\(Unique 256-bit DEK + KMS Wrap\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 677.89 Td (        LOCKDOWN_SVC["Threat Lockdown Engine\\n\(Burst Detection & IP Quarantine\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 667.89 Td (        TOTP_SVC["RFC 6238 TOTP Engine\\n\(Replay Protection & Drift Window\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 657.89 Td (        JOB_DISPATCHER["BullMQ Async Dispatcher\\n\(Background Encryption Queue\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 647.89 Td (    end) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 637.89 Td () Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 627.89 Td (    subgraph Core_Database ["Relational Storage \(SQLite / PostgreSQL\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 617.89 Td (        DB_USERS[\("Users & BMDC Profiles"\)]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 607.89 Td (        DB_GRANTS[\("Consultation Grants \(Time-Bounded\)"\)]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 597.89 Td (        DB_RX[\("Immutable Prescriptions"\)]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 587.89 Td (        DB_FILES[\("Encrypted Ciphertext & KMS Tags"\)]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 577.89 Td (        DB_AUDIT[\("Security Audit Logs & Locks"\)]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 567.89 Td (    end) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 557.89 Td () Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 547.89 Td (    subgraph Blockchain_Ledger ["Hyperledger Fabric Network"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 537.89 Td (CHAINCODE["prescription_integrity Chaincode\\nregisterPrescriptionHash\(docId, sha256\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 527.89 Td (        LEDGER[\("Immutable Merkle Ledger\\n\(Zero PHI Stored\)"\)]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 517.89 Td (    end) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 507.89 Td () Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 497.89 Td (    subgraph Patient_Vault ["Patient Workstation \(Port 3000 / 8000\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 487.89 Td (        P_VAULT["Encrypted Patient Prescription Vault"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 477.89 Td (        P_RECOVERY["Dual-Mode Recovery Modal\\n\(Google 2FA / 5-min OTP\)"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 467.89 Td (        P_STREAM["Zero-Knowledge Decrypted Stream"]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 457.89 Td (    end) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 447.89 Td () Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 437.89 Td (    D_UI -->|1. Formulate Regimen| D_Draft) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 427.89 Td (    D_Draft -->|2. Sign with 6-Digit TOTP| D_MFA) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 417.89 Td (    D_MFA -->|3. POST /api/prescriptions/approve| AUTH_GUARD) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 407.89 Td (    AUTH_GUARD -->|4. Validate Doctor BMDC & Active Grant| DB_GRANTS) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 397.89 Td (    AUTH_GUARD -->|5. Revoke Doctor Grant Immediately| DB_GRANTS) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 387.89 Td (    AUTH_GUARD -->|6. Dispatch PDF & Crypto Task| JOB_DISPATCHER) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 377.89 Td (    JOB_DISPATCHER -->|7. Envelope Encryption| CRYPTO_ENGINE) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 367.89 Td (    CRYPTO_ENGINE -->|8. Store Ciphertext & AuthTag| DB_FILES) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 357.89 Td (    CRYPTO_ENGINE -->|9. Anchor SHA-256 Digest| CHAINCODE) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 347.89 Td (    CHAINCODE -->|10. Commit Tx| LEDGER) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 337.89 Td (    P_VAULT -->|11. GET /api/patient/prescriptions/:id/download| LOCKDOWN_SVC) Tj ET
+0.70 w 0.850 0.880 0.920 RG 0.960 0.970 0.980 rg 45.00 284.89 505.28 32.00 re B
+2.50 w 0.200 0.500 0.800 RG 45.00 316.89 m 45.00 284.89 l S
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 307.89 Td (    LOCKDOWN_SVC -->|12. Compare File Hash vs Blockchain| CHAINCODE) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 297.89 Td (    LOCKDOWN_SVC -->|13. Stream Decrypted %PDF Bytes| P_STREAM) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 270.89 m 550.28 270.89 l S
+0.020 0.450 0.720 rg 45.00 228.89 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 231.89 Td (2. Multi-Layer Security Architecture) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 226.89 m 550.28 226.89 l S
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 196.89 Td (Layer 1: AES-256-GCM Envelope Encryption & Key Management) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 181.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 181.89 Td (Unique DEK per Document: Each generated prescription generates a fresh,) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 170.39 Td (cryptographically secure 256-bit Data Encryption Key \(randomBytes\(32\)\) and a 96-bit) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 158.89 Td (initialization vector \(randomBytes\(12\)\).) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 136.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 136.39 Td (Galois/Counter Mode \(GCM\): Provides authenticated encryption. Modifying a single byte) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 124.89 Td (of ciphertext causes immediate authentication tag verification failure) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 113.39 Td (\(ERR_CRYPTO_OPERATION_FAILED\).) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 90.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 90.89 Td (Cloud KMS Key Wrapping: DEKs are never saved in plaintext in the database or logs.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 79.39 Td (They are encrypted using the Master Key Encryption Key \(KEK\) via envelope encryption) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 67.89 Td (\(wrappedKey = AES-256-CBC\(DEK, KEK\)\).) Tj ET
+
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 13 0 R >>
+endobj
+13 0 obj
+<< /Length 6858 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 3 of 10) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 777.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 777.89 Td (Source Module:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 766.39 Td ([encryption.service.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/modules/security/encryption.service.ts\)) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 730.89 Td (Layer 2: Server-Enforced Consultation Grants & Strict Access Boundary) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 715.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 715.89 Td (Time-Bounded Authorization: Doctors obtain temporary, scoped access to patient) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 704.39 Td (vitals, allergies, and history through a database entity: ConsultationGrant.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 681.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 681.89 Td (Immediate Grant Revocation: The exact instant a doctor clicks *Approve & Sign*, the) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 670.39 Td (server commits the approved prescription, permanently sets revokedAt = new Date\(\), and) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 658.89 Td (terminates all doctor read/write access.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 636.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 636.39 Td (Strict Patient-Only Delivery: Finalized prescriptions can only be downloaded by the) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 624.89 Td (document's authenticated patient \(X-Patient-ID matching prescription.patientId\).) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 613.39 Td (Doctors, pharmacists, and unauthorized peers receive 403 Forbidden.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 590.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 590.89 Td (Source Module:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 579.39 Td ([consultation-access.service.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/modules/consultation/consultation-access.service.ts\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 567.89 Td (&) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 556.39 Td ([prescription-secure.service.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/modules/prescription/prescription-secure.service.ts\)) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 520.89 Td (Layer 3: Hyperledger Fabric Document Integrity & Blockchain Anchoring) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 505.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 505.89 Td (Zero Protected Health Information \(PHI\) On-Chain: The blockchain stores strictly:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 494.39 Td (\(documentId, version, sha256Hash, timestamp, txId\). No patient names, symptoms,) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 482.89 Td (medications, or doctor notes ever touch the ledger.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 460.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 460.39 Td (Pre-Delivery Integrity Re-Computation: Before decrypting a PDF for patient delivery,) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 448.89 Td (the backend computes the SHA-256 digest of the ciphertext on disk and compares it to) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 437.39 Td (the blockchain ledger.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 414.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 414.89 Td (Forensic Quarantine: If a mismatch is detected, the document transitions to) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 403.39 Td (QUARANTINED. All downloads are aborted, an administrative alert is flagged, and) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 391.89 Td (OTP/TOTP unlocking is strictly prohibited.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 369.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 369.39 Td (Source Modules:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 357.89 Td ([prescription_integrity.js]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/blockchain/chaincode/prescription_integrity.js\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 346.39 Td (&) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 334.89 Td ([blockchain.service.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/modules/blockchain/blockchain.service.ts\)) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 299.39 Td (Layer 4: Google Authenticator \(RFC 6238 TOTP\) Digital Signatures & Threat Recovery) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 284.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 284.39 Td (RFC 6238 TOTP Engine: Implements HMAC-SHA1 rotating 6-digit tokens across 30-second) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 272.89 Td (windows with a +/-1 step drift allowance.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 250.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 250.39 Td (Two-Factor Digital Signature: Doctors cannot finalize prescriptions using passwords) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 238.89 Td (or checkboxes alone. Approval requires entering the active 6-digit TOTP code paired) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 227.39 Td (with their BMDC profile.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 204.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 204.89 Td (Replay Attack Defense: Tracked tokens prevent reuse of the same 6-digit code within) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 193.39 Td (the active time-step.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 170.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 170.89 Td (8 Emergency Backup Codes: Users receive 8 single-use cryptographically hashed) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 159.39 Td (emergency codes \(TB-XXXX-XXXX\) for account recovery if their authenticator device is) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 147.89 Td (lost.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 125.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 125.39 Td (Source Module:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 113.89 Td ([totp.service.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/modules/auth/totp.service.ts\)) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 94.39 m 550.28 94.39 l S
+
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 15 0 R >>
+endobj
+15 0 obj
+<< /Length 7197 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 4 of 10) Tj ET
+0.020 0.450 0.720 rg 45.00 762.89 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 765.89 Td (3. Threat Detection, Automated Lockdown & Dual-Mode Recovery) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 760.89 m 550.28 760.89 l S
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 730.89 Td (Automated Lockdown Triggers) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 715.89 Td (1.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 715.89 Td (Brute-Force Download Burst: Exceeding 5 failed download or access requests within a) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 704.39 Td (60-second window.) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 681.89 Td (2.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 681.89 Td (Revoked Session Re-Use: A doctor attempting to query patient records after) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 670.39 Td (ConsultationGrant expiration.) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 647.89 Td (3.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 647.89 Td (Identity Spoofing: A patient requesting download access for a document belonging to) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 636.39 Td (another patient ID.) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 613.89 Td (4.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 613.89 Td (Integrity Violation: Ciphertext digest mismatch against the Hyperledger Fabric) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 602.39 Td (ledger \(triggers permanent forensic quarantine\).) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 566.89 Td (Dual-Mode Identity Recovery) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 551.89 Td (When an access lock is recoverable \(securityStatus === 'LOCKED'\), the patient can verify) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 539.89 Td (their identity using two distinct channels:) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 515.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 515.89 Td (Mode A: Google Authenticator \(Instant TOTP\): User enters the active 6-digit code from) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 504.39 Td (Google Authenticator. Verified in-process with zero network latency.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 481.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 481.89 Td (Mode B: Single-Use OTP \(Email / SMS Fallback\): Dispatches a 6-digit cryptographic) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 470.39 Td (challenge with a strict 5-minute time-to-live \(TTL\), single-use invalidation, and a) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 458.89 Td (maximum of 3 failed attempts.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 436.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 436.39 Td (Source Module:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 424.89 Td ([security-lockdown.service.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/modules/security/security-lockdown.service.ts\)) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 405.39 m 550.28 405.39 l S
+0.020 0.450 0.720 rg 45.00 363.39 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 366.39 Td (4. Database Schema & State Machine) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 361.39 m 550.28 361.39 l S
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 331.39 Td (10 Core Entities) Tj ET
+0.060 0.180 0.320 rg 45.00 307.39 505.28 18.00 re f
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 50.00 312.39 Td (Entity) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 211.69 312.39 Td (Purpose) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 281.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 297.39 Td (User) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 297.39 Td (Patient and Doctor accounts with role-based access control,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 287.39 Td (BMDC registration, and MFA secret storage) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 255.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 271.39 Td (Consultation) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 271.39 Td (Video/audio consultation session lifecycle \(SCHEDULED,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 261.39 Td (ACTIVE, COMPLETED, CANCELLED\)) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 229.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 245.39 Td (ConsultationGrant) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 245.39 Td (Time-bounded doctor access token linked to a specific patient) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 235.39 Td (and consultation \(expiresAt, revokedAt\)) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 203.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 219.39 Td (Prescription) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 219.39 Td (Approved clinical prescription version \(DRAFT, APPROVED,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 209.39 Td (GENERATING, READY, LOCKED\)) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 177.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 193.39 Td (PrescriptionItem) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 193.39 Td (Clinical regimen items \(medication name, dosage, frequency) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 183.39 Td (1+0+1, duration, instructions\)) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 151.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 167.39 Td (PrescriptionFile) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 167.39 Td (Private encrypted document reference \(storage path, wrapped) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 157.39 Td (DEK, IV, auth tag, SHA-256 hash\)) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 125.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 141.39 Td (SecurityEvent) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 141.39 Td (Audit trail recording suspicious bursts, failed auth) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 131.39 Td (attempts, locks, and IP addresses) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 99.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 115.39 Td (DocumentLock) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 115.39 Td (Active security locks with reason, locked timestamp, and) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 105.39 Td (forensic hold status) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 73.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 89.39 Td (OtpChallenge) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 89.39 Td (6-digit challenge storage with bcrypt hash, expiry timestamp,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 79.39 Td (attempts count, and consumed flag) Tj ET
+
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 17 0 R >>
+endobj
+17 0 obj
+<< /Length 8181 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 5 of 10) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 760.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 776.89 Td (AuditLog) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 776.89 Td (Immutable system-wide access logs for compliance and) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 211.69 766.89 Td (regulatory reporting) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 728.89 Td (Prescription Lifecycle State Machine) Tj ET
+0.70 w 0.850 0.880 0.920 RG 0.960 0.970 0.980 rg 45.00 520.89 505.28 202.00 re B
+2.50 w 0.200 0.500 0.800 RG 45.00 722.89 m 45.00 520.89 l S
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 713.89 Td ([ DRAFT ] ??\(Doctor Approval + Google 2FA\)??> [ APPROVED ]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 703.89 Td (                                                     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 693.89 Td (                                       \(Grant Revoked Post-Approval\)) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 683.89 Td (                                                     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 673.89 Td (                                                     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 663.89 Td (                                              [ GENERATING ]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 653.89 Td (                                                     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 643.89 Td (                                        \(Puppeteer + AES-256 + Fabric\)) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 633.89 Td (                                                     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 623.89 Td (                                                     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 613.89 Td (                                                 [ READY ]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 603.89 Td (                                                  ?     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 593.89 Td (                               \(Suspicious Burst\) ?     ? \(Patient 2FA / OTP Recovery\)) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 583.89 Td (                                                  ?     ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 573.89 Td (                                              [ LOCKED ]) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 563.89 Td (                                                  ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 553.89 Td (                               \(Hash Mismatch\)    ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 543.89 Td (                                                  ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 533.89 Td (                                            [ QUARANTINED ] \(Forensic Hold -- OTP Blocked\)) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 503.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 503.89 Td (Prisma Definition:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 492.39 Td ([schema.prisma]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/prisma/schema.prisma\)) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 469.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 469.89 Td (SQLite Persistence Store:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 458.39 Td ([sqlite-store.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/db/sqlite-store.ts\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 446.89 Td (&) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 435.39 Td ([prisma-adapter.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/db/prisma-adapter.ts\)) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 415.89 m 550.28 415.89 l S
+0.020 0.450 0.720 rg 45.00 373.89 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 376.89 Td (5. Backend REST API Endpoints \(Gateway Port 5002\)) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 371.89 m 550.28 371.89 l S
+0.060 0.180 0.320 rg 45.00 339.89 505.28 18.00 re f
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 50.00 344.89 Td (Method) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 151.06 344.89 Td (Endpoint) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 327.90 344.89 Td (Authorization) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 454.22 344.89 Td (Description) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 283.89 505.28 56.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 329.89 Td (GET) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 329.89 Td (/health) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 329.89 Td (Public) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 329.89 Td (System status,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 319.89 Td (cryptographic) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 309.89 Td (engine status, and) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 299.89 Td (Fabric ledger) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 289.89 Td (connectivity) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 227.89 505.28 56.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 273.89 Td (POST) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 273.89 Td (/api/auth/mfa/setup) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 273.89 Td (Bearer Token) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 273.89 Td (Generates RFC) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 263.89 Td (6238 Base32) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 253.89 Td (secret, QR code) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 243.89 Td (data URL, and 8) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 233.89 Td (recovery codes) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 171.89 505.28 56.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 217.89 Td (POST) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 217.89 Td (/api/auth/mfa/verify) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 217.89 Td (Bearer Token) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 217.89 Td (Validates 6-digit) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 207.89 Td (code and activates) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 197.89 Td (two-factor) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 187.89 Td (authentication on) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 177.89 Td (account) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 125.89 505.28 46.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 161.89 Td (GET) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 161.89 Td (/api/consultations/:id/grant-status) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 161.89 Td (Doctor / Patient) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 161.89 Td (Validates active) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 151.89 Td (consultation grant) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 141.89 Td (and remaining) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 131.89 Td (grant time-to-live) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 59.89 505.28 66.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 115.89 Td (POST) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 115.89 Td (/api/prescriptions/approve) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 115.89 Td (Doctor + 2FA) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 115.89 Td (Verifies grant,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 105.89 Td (validates doctor) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 95.89 Td (TOTP, creates) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 85.89 Td (immutable) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 75.89 Td (prescription, and) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 65.89 Td (revokes grant) Tj ET
+
+endstream
+endobj
+18 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 19 0 R >>
+endobj
+19 0 obj
+<< /Length 7802 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 6 of 10) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 720.89 505.28 66.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 776.89 Td (GET) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 776.89 Td (/api/prescriptions/patient/list) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 776.89 Td (Patient) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 776.89 Td (Lists all) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 766.89 Td (verified encrypted) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 756.89 Td (prescriptions in) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 746.89 Td (patient vault with) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 736.89 Td (blockchain proof) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 726.89 Td (pills) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 654.89 505.28 66.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 710.89 Td (GET) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 710.89 Td (/api/patient/prescriptions/:id/download) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 710.89 Td (Patient Only) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 710.89 Td (Recomputes) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 700.89 Td (SHA-256 hash) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 690.89 Td (against Fabric,) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 680.89 Td (unwraps DEK via) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 670.89 Td (KMS, and streams) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 660.89 Td (decrypted %PDF) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 588.89 505.28 66.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 644.89 Td (POST) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 644.89 Td (/api/security/prescriptions/:id/request-otp) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 644.89 Td (Patient) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 644.89 Td (Dispatches) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 634.89 Td (5-minute) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 624.89 Td (single-use OTP) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 614.89 Td (challenge to) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 604.89 Td (registered) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 594.89 Td (email/phone) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 532.89 505.28 56.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 578.89 Td (POST) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 578.89 Td (/api/security/prescriptions/:id/verify-otp) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 578.89 Td (Patient) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 578.89 Td (Validates 6-digit) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 568.89 Td (OTP challenge and) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 558.89 Td (restores ACTIVE) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 548.89 Td (status on) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 538.89 Td (recoverable locks) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 476.89 505.28 56.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 522.89 Td (POST) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 151.06 522.89 Td (/api/security/prescriptions/:id/verify-totp) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 327.90 522.89 Td (Patient) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 522.89 Td (Validates Google) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 512.89 Td (Authenticator TOTP) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 502.89 Td (token and unlocks) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 492.89 Td (prescription) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 454.22 482.89 Td (access) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 451.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 451.89 Td (Gateway Entrypoint:) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 440.39 Td ([index.ts]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/backend/src/index.ts\)) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 420.89 m 550.28 420.89 l S
+0.020 0.450 0.720 rg 45.00 378.89 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 381.89 Td (6. Frontend Portals & Consultation Workspace Layouts) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 376.89 m 550.28 376.89 l S
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 346.89 Td (The Three-Mode Doctor Consultation Workspace) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 331.89 Td (Implemented natively inside) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 319.89 Td ([ClinicalRoom.jsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/components/ClinicalRoom.jsx\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 307.89 Td (and) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 295.89 Td ([ConsultationRoom.tsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telemedicine/frontend/src/components/consultation/ConsultationRoom.tsx\):) Tj ET
+0.70 w 0.850 0.880 0.920 RG 0.960 0.970 0.980 rg 45.00 82.89 505.28 192.00 re B
+2.50 w 0.200 0.500 0.800 RG 45.00 274.89 m 45.00 82.89 l S
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 265.89 Td (+--------------------------------------------------------------------------------------------------+) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 255.89 Td (| TOP WORKSPACE BAR: Patient: Niloy Hasan \(Session #19\) | Grant: ACTIVE \(58:12\) | Exit Room) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 245.89 Td (|) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 235.89 Td (| Workspace Mode Switcher: [ ? Video + E-Prescription ] [ ? Audio + E-Prescription ] [ ?) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 225.89 Td (Full Screen ]|) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 215.89 Td (+-----------------------------------+--------------------------------------------------------------+) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 205.89 Td (| | SECURE DIGITAL E-PRESCRIPTION PORTAL \(Embedded / Full\) |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 195.89 Td (| LIVE PEER VIDEO STREAM | +----------------------+----------------------------------+ |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 185.89 Td (| \(with Camera Ready Preview & | | CLINICAL SAFETY | Chief Complaints & Diagnosis | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 175.89 Td (| Local PiP Self-View\) | | CHART | Quick Chips \(+GERD, +HTN...\) | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 165.89 Td (| | | * BP: 128/84 mmHg | Add Medication to Regimen | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 155.89 Td (| CALL CONTROLS HUD: | | * HR: 76 bpm | * Napa Extend 665mg \(1+0+1\) | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 145.89 Td (| [Mic] [Cam] [Share] [End Call] | | * Critical Allergies | * Seclo 20mg \(1+0+0\) | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 135.89 Td (| [Expand Rx Full-Screen ?] | | * Server Grant Badge | Doctor Advice & Instructions | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 125.89 Td (| | | | [Approve & Sign \(Google 2FA\)] | |) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 115.89 Td (| ENCRYPTED PEER CHAT DRAWER | +----------------------+----------------------------------+) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 105.89 Td (|) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 95.89 Td (+-----------------------------------+--------------------------------------------------------------+) Tj ET
+
+endstream
+endobj
+20 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 21 0 R >>
+endobj
+21 0 obj
+<< /Length 6959 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 7 of 10) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 777.89 Td (1.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 777.89 Td (Mode A -- Live Video + E-Prescription Split View \(video-split\):) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 755.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 755.39 Td (Left Pane \(w-5/12\): Live encrypted WebRTC video stream of the patient, local) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 743.89 Td (self-view PiP, call HUD controls \(Mic, Cam, Screen Share, Hangup\), and an "Expand Rx) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 732.39 Td (Full-Screen ?" button, with encrypted chat directly below.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 709.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 709.89 Td (Right Pane \(w-7/12\): Embedded) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 698.39 Td ([EPrescriptionPortal.jsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/components/EPrescriptionPortal.jsx\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 686.89 Td (containing the Clinical Safety Chart and Rx Regimen Builder.) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 664.39 Td (2.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 664.39 Td (Mode B -- Live Audio + Full-Screen E-Prescription \(audio-full\):) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 641.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 641.89 Td (Docks a compact 52px audio bar at the top displaying an animated sound wave) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 630.39 Td (visualizer, call timer, mic mute toggle, and grant status.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 607.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 607.89 Td (The E-Prescription Portal expands to 100% full-screen width below the audio bar.) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 585.39 Td (3.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 585.39 Td (Mode C -- Dedicated Full-Screen E-Prescription Portal \(rx-fullscreen\):) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 562.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 562.89 Td (Fills 100vw x 100vh for undistracted clinical prescription writing.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 540.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 540.39 Td (The active call contracts into a floating Picture-in-Picture \(PiP\) Tile \(bottom-16) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 528.89 Td (left-6 w-72\) displaying the remote video/audio feed and a one-click Dock Beside Call) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 517.39 Td (button.) Tj ET
+BT /F2 9.0 Tf 0.040 0.220 0.420 rg 49.00 494.89 Td (4.) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 65.00 494.89 Td (Zero-Loss Draft Persistence Store:) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 472.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 472.39 Td ([usePrescriptionDraftStore.js]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/store/usePrescriptionDraftStore.js\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 460.89 Td (preserves all typed complaints, diagnoses, and medications in memory across layout) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 449.39 Td (mode switches without resetting or page reloads.) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 413.89 Td (Patient Encrypted Prescription Vault) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 398.89 Td (Implemented in) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 386.89 Td ([PatientPrescriptionVault.jsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/components/PatientPrescriptionVault.jsx\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 374.89 Td (and integrated into) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 362.89 Td ([PatientDashboard.jsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/components/PatientDashboard.jsx\):) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 338.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 338.89 Td (Real-Time Security Badges: [SECURE] SECURE \(Active/Ready\), [WARN] LOCKED \(Threat lockdown\), and) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 327.39 Td (? QUARANTINED \(Cryptographic hash mismatch\).) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 304.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 304.89 Td (On-Chain Blockchain Badges: Displays verified Fabric anchor status, TxID, and SHA-256) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 293.39 Td (digest verified directly against the chaincode ledger.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 270.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 270.89 Td (Decrypted Stream Delivery: Streams decrypted %PDF binary files directly to the) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 259.39 Td (patient's device with zero unencrypted cache on disk.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 236.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 236.89 Td (Embedded Dual-Mode Recovery Modal: Handles Google Authenticator verification and) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 225.39 Td (5-minute single-use OTP challenge entry.) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 189.89 Td (Google Authenticator 2FA Pairing Modal) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 174.89 Td (Implemented in) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 162.89 Td ([GoogleAuthenticatorSetupModal.jsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/components/GoogleAuthenticatorSetupModal.jsx\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 150.89 Td (and integrated into) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 138.89 Td ([SecurityCenter.jsx]\(file:///Users/mdniloy/Downloads/telehealth%20bangladesh/telehealth-bangladesh/frontend-src/src/components/SecurityCenter.jsx\):) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 114.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 114.89 Td (Generates live pairing QR codes via POST /api/auth/mfa/setup.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 92.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 92.39 Td (Displays manual Base32 key with one-click copy.) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 69.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 69.89 Td (Displays 8 emergency backup recovery codes \(TB-XXXX-XXXX\).) Tj ET
+
+endstream
+endobj
+22 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 23 0 R >>
+endobj
+23 0 obj
+<< /Length 9282 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 8 of 10) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 777.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 777.89 Td (Verifies rotating 6-digit TOTP code before activating 2FA.) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 758.39 m 550.28 758.39 l S
+0.020 0.450 0.720 rg 45.00 716.39 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 719.39 Td (7. Verification & Acceptance Test Matrix) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 714.39 m 550.28 714.39 l S
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 684.39 Td (Security Unit Acceptance Suite \(`test-security-suite.ts`\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 669.39 Td (Executed via node --experimental-strip-types) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 657.39 Td (telemedicine/backend/src/test-security-suite.ts:) Tj ET
+0.060 0.180 0.320 rg 45.00 618.39 505.28 18.00 re f
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 50.00 623.39 Td (Test #) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 176.32 623.39 Td (Acceptance Test Case) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 428.96 623.39 Td (Result) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 592.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 608.39 Td (01) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 608.39 Td (Doctor cannot access patient data after) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 598.39 Td (consultation ends \(Revocation Enforced\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 608.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 566.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 582.39 Td (02) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 582.39 Td (Patient cannot download another patient's) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 572.39 Td (prescription \(Identity Verification\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 582.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 540.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 556.39 Td (03) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 556.39 Td (PDF ciphertext cannot be read without DEK) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 546.39 Td (unwrapping \(AES-256-GCM Envelope Protection\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 556.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 514.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 530.39 Td (04) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 530.39 Td (Modifying encrypted bytes triggers GCM auth) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 520.39 Td (tag failure \(Tamper Detection\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 530.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 488.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 504.39 Td (05) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 504.39 Td (Blockchain hash mismatch quarantines) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 494.39 Td (document and halts delivery) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 504.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 462.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 478.39 Td (06) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 478.39 Td (Suspicious download/authentication bursts) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 468.39 Td (automatically lock access) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 478.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 436.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 452.39 Td (07) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 452.39 Td (Security notifications dispatched with zero) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 442.39 Td (exposed PHI/clinical details) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 452.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 410.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 426.39 Td (08) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 426.39 Td (6-digit OTP enforces single-use, 5-minute) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 416.39 Td (expiry, and max retry boundaries) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 426.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 384.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 400.39 Td (09) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 400.39 Td (Valid OTP is strictly rejected when document) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 390.39 Td (is quarantined for integrity failure) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 400.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 358.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 374.39 Td (10) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 374.39 Td (Transactional retry and error containment) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 364.39 Td (safely recover from subsystem errors) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 374.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 332.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 348.39 Td (11) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 348.39 Td (Google Authenticator RFC 6238 TOTP generates) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 338.39 Td (& verifies valid 6-digit token) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 348.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 306.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 322.39 Td (12) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 322.39 Td (Invalid or forged Google Authenticator token) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 312.39 Td (strictly rejected) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 322.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 280.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 296.39 Td (13) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 296.39 Td (Google Authenticator token replay attack) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 286.39 Td (within the same 30s window strictly rejected) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 296.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 254.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 270.39 Td (14) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 270.39 Td (One-time emergency backup recovery code) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 260.39 Td (verified and invalidated immediately) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 270.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 228.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 244.39 Td (15) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 244.39 Td (Doctor prescription approval enforces Google) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 234.39 Td (Authenticator 2FA before signing) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 244.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 212.39 505.28 16.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 218.39 Td (TOTAL) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 218.39 Td (15 Security Tests Executed) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 218.39 Td (100% PASSED) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 180.39 Td (End-to-End Workflow Integration Suite \(`test-in-process-integration.ts`\)) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 165.39 Td (Executed via node --experimental-strip-types) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 45.00 153.39 Td (telemedicine/backend/src/test-in-process-integration.ts:) Tj ET
+0.060 0.180 0.320 rg 45.00 114.39 505.28 18.00 re f
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 50.00 119.39 Td (Step #) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 176.32 119.39 Td (End-to-End Workflow Step) Tj ET
+BT /F2 8.5 Tf 1.000 1.000 1.000 rg 428.96 119.39 Td (Result) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 88.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 104.39 Td (01) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 104.39 Td (Gateway health check passed & verified) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 94.39 Td (Google Authenticator RFC 6238) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 104.39 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 62.39 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 78.39 Td (02) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 78.39 Td (Doctor Sarah authenticated with certified) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 68.39 Td (BMDC credentials) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 78.39 Td (PASSED) Tj ET
+
+endstream
+endobj
+24 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 25 0 R >>
+endobj
+25 0 obj
+<< /Length 5613 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 9 of 10) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 760.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 776.89 Td (03) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 776.89 Td (Doctor Sarah successfully paired Google) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 766.89 Td (Authenticator \(RFC 6238 TOTP\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 776.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 734.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 750.89 Td (04) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 750.89 Td (Doctor consultation grant verified active) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 740.89 Td (\(Patient data unlocked\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 750.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 708.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 724.89 Td (05) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 724.89 Td (Prescription approval without Google) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 714.89 Td (Authenticator strictly rejected \(403\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 724.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 672.89 505.28 36.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 698.89 Td (06) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 698.89 Td (Prescription approved with Google) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 688.89 Td (Authenticator \(SHA-256 Digest Anchored to) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 678.89 Td (Fabric\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 698.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 646.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 662.89 Td (07) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 662.89 Td (Doctor consultation grant verified revoked) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 652.89 Td (post-approval \(Access Terminated\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 662.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 620.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 636.89 Td (08) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 636.89 Td (Patient Niloy successfully downloaded) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 626.89 Td (decrypted PDF \(Valid %PDF binary stream\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 636.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 594.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 610.89 Td (09) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 610.89 Td (Unauthorized patient download attempt) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 600.89 Td (strictly blocked \(403 Forbidden\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 610.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 568.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 584.89 Td (10) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 584.89 Td (Patient Niloy enabled Google Authenticator) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 574.89 Td (for threat recovery) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 584.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 542.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 558.89 Td (11) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 558.89 Td (Patient successfully restored document) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 548.89 Td (access via Google Authenticator) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 558.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 0.970 0.980 1.000 rg 45.00 516.89 505.28 26.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 532.89 Td (12) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 532.89 Td (Quarantined document strictly blocks) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 522.89 Td (OTP/TOTP unlock \(Forensic Hold\)) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 532.89 Td (PASSED) Tj ET
+0.50 w 0.880 0.900 0.940 RG 1.000 1.000 1.000 rg 45.00 500.89 505.28 16.00 re B
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 50.00 506.89 Td (TOTAL) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 176.32 506.89 Td (12 Workflow Stages Executed) Tj ET
+BT /F1 8.0 Tf 0.150 0.200 0.250 rg 428.96 506.89 Td (100% PASSED) Tj ET
+BT /F2 10.5 Tf 0.100 0.280 0.480 rg 45.00 468.89 Td (Production Frontend Compilation) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 453.89 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 453.89 Td (Vite Production Bundler: npm --prefix "telehealth-bangladesh/frontend-src" run build) Tj ET
+BT /F2 11.0 Tf 0.020 0.450 0.720 rg 51.00 431.39 Td (*) Tj ET
+BT /F1 9.0 Tf 0.150 0.200 0.280 rg 63.00 431.39 Td (Build Status: 1995 modules transformed into production assets in 1.13s with 0 errors.) Tj ET
+1.00 w 0.800 0.850 0.900 RG 45.00 411.89 m 550.28 411.89 l S
+0.020 0.450 0.720 rg 45.00 369.89 4.00 16.00 re f
+BT /F2 12.5 Tf 0.040 0.220 0.420 rg 55.00 372.89 Td (8. Master File & Component Reference Index) Tj ET
+0.80 w 0.850 0.900 0.950 RG 45.00 367.89 m 550.28 367.89 l S
+
+endstream
+endobj
+26 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> /Contents 27 0 R >>
+endobj
+27 0 obj
+<< /Length 6929 >>
+stream
+0.75 w 0.80 0.85 0.90 RG 45.00 799.89 m 550.28 799.89 l S
+BT /F1 8 Tf 0.40 0.45 0.50 rg 45.00 805.89 Td (HealNSight Telemedicine | Master Architecture & Implementation Plan) Tj ET
+0.75 w 0.80 0.85 0.90 RG 45.00 42.00 m 550.28 42.00 l S
+BT /F1 8 Tf 0.45 0.50 0.55 rg 45.00 30.00 Td (Confidential & Proprietary * Government of Bangladesh / BMDC Healthcare Standard) Tj ET
+BT /F2 8 Tf 0.35 0.40 0.45 rg 495.28 30.00 Td (Page 10 of 10) Tj ET
+0.70 w 0.850 0.880 0.920 RG 0.960 0.970 0.980 rg 45.00 324.89 505.28 462.00 re B
+2.50 w 0.200 0.500 0.800 RG 45.00 786.89 m 45.00 324.89 l S
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 777.89 Td (telemedicine/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 767.89 Td (??? backend/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 757.89 Td (?   ??? prisma/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 747.89 Td (? ? ??? schema.prisma # 10 core entities & state machines) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 737.89 Td (?   ??? src/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 727.89 Td (?   ?   ??? db/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 717.89 Td (? ? ? ??? sqlite-store.ts # SQLite persistent table schema) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 707.89 Td (? ? ? ??? prisma-adapter.ts # Database queries & ID generator) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 697.89 Td (?   ?   ??? modules/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 687.89 Td (?   ?   ?   ??? security/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 677.89 Td (?   ?   ?   ?   ??? encryption.service.ts                     # AES-256-GCM + KMS wrapping) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 667.89 Td (? ? ? ? ??? security-lockdown.service.ts # Threat detection, locks, OTP challenges) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 657.89 Td (?   ?   ?   ??? consultation/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 647.89 Td (? ? ? ? ??? consultation-access.service.ts # Consultation grant lifecycle enforcer) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 637.89 Td (?   ?   ?   ??? blockchain/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 627.89 Td (? ? ? ? ??? blockchain.service.ts # Fabric chaincode client & hash verifier) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 617.89 Td (?   ?   ?   ??? auth/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 607.89 Td (? ? ? ? ??? totp.service.ts # Google Authenticator RFC 6238 TOTP engine) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 597.89 Td (?   ?   ?   ??? prescription/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 587.89 Td (? ? ? ??? prescription-secure.service.ts # Approval pipeline & patient download guard) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 577.89 Td (? ? ? ??? pdf-renderer.service.ts # Puppeteer clinical PDF compiler) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 567.89 Td (?   ?   ??? workers/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 557.89 Td (? ? ? ??? prescription.worker.ts # BullMQ async encryption worker) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 547.89 Td (? ? ??? index.ts # Express API gateway \(Port 5002\)) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 537.89 Td (? ? ??? test-security-suite.ts # 15/15 unit acceptance test suite) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 527.89 Td (? ? ??? test-in-process-integration.ts # 12/12 in-process E2E test suite) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 517.89 Td (?   ??? package.json) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 507.89 Td (??? blockchain/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 497.89 Td (?   ??? chaincode/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 487.89 Td (?       ??? prescription_integrity.js                         # Hyperledger Fabric chaincode) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 477.89 Td (??? frontend/ \(Standalone Reference\)) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 467.89 Td (    ??? src/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 457.89 Td (        ??? store/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 447.89 Td (        ?   ??? usePrescriptionDraftStore.ts                  # Shared draft state store) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 437.89 Td (        ??? components/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 427.89 Td (        ?   ??? prescription/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 417.89 Td (        ?   ?   ??? EPrescriptionPortal.tsx                   # Full-screen / in-call portal) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 407.89 Td (        ?   ??? consultation/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 397.89 Td (        ?       ??? ConsultationRoom.tsx                      # Three-mode consultation room) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 387.89 Td (        ??? pages/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 377.89 Td (            ??? doctor/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 367.89 Td (??? ConsultationsQueue.tsx # Queue cards with direct portal routing) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 357.89 Td () Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 347.89 Td (telehealth-bangladesh/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 337.89 Td (??? frontend-src/src/) Tj ET
+0.70 w 0.850 0.880 0.920 RG 0.960 0.970 0.980 rg 45.00 174.89 505.28 142.00 re B
+2.50 w 0.200 0.500 0.800 RG 45.00 316.89 m 45.00 174.89 l S
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 307.89 Td (    ??? store/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 297.89 Td (? ??? usePrescriptionDraftStore.js # React in-memory zero-loss draft store) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 287.89 Td (    ??? components/) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 277.89 Td (? ??? EPrescriptionPortal.jsx # Full-Screen & docked consultation portal) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 267.89 Td (? ??? ClinicalRoom.jsx # Live 3-mode consultation workspace) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 257.89 Td (? ??? PatientPrescriptionVault.jsx # Patient encrypted vault & recovery modal) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 247.89 Td (? ??? GoogleAuthenticatorSetupModal.jsx # 2FA pairing QR code & backup codes modal) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 237.89 Td (? ??? SecurePrescriptionModal.jsx # Standalone fallback approval modal) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 227.89 Td (? ??? DoctorDashboard.jsx # Doctor queue with direct portal launch) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 217.89 Td (? ??? ConsultationPortal.jsx # Consultations hub with direct portal launch) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 207.89 Td (? ??? PatientDashboard.jsx # Patient dashboard wired to secure vault) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 197.89 Td (? ??? SecurityCenter.jsx # Security center wired to Google Authenticator) Tj ET
+BT /F4 7.2 Tf 0.150 0.200 0.250 rg 53.00 187.89 Td (??? App.jsx # App router passing layout modes) Tj ET
+
+endstream
+endobj
+xref
+0 28
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000185 00000 n 
+0000000255 00000 n 
+0000000330 00000 n 
+0000000408 00000 n 
+0000000476 00000 n 
+0000000549 00000 n 
+0000000721 00000 n 
+0000003389 00000 n 
+0000003563 00000 n 
+0000011184 00000 n 
+0000011358 00000 n 
+0000018269 00000 n 
+0000018443 00000 n 
+0000025693 00000 n 
+0000025867 00000 n 
+0000034101 00000 n 
+0000034275 00000 n 
+0000042130 00000 n 
+0000042304 00000 n 
+0000049316 00000 n 
+0000049490 00000 n 
+0000058825 00000 n 
+0000058999 00000 n 
+0000064665 00000 n 
+0000064839 00000 n 
+trailer
+<< /Size 28 /Root 1 0 R >>
+startxref
+71821
+%%EOF

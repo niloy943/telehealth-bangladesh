@@ -24,8 +24,17 @@ def main():
 
     env = os.environ.copy()
     env.setdefault("VITE_API_BASE", "http://localhost:8000")
-    env.setdefault("VITE_AUTH_API_BASE", os.environ.get("VITE_AUTH_API_BASE", "http://localhost:5000"))
+    if "VITE_AUTH_API_BASE" not in env:
+        import socket
+        auth_port = 5000
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('127.0.0.1', 5000))
+        except OSError:
+            auth_port = 5001
+        env["VITE_AUTH_API_BASE"] = f"http://localhost:{auth_port}"
     env.setdefault("VITE_FASTAPI_BASE", "http://localhost:6000")
+    env.setdefault("VITE_EP_API_BASE", "http://localhost:5002")
 
     print("\n--- HealNSight: Starting High-Performance Vite Frontend Server on Port 3000 ---")
     print("Open http://localhost:3000 in your browser to view the platform.")

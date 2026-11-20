@@ -11,7 +11,15 @@ def main():
         print(f"Error: Could not find run_migrations.py in {sub_dir}")
         sys.exit(1)
 
-    result = subprocess.run([sys.executable, target_script], cwd=sub_dir)
+    py_exe = sys.executable
+    if sys.platform == "win32":
+        venv_py = os.path.join(sub_dir, ".venv", "Scripts", "python.exe")
+    else:
+        venv_py = os.path.join(sub_dir, ".venv", "bin", "python")
+    if os.path.exists(venv_py):
+        py_exe = venv_py
+
+    result = subprocess.run([py_exe, target_script], cwd=sub_dir)
     sys.exit(result.returncode)
 
 if __name__ == "__main__":

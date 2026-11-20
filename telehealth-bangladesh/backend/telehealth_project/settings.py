@@ -13,10 +13,11 @@ load_dotenv(BASE_DIR.parent / '.env')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('TELEHEALTH_SECRET_KEY', 'django-insecure-vital-bd-secure-key-2026-xyz')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Production Debug Toggle: Default to False unless explicitly set in local dev environment
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+# Whitelist allowed hostnames from environment
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,*').split(',') if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     # 3rd Party Packages
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'channels',
     
     # App
@@ -47,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'api.middleware.DisableClientCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'telehealth_project.urls'
@@ -145,27 +148,50 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
-        'otp_ip': '10/minute',
-        'otp_identifier': '5/minute',
+        'anon': '5000/day' if not DEBUG else '100000/day',
+        'user': '20000/day' if not DEBUG else '200000/day',
+        'otp_ip': '30/minute' if not DEBUG else '300/minute',
+        'otp_identifier': '15/minute' if not DEBUG else '150/minute',
     },
 }
 
-# JWT configurations
+# JWT configurations: Rotating refresh tokens with automatic blacklisting upon rotation
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # Extended for demo simplicity
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.environ.get('JWT_ACCESS_MINUTES', 1440))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('JWT_REFRESH_DAYS', 7))),
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# CORS headers permissions
-CORS_ALLOW_ALL_ORIGINS = True
+# Strict CORS origin whitelist (never wildcard with credentials in healthcare production)
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in os.environ.get(
+        'CORS_ALLOWED_ORIGINS',
+        'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5002,http://127.0.0.1:5002'
+    ).split(',') if origin.strip()
+]
 CORS_ALLOW_CREDENTIALS = True
+
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'cache-control',
+    'pragma',
+    'expires',
+    'x-patient-id',
+    'x-patient-username',
+    'x-doctor-id',
+    'x-doctor-username',
+    'x-requested-with',
+]
+
+# Standard Security Headers across all modes
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
 # Channel Layers
 # Use InMemoryChannelLayer to run locally without Redis server dependency

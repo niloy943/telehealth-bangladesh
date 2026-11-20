@@ -36,8 +36,8 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
         { id: 'go-dash', title: 'Navigate: Citizen Health Dashboard', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
         { id: 'go-consultation', title: 'Navigate: Telemedicine Consultations (Audio/Video)', icon: <Video className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('consultation'); onClose(); } },
         { id: 'go-book', title: 'Action: Book Specialist Consultation', icon: <Activity className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('booking'); onClose(); } },
-        { id: 'go-records', title: 'Navigate: Encrypted Medical Records', icon: <Eye className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('records'); onClose(); } },
-        { id: 'go-prescriptions', title: 'Navigate: Digital Prescription', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Clinical Workspace', action: () => { onAction('prescriptions'); onClose(); } },
+        { id: 'go-records', title: 'Navigate: Encrypted Medical Records', icon: <Eye className="w-4 h-4 text-[#059669]" />, category: '', action: () => { onAction('records'); onClose(); } },
+        { id: 'go-prescriptions', title: 'Navigate: Digital Prescription', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: '', action: () => { onAction('prescriptions'); onClose(); } },
         { id: 'go-consent', title: 'Navigate: Privacy & Consent Manager', icon: <Shield className="w-4 h-4 text-[#168CF5]" />, category: 'Security', action: () => { onAction('consent'); onClose(); } },
         { id: 'go-pharmacy', title: 'Navigate: Pharmacy Store & Orders', icon: <Compass className="w-4 h-4 text-amber-600" />, category: 'Pharmacy', action: () => { onAction('pharmacy'); onClose(); } },
         { id: 'go-payments', title: 'Navigate: Billing & Payment Receipts', icon: <Compass className="w-4 h-4 text-[#168CF5]" />, category: 'Billing', action: () => { onAction('payments'); onClose(); } },
@@ -49,7 +49,7 @@ export const CommandPalette = ({ isOpen, onClose, user, onAction, activeTab, tog
 
     if (user?.role === 'doctor') {
       return [
-        { id: 'go-dash', title: 'Navigate: Clinical Workspace & Queue', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
+        { id: 'go-dash', title: 'Navigate:  & Queue', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('dashboard'); onClose(); } },
         { id: 'go-consultation', title: 'Navigate: Consultation Hub & Live Queue', icon: <Video className="w-4 h-4 text-[#168CF5]" />, category: 'Consultation', action: () => { onAction('consultation'); onClose(); } },
         { id: 'go-schedule', title: 'Navigate: Consultation Fee & Weekly Schedule', icon: <Compass className="w-4 h-4 text-[#059669]" />, category: 'Navigation', action: () => { onAction('schedule'); onClose(); } },
         { id: 'toggle-status', title: 'Action: Toggle Online Availability', icon: <Activity className="w-4 h-4 text-[#059669]" />, category: 'Availability', action: () => { onAction('toggle-availability'); onClose(); } },

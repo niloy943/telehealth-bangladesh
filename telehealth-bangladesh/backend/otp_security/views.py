@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from typing import Optional
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -39,7 +40,7 @@ class OtpIdentifierRateThrottle(SimpleRateThrottle):
 
     scope = "otp_identifier"
 
-    def get_cache_key(self, request: Request, view: APIView) -> str | None:
+    def get_cache_key(self, request: Request, view: APIView) -> Optional[str]:
         identifier = request.data.get("identifier")
         if not identifier:
             return None
